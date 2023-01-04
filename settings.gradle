@@ -863,3 +863,12 @@ if (buildProperties.isKotlinNativeEnabled) {
     include ':kotlin-native:backend.native:tests'
     include ":kotlin-native:prepare:kotlin-native-compiler-embeddable"
 }
+include 'plugins:jso'
+findProject(':plugins:jso')?.name = 'jso'
+include 'plugins:jso:jso-compiler'
+findProject(':plugins:jso:jso-compiler')?.name = 'jso-compiler'
+include 'plugins:jso:jso-compiler:jso-compiler-plugin.k1'
+findProject(':plugins:jso:jso-compiler:jso-compiler-plugin.k1')?.name = 'jso-compiler-plugin.k1'
+include 'plugins:jso:jso-compiler:jso-compiler-plugin.k2'
+findProject(':plugins:jso:jso-compiler:jso-compiler-plugin.k2')?.name = 'jso-compiler-plugin.k2'
+
