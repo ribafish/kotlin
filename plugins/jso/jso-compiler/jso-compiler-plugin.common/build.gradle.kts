@@ -1,4 +1,4 @@
-description = "Kotlin JavaScript Object Compiler Plugin (K1)"
+description = "Kotlin JSO Compiler Plugin (Common)"
 
 plugins {
     kotlin("jvm")
@@ -6,10 +6,9 @@ plugins {
 }
 
 dependencies {
+    compileOnly(project(":compiler:util"))
+    compileOnly(project(":core:compiler.common"))
     compileOnly(intellijCore())
-    compileOnly(project(":compiler:frontend"))
-    compileOnly(project(":compiler:cli-common"))
-    compileOnly(project(":js:js.frontend"))
 }
 
 sourceSets {

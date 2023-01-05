@@ -3,33 +3,33 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+package org.jetbrains.kotlinx.jso.compiler.k1.diagnostics
+
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlinx.jso.compiler.k1.utils.isJSOCall
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.checkers.CallChecker
 import org.jetbrains.kotlin.resolve.calls.checkers.CallCheckerContext
-import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyExternal
 
-val JSO_PATTERN: DescriptorPredicate = PatternBuilder.pattern("kotlinx.jso.jso()")
-
-class JsObjectTypeParameterChecker : CallChecker {
+class JsObjectParametersChecker : CallChecker {
     override fun check(resolvedCall: ResolvedCall<*>, reportOn: PsiElement, context: CallCheckerContext) {
         if (!resolvedCall.isJSOCall()) return
 
-        val providedExternalInterfaceTypeArgument = resolvedCall.typeArguments.values.singleOrNull() ?: return context.trace.report(TODO().on(expression))
+        val providedExternalInterfaceTypeArgument =
+            resolvedCall.typeArguments.values.singleOrNull() ?: return context.trace.report(TODO().on(reportOn))
 
         if (!providedExternalInterfaceTypeArgument.isExternalInterface()) {
-            return context.trace.report(TODO().on(expression))
+            return context.trace.report(TODO().on(reportOn))
         }
+
     }
 
     private fun KotlinType.isExternalInterface(): Boolean {
         val descriptor = constructor.declarationDescriptor as? ClassDescriptor ?: return false
         return descriptor.kind == ClassKind.INTERFACE && descriptor.isEffectivelyExternal()
     }
-}
-
-private fun <F : CallableDescriptor?> ResolvedCall<F>.isJSOCall(): Boolean {
-    val descriptor = resultingDescriptor
-    return descriptor is SimpleFunctionDescriptor && JSO_PATTERN.test(descriptor)
 }
