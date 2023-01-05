@@ -8,6 +8,7 @@ package org.jetbrains.kotlinx.jso.compiler.resolve
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.synthetics.SyntheticClassOrObjectDescriptor
@@ -16,6 +17,8 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProv
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.TypeAttributes
+import org.jetbrains.kotlin.types.TypeProjectionImpl
+import org.jetbrains.kotlin.types.Variance
 
 object KJsObjectDescriptorBuilderResolver {
     fun getJsObjectBuilderPropertyNames(classDescriptor: ClassDescriptor): List<Name> {
@@ -34,7 +37,8 @@ object KJsObjectDescriptorBuilderResolver {
         result: MutableSet<PropertyDescriptor>
     ) {
         val typeToBuild = thisDescriptor.containingDeclaration as ClassDescriptor
-        val typeToBuildMemberScope = typeToBuild.getMemberScope(thisDescriptor.declaredTypeParameters.toMutableList())
+        val typeToBuildMemberScope =
+            typeToBuild.getMemberScope(thisDescriptor.declaredTypeParameters.map { TypeProjectionImpl(it.variance, it.defaultType) })
         val originalProperty = typeToBuildMemberScope.getContributedVariables(name, NoLookupLocation.FROM_BACKEND).single()
 
         if (originalProperty.getter?.isDefault != false) {
@@ -42,7 +46,11 @@ object KJsObjectDescriptorBuilderResolver {
         }
     }
 
-    fun addJsObjectBuilderImplClass(thisDescriptor: ClassDescriptor, declarationProvider: ClassMemberDeclarationProvider, ctx: LazyClassContext): ClassDescriptor {
+    fun addJsObjectBuilderImplClass(
+        thisDescriptor: ClassDescriptor,
+        declarationProvider: ClassMemberDeclarationProvider,
+        ctx: LazyClassContext
+    ): ClassDescriptor {
         val typeToBuild = thisDescriptor.containingDeclaration as ClassDescriptor
         val thisDeclaration = declarationProvider.correspondingClassOrObject!!
         val scope = ctx.declarationScopeProvider.getResolutionScopeForDeclaration(declarationProvider.ownerInfo!!.scopeAnchor)

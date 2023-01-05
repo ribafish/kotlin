@@ -6,8 +6,10 @@
 package org.jetbrains.kotlinx.jso.compiler.k1.diagnostics
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.isJSOCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -23,9 +25,19 @@ class JsObjectParametersChecker : CallChecker {
             resolvedCall.typeArguments.values.singleOrNull() ?: return context.trace.report(TODO().on(reportOn))
 
         if (!providedExternalInterfaceTypeArgument.isExternalInterface()) {
+            context.trace.report(TODO().on(reportOn))
+        }
+
+        val providedLambda = resolvedCall.valueArgumentsByIndex?.singleOrNull()?.arguments?.singleOrNull() ?: return context.trace.report(TODO().on(reportOn))
+
+        if (!providedLambda.isLambda()) {
             return context.trace.report(TODO().on(reportOn))
         }
 
+    }
+
+    private fun ValueArgument.isLambda(): Boolean {
+        return getArgumentExpression() is KtLambdaExpression
     }
 
     private fun KotlinType.isExternalInterface(): Boolean {
