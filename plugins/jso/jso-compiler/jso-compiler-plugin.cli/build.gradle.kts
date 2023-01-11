@@ -1,4 +1,4 @@
-description = "Kotlin JSO Compiler Plugin (CLI)"
+description = "Kotlin JSO Compiler Plugin (Common)"
 
 plugins {
     kotlin("jvm")
@@ -13,12 +13,9 @@ dependencies {
 
     implementation(project(":jso-compiler-plugin.common"))
     implementation(project(":jso-compiler-plugin.k1"))
-    implementation(project(":jso-compiler-plugin.k2"))
 
     compileOnly(intellijCore())
 }
-
-optInToExperimentalCompilerApi()
 
 sourceSets {
     "main" { projectDefault() }

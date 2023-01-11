@@ -881,4 +881,6 @@ include 'plugins:jso:jso-runtime:src'
 findProject(':plugins:jso:jso-runtime:src')?.name = 'src'
 include 'plugins:jso:jso-compiler:jso-compiler-plugin.common'
 findProject(':plugins:jso:jso-compiler:jso-compiler-plugin.common')?.name = 'jso-compiler-plugin.common'
+include 'plugins:jso:jso-compiler:jso-compiler-plugin.cli'
+findProject(':plugins:jso:jso-compiler:jso-compiler-plugin.cli')?.name = 'jso-compiler-plugin.cli'
 
