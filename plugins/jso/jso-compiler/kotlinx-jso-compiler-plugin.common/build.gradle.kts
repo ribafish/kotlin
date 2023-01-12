@@ -1,4 +1,4 @@
-description = "Kotlin JSO Compiler Plugin (Common)"
+description = "Kotlin JavaScript Object Compiler Plugin (Common)"
 
 plugins {
     kotlin("jvm")

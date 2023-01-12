@@ -1,4 +1,8 @@
-description = "Kotlin JSO Compiler Plugin (Common)"
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
+
+description = "Kotlin JavaScript Object Compiler Plugin (CLI)"
 
 plugins {
     kotlin("jvm")
@@ -10,9 +14,6 @@ dependencies {
     compileOnly(project(":compiler:cli"))
     compileOnly(project(":compiler:plugin-api"))
     compileOnly(project(":compiler:fir:entrypoint"))
-
-    implementation(project(":jso-compiler-plugin.common"))
-    implementation(project(":jso-compiler-plugin.k1"))
 
     compileOnly(intellijCore())
 }

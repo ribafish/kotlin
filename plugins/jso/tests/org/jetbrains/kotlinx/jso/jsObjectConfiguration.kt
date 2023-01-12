@@ -3,9 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlinx.serialization
+package org.jetbrains.kotlinx.jso
 
-import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
@@ -20,34 +19,24 @@ import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationIntr
 import org.jetbrains.kotlinx.serialization.compiler.fir.FirSerializationExtensionRegistrar
 import java.io.File
 
-private val librariesPaths = listOfNotNull(RuntimeLibraryInClasspathTest.coreLibraryPath, RuntimeLibraryInClasspathTest.jsonLibraryPath)
-
-class SerializationEnvironmentConfigurator(
-    testServices: TestServices,
-    private val noLibraries: Boolean
-) : EnvironmentConfigurator(testServices) {
-    override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
-        if (noLibraries) return
-        configuration.addJvmClasspathRoots(librariesPaths)
-    }
-
+class SerializationEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun CompilerPluginRegistrar.ExtensionStorage.registerCompilerExtensions(
         module: TestModule,
         configuration: CompilerConfiguration
     ) {
-        SerializationComponentRegistrar.registerExtensions(this, SerializationIntrinsicsState.FORCE_ENABLED)
+        JsObjectComponentRegistrar.registerExtensions(this)
     }
 }
 
-class SerializationRuntimeClasspathProvider(testServices: TestServices) : RuntimeClasspathProvider(testServices) {
+class JsObjectRuntimeClasspathProvider(testServices: TestServices) : RuntimeClasspathProvider(testServices) {
     override fun runtimeClassPaths(module: TestModule): List<File> {
-        return librariesPaths
+        return listOf(System.getProperty("jso.core.path"))
     }
 }
 
-fun TestConfigurationBuilder.configureForKotlinxSerialization(noLibraries: Boolean = false) {
-    useConfigurators(::SerializationEnvironmentConfigurator.bind(noLibraries))
+fun TestConfigurationBuilder.configureForKotlinxJsObject() {
+    useConfigurators(::JsObjectEnvironmentConfigurator.bind())
     if (!noLibraries) {
-        useCustomRuntimeClasspathProviders(::SerializationRuntimeClasspathProvider)
+        useCustomRuntimeClasspathProviders(::JsObjectRuntimeClasspathProvider)
     }
 }
