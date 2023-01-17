@@ -13,6 +13,7 @@ dependencies {
     compileOnly(project(":compiler:cli-common"))
     compileOnly(project(":compiler:ir.backend.common")) // needed for CompilationException
 
+    implementation(project(":kotlinx-jso-compiler-plugin.common"))
 }
 
 sourceSets {

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 import org.jetbrains.kotlin.resolve.lazy.LazyClassContext
 import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.isJsObjectBuilderInterface
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.shouldHaveGeneratedJsObjectBuilder
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsObjectDeclarationNames

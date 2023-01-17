@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
-import org.jetbrains.kotlin.gradle.targets.js.d8.D8RootPlugin
 
 description = "Kotlin JavaScript Object Compiler Plugin"
 
@@ -19,26 +18,26 @@ val jsoIrRuntimeForTests by configurations.creating {
 }
 
 dependencies {
-//    embedded(project(":kotlinx-jso-compiler-plugin.common")) { isTransitive = false }
-//    embedded(project(":kotlinx-jso-compiler-plugin.k1")) { isTransitive = false }
-//    embedded(project(":kotlinx-jso-compiler-plugin.k2")) { isTransitive = false }
-//    embedded(project(":kotlinx-jso-compiler-plugin.cli")) { isTransitive = false }
+    embedded(project(":kotlinx-jso-compiler-plugin.common")) { isTransitive = false }
+    embedded(project(":kotlinx-jso-compiler-plugin.k1")) { isTransitive = false }
+    embedded(project(":kotlinx-jso-compiler-plugin.k2")) { isTransitive = false }
+    embedded(project(":kotlinx-jso-compiler-plugin.cli")) { isTransitive = false }
 
-//    testApi(project(":compiler:backend"))
-//    testApi(project(":compiler:cli"))
-//    testApi(project(":kotlinx-serialization-compiler-plugin.cli"))
-//
-//    testApi(projectTests(":compiler:test-infrastructure"))
-//    testApi(projectTests(":compiler:test-infrastructure-utils"))
-//    testApi(projectTests(":compiler:tests-compiler-utils"))
-//    testApi(projectTests(":compiler:tests-common-new"))
-//    testImplementation(projectTests(":generators:test-generator"))
-//
-//    testApiJUnit5()
-//
-//    jsoIrRuntimeForTests(project(":kotlinx-jso-runtime")) { isTransitive = false }
-//
-//    testRuntimeOnly(project(":core:descriptors.runtime"))
+    testApi(project(":compiler:backend"))
+    testApi(project(":compiler:cli"))
+    testApi(project(":kotlinx-jso-compiler-plugin.cli"))
+
+    testApi(projectTests(":compiler:test-infrastructure"))
+    testApi(projectTests(":compiler:test-infrastructure-utils"))
+    testApi(projectTests(":compiler:tests-compiler-utils"))
+    testApi(projectTests(":compiler:tests-common-new"))
+    testImplementation(projectTests(":generators:test-generator"))
+
+    testApiJUnit5()
+
+    jsoIrRuntimeForTests(project(":kotlinx-jso-runtime")) { isTransitive = false }
+
+    testRuntimeOnly(project(":core:descriptors.runtime"))
 }
 
 optInToExperimentalCompilerApi()

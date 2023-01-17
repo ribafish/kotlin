@@ -19,11 +19,13 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.TransientReceiver
 import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext
 import org.jetbrains.kotlin.types.replace
+import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.isJSOCall
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsObjectDeclarationNames
 
 @OptIn(InternalNonStableExtensionPoints::class)
 class JsObjectCreationExtension : TypeResolutionInterceptorExtension {
+    @OptIn(IDEAPluginsCompatibilityAPI::class)
     override fun interceptFunctionLiteralDescriptor(
         expression: KtLambdaExpression,
         context: ExpressionTypingContext,

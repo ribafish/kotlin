@@ -1,7 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
-
 description = "Kotlin JavaScript Object Compiler Plugin (CLI)"
 
 plugins {
@@ -14,6 +10,10 @@ dependencies {
     compileOnly(project(":compiler:cli"))
     compileOnly(project(":compiler:plugin-api"))
     compileOnly(project(":compiler:fir:entrypoint"))
+
+    implementation(project(":kotlinx-jso-compiler-plugin.common"))
+    implementation(project(":kotlinx-jso-compiler-plugin.k1"))
+    implementation(project(":kotlinx-jso-compiler-plugin.k2"))
 
     compileOnly(intellijCore())
 }
