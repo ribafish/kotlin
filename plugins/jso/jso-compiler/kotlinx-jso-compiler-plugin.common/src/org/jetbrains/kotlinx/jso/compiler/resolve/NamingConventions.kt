@@ -10,10 +10,8 @@ import org.jetbrains.kotlin.name.Name
 
 object JsObjectDeclarationNames {
     private const val BUILDER_INTERFACE = "kotlinx\$jso\$builder"
+    private const val UNSAFE_BUILDER_FUNCTION = "__unsafeJso"
 
     val BUILDER_INTERFACE_NAME = Name.identifier(BUILDER_INTERFACE)
-}
-
-fun String.withPackage(fqName: FqName): FqName {
-    return fqName.child(Name.identifier(this))
+    val BUILDER_FUNCTION_FQN = FqName("kotlinx.jso.jso")
 }

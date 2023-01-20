@@ -16,22 +16,24 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.checkers.CallChecker
 import org.jetbrains.kotlin.resolve.calls.checkers.CallCheckerContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyExternal
+import org.jetbrains.kotlinx.jso.compiler.diagnostics.JsObjectErrors
 
 class JsObjectParametersChecker : CallChecker {
     override fun check(resolvedCall: ResolvedCall<*>, reportOn: PsiElement, context: CallCheckerContext) {
         if (!resolvedCall.isJSOCall()) return
 
         val providedExternalInterfaceTypeArgument =
-            resolvedCall.typeArguments.values.singleOrNull() ?: return context.trace.report(TODO().on(reportOn))
+            resolvedCall.typeArguments.values.singleOrNull()
+                ?: return context.trace.report(JsObjectErrors.TYPE_TO_CREATE_WAS_NOT_PROVIDED.on(reportOn))
 
         if (!providedExternalInterfaceTypeArgument.isExternalInterface()) {
-            context.trace.report(TODO().on(reportOn))
+            context.trace.report(JsObjectErrors.ONLY_EXTERNAL_INTERFACES_SUPPORTED.on(reportOn))
         }
 
-        val providedLambda = resolvedCall.valueArgumentsByIndex?.singleOrNull()?.arguments?.singleOrNull() ?: return context.trace.report(TODO().on(reportOn))
+        val providedLambda = resolvedCall.valueArgumentsByIndex?.singleOrNull()?.arguments?.singleOrNull() ?: return context.trace.report(JsObjectErrors.LAMBDA_WAS_NOT_PROVIDED.on(reportOn))
 
         if (!providedLambda.isLambda()) {
-            return context.trace.report(TODO().on(reportOn))
+            return context.trace.report(JsObjectErrors.FUNCTION_ACCEPT_ONLY_LAMBDA_FUNCTIONS.on(reportOn))
         }
 
     }

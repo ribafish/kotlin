@@ -3,7 +3,7 @@ package foo
 import kotlinx.jso.jso
 
 external interface User {
-    val name: String
+    var name: String
     val age: Int
 }
 
@@ -17,7 +17,7 @@ fun box(): String {
     if (user.age != 10) return "Fail: problem with `age` property"
 
     val json = js("JSON.stringify(user)")
-    if (json != "{ \"name\": \"Name\", \"age\": 10 } ") return "Fail: got the next json: $json"
+    if (json != "{\"name\":\"Name\",\"age\":10}") return "Fail: got the next json: $json"
 
     return "OK"
 }

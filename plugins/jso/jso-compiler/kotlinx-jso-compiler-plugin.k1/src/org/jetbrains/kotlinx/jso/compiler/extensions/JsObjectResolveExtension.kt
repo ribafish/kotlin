@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 import org.jetbrains.kotlin.resolve.lazy.LazyClassContext
 import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.isJsObjectBuilderInterface
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.shouldHaveGeneratedJsObjectBuilder
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsObjectDeclarationNames
@@ -34,14 +33,9 @@ open class JsObjectResolveExtension : SyntheticResolveExtension {
         declarationProvider: ClassMemberDeclarationProvider,
         result: MutableSet<ClassDescriptor>
     ) {
-        if (thisDescriptor.shouldHaveGeneratedJsObjectBuilder && result.none { it.name == JsObjectDeclarationNames.BUILDER_INTERFACE_NAME })
+        if (thisDescriptor.shouldHaveGeneratedJsObjectBuilder && name == JsObjectDeclarationNames.BUILDER_INTERFACE_NAME && result.none { it.name == JsObjectDeclarationNames.BUILDER_INTERFACE_NAME })
             result.add(KJsObjectDescriptorBuilderResolver.addJsObjectBuilderImplClass(thisDescriptor, declarationProvider, ctx))
         return
-    }
-
-    override fun addSyntheticSupertypes(thisDescriptor: ClassDescriptor, supertypes: MutableList<KotlinType>) {
-        if (thisDescriptor.isJsObjectBuilderInterface)
-            KJsObjectDescriptorBuilderResolver.addJsObjectBuilderSupertypes(thisDescriptor, supertypes)
     }
 
     override fun getSyntheticPropertiesNames(thisDescriptor: ClassDescriptor): List<Name> {

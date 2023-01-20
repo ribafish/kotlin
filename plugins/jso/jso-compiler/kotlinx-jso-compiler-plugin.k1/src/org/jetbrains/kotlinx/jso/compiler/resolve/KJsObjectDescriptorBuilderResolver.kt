@@ -7,8 +7,7 @@ package org.jetbrains.kotlinx.jso.compiler.resolve
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
-import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.synthetics.SyntheticClassOrObjectDescriptor
@@ -25,11 +24,6 @@ object KJsObjectDescriptorBuilderResolver {
     fun getJsObjectBuilderPropertyNames(classDescriptor: ClassDescriptor): List<Name> {
         val typeToBuild = classDescriptor.containingDeclaration as ClassDescriptor
         return typeToBuild.unsubstitutedMemberScope.getVariableNames().toList()
-    }
-
-    fun addJsObjectBuilderSupertypes(thisDescriptor: ClassDescriptor, supertypes: MutableList<KotlinType>) {
-        val typeToBuild = thisDescriptor.containingDeclaration as ClassDescriptor
-        supertypes.add(KotlinTypeFactory.simpleNotNullType(TypeAttributes.Empty, typeToBuild, emptyList()))
     }
 
     fun generateJsObjectBuilderProperties(
@@ -52,7 +46,6 @@ object KJsObjectDescriptorBuilderResolver {
         declarationProvider: ClassMemberDeclarationProvider,
         ctx: LazyClassContext
     ): ClassDescriptor {
-        val typeToBuild = thisDescriptor.containingDeclaration as ClassDescriptor
         val thisDeclaration = declarationProvider.correspondingClassOrObject!!
         val scope = ctx.declarationScopeProvider.getResolutionScopeForDeclaration(declarationProvider.ownerInfo!!.scopeAnchor)
         val jsoBuilderDescriptor = SyntheticClassOrObjectDescriptor(
@@ -70,7 +63,7 @@ object KJsObjectDescriptorBuilderResolver {
             false
         )
         val typeParameters: List<TypeParameterDescriptor> =
-            typeToBuild.declaredTypeParameters.mapIndexed { index, param ->
+            thisDescriptor.declaredTypeParameters.mapIndexed { index, param ->
                 TypeParameterDescriptorImpl.createWithDefaultBound(
                     jsoBuilderDescriptor,
                     Annotations.EMPTY,
@@ -110,6 +103,49 @@ object KJsObjectDescriptorBuilderResolver {
         )
 
         propertyDescriptor.overriddenDescriptors = listOf(this)
+
+        propertyDescriptor.initialize(
+            PropertyGetterDescriptorImpl(
+                propertyDescriptor,
+                Annotations.EMPTY,
+                propertyDescriptor.modality,
+                propertyDescriptor.visibility,
+                getter?.isDefault ?: true,
+                true,
+                getter?.isInline ?: false,
+                CallableMemberDescriptor.Kind.SYNTHESIZED,
+                null,
+                propertyDescriptor.source
+            ).apply { initialize(propertyDescriptor.type) },
+            PropertySetterDescriptorImpl(
+                propertyDescriptor,
+                Annotations.EMPTY,
+                propertyDescriptor.modality,
+                propertyDescriptor.visibility,
+                setter?.isDefault ?: true,
+                true,
+                setter?.isInline ?: false,
+                CallableMemberDescriptor.Kind.SYNTHESIZED,
+                null,
+                propertyDescriptor.source
+            ).apply {
+                initialize(
+                    ValueParameterDescriptorImpl(
+                        this,
+                        null,
+                        0,
+                        Annotations.EMPTY,
+                        Name.identifier("value"),
+                        propertyDescriptor.type,
+                        false,
+                        false,
+                        false,
+                        null,
+                        propertyDescriptor.source
+                    )
+                )
+            },
+        )
 
         return propertyDescriptor
     }

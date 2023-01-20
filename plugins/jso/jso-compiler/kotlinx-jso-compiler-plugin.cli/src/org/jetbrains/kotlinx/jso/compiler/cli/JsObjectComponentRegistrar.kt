@@ -31,9 +31,9 @@ class JsObjectComponentRegistrar : CompilerPluginRegistrar() {
 
     companion object {
         fun registerExtensions(extensionStorage: ExtensionStorage) = with(extensionStorage) {
+            StorageComponentContainerContributor.registerExtension(JsObjectPluginComponentContainerContributor())
             SyntheticResolveExtension.registerExtension(JsObjectResolveExtension())
             TypeResolutionInterceptor.registerExtension(JsObjectCreationExtension())
-            StorageComponentContainerContributor.registerExtension(JsObjectPluginComponentContainerContributor())
         }
     }
 }

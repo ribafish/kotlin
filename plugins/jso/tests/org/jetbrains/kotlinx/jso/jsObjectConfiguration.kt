@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlinx.jso
+package org.jetbrains.kotlinx.jso.runners
 
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -26,7 +26,7 @@ class JsObjectEnvironmentConfigurator(testServices: TestServices) : EnvironmentC
 
 class JsObjectRuntimeClasspathProvider(testServices: TestServices) : RuntimeClasspathProvider(testServices) {
     override fun runtimeClassPaths(module: TestModule): List<File> {
-        return listOf(File(System.getProperty("jso.core.path")))
+        return listOf(File(System.getProperty("jso.runtime.path")))
     }
 }
 

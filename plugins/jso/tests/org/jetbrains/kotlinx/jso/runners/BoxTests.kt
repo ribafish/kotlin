@@ -5,6 +5,9 @@
 
 package org.jetbrains.kotlinx.jso.runners
 
+import org.jetbrains.kotlin.js.test.ir.AbstractJsIrTest
+import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
+
 open class AbstractJsObjectIrJsBoxTest : AbstractJsIrTest(
     pathToTestDir = "plugins/kotlinx-serialization/testData/boxIr/",
     testGroupOutputDirPrefix = "codegen/serializationBoxIr/"

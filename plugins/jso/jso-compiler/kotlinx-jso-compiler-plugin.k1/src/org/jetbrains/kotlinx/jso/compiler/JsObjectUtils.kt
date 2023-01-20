@@ -10,15 +10,13 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.js.patterns.PatternBuilder
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyExternal
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsObjectDeclarationNames
 
-val JSO_PATTERN = PatternBuilder.pattern("kotlinx.jso.jso()")
-
 fun <F : CallableDescriptor?> ResolvedCall<F>.isJSOCall(): Boolean {
     val descriptor = resultingDescriptor
-    return descriptor is SimpleFunctionDescriptor && JSO_PATTERN.test(descriptor)
+    return descriptor is SimpleFunctionDescriptor && descriptor.fqNameSafe == JsObjectDeclarationNames.BUILDER_FUNCTION_FQN
 }
 
 val ClassDescriptor.shouldHaveGeneratedJsObjectBuilder: Boolean
