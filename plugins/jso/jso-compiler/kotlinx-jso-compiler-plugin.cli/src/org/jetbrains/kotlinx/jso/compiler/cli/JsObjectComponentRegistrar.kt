@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.extensions.internal.TypeResolutionInterceptor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 import org.jetbrains.kotlinx.jso.compiler.extensions.JsObjectCreationExtension
-import org.jetbrains.kotlinx.jso.compiler.k1.diagnostics.JsObjectParametersChecker
+import org.jetbrains.kotlinx.jso.compiler.k1.diagnostics.JsObjectPropertiesChecker
 import org.jetbrains.kotlinx.jso.compiler.k1.extensions.JsObjectResolveExtension
 
 @OptIn(ExperimentalCompilerApi::class, InternalNonStableExtensionPoints::class)
@@ -44,6 +44,6 @@ private class JsObjectPluginComponentContainerContributor : StorageComponentCont
         platform: TargetPlatform,
         moduleDescriptor: ModuleDescriptor
     ) {
-        container.useInstance(JsObjectParametersChecker())
+        container.useInstance(JsObjectPropertiesChecker())
     }
 }

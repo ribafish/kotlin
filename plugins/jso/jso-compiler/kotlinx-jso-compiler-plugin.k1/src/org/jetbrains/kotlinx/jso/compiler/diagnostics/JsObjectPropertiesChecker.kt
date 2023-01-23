@@ -6,10 +6,14 @@
 package org.jetbrains.kotlinx.jso.compiler.k1.diagnostics
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.cfg.ControlFlowInformationProvider
+import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.js.analyze.JsNativeDiagnosticSuppressor
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.stubs.impl.KotlinClassStubImpl
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlinx.jso.compiler.k1.utils.isJSOCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -18,7 +22,7 @@ import org.jetbrains.kotlin.resolve.calls.checkers.CallCheckerContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyExternal
 import org.jetbrains.kotlinx.jso.compiler.diagnostics.JsObjectErrors
 
-class JsObjectParametersChecker : CallChecker {
+class JsObjectPropertiesChecker : CallChecker {
     override fun check(resolvedCall: ResolvedCall<*>, reportOn: PsiElement, context: CallCheckerContext) {
         if (!resolvedCall.isJSOCall()) return
 
@@ -30,16 +34,26 @@ class JsObjectParametersChecker : CallChecker {
             context.trace.report(JsObjectErrors.ONLY_EXTERNAL_INTERFACES_SUPPORTED.on(reportOn))
         }
 
-        val providedLambda = resolvedCall.valueArgumentsByIndex?.singleOrNull()?.arguments?.singleOrNull() ?: return context.trace.report(JsObjectErrors.LAMBDA_WAS_NOT_PROVIDED.on(reportOn))
+        val providedLambda = resolvedCall.valueArgumentsByIndex?.singleOrNull()?.arguments?.singleOrNull()?.getArgumentExpression()
+            ?: return context.trace.report(JsObjectErrors.LAMBDA_WAS_NOT_PROVIDED.on(reportOn))
 
-        if (!providedLambda.isLambda()) {
+        if (providedLambda is KtLambdaExpression) {
             return context.trace.report(JsObjectErrors.FUNCTION_ACCEPT_ONLY_LAMBDA_FUNCTIONS.on(reportOn))
         }
-
     }
 
-    private fun ValueArgument.isLambda(): Boolean {
-        return getArgumentExpression() is KtLambdaExpression
+    private fun KtLambdaExpression.checkAllPropertiesWereInitialized(context: CallCheckerContext, typeToCreate: KotlinType) {
+        val pseudoClassWithPseudoConstructor = KtClass(
+            KotlinClassStubImpl(typeToCreate)
+        )
+
+        val controlFlowInformationProvider: ControlFlowInformationProvider = ControlFlowInformationProviderImpl(
+            pseudoClassWithPseudoConstructor,
+            context.trace,
+            context.languageVersionSettings,
+            JsNativeDiagnosticSuppressor,
+            null
+        )
     }
 
     private fun KotlinType.isExternalInterface(): Boolean {

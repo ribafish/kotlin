@@ -9,6 +9,7 @@ dependencies {
     compileOnly(intellijCore())
     compileOnly(project(":core:compiler.common.jvm"))
     compileOnly(project(":compiler:frontend"))
+    compileOnly(project(":compiler:frontend:cfg"))
     compileOnly(project(":js:js.frontend"))
     compileOnly(project(":compiler:cli-common"))
     compileOnly(project(":compiler:ir.backend.common")) // needed for CompilationException

@@ -10,7 +10,6 @@ external interface User {
 fun box(): String {
     val user = jso<User> {
         name = "Name"
-        age  = 10
     }
 
     if (user.name != "Name") return "Fail: problem with `name` property"
