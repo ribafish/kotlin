@@ -8,22 +8,12 @@ package org.jetbrains.kotlinx.jso.compiler.cli
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.container.StorageComponentContainer
-import org.jetbrains.kotlin.container.useInstance
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
-import org.jetbrains.kotlin.extensions.internal.InternalNonStableExtensionPoints
-import org.jetbrains.kotlin.extensions.internal.TypeResolutionInterceptor
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
-import org.jetbrains.kotlinx.jso.compiler.extensions.JsObjectCreationExtension
-import org.jetbrains.kotlinx.jso.compiler.k1.diagnostics.JsObjectPropertiesChecker
-import org.jetbrains.kotlinx.jso.compiler.k1.extensions.JsObjectResolveExtension
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
+import org.jetbrains.kotlinx.jso.compiler.fir.JsObjectExtensionRegistrar
 
-@OptIn(ExperimentalCompilerApi::class, InternalNonStableExtensionPoints::class)
+@OptIn(ExperimentalCompilerApi::class)
 class JsObjectComponentRegistrar : CompilerPluginRegistrar() {
-    override val supportsK2: Boolean get() = false
-
+    override val supportsK2: Boolean get() = true
 
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
         Companion.registerExtensions(this)
@@ -31,19 +21,7 @@ class JsObjectComponentRegistrar : CompilerPluginRegistrar() {
 
     companion object {
         fun registerExtensions(extensionStorage: ExtensionStorage) = with(extensionStorage) {
-            StorageComponentContainerContributor.registerExtension(JsObjectPluginComponentContainerContributor())
-            SyntheticResolveExtension.registerExtension(JsObjectResolveExtension())
-            TypeResolutionInterceptor.registerExtension(JsObjectCreationExtension())
+            FirExtensionRegistrarAdapter.registerExtension(JsObjectExtensionRegistrar())
         }
-    }
-}
-
-private class JsObjectPluginComponentContainerContributor : StorageComponentContainerContributor {
-    override fun registerModuleComponents(
-        container: StorageComponentContainer,
-        platform: TargetPlatform,
-        moduleDescriptor: ModuleDescriptor
-    ) {
-        container.useInstance(JsObjectPropertiesChecker())
     }
 }

@@ -5,7 +5,7 @@
 
 package kotlinx.jso
 
-public inline fun <T : Any> jso(builder: Any.() -> Unit): T {
-    val jso = js("{}").unsafeCast<T>()
-    return jso.apply { builder() }
-}
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.BINARY)
+public annotation class JsSimpleObject

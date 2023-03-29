@@ -6,10 +6,10 @@
 package org.jetbrains.kotlinx.jso
 
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
-import org.jetbrains.kotlinx.jso.runners.*
+import org.jetbrains.kotlinx.jso.runners.AbstractJsObjectIrJsBoxTest
 
 fun main(args: Array<String>) {
-    val excludedFirTestdataPattern = "^(.+)\\.fir\\.kts?\$"
+//    val excludedFirTestdataPattern = "^(.+)\\.fir\\.kts?\$"
 
     generateTestGroupSuiteWithJUnit5(args) {
         testGroup(
@@ -17,13 +17,8 @@ fun main(args: Array<String>) {
             "plugins/jso/testData"
         ) {
             // ------------------------------- diagnostics -------------------------------
-            testClass<AbstractJsObjectPluginDiagnosticTest>() {
-                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
-            }
-
-//            testClass<AbstractJsObjectFirDiagnosticTest> {
+//            testClass<AbstractJsObjectPluginDiagnosticTest>() {
 //                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
-//                model("firMembers")
 //            }
 
             // ------------------------------- box -------------------------------

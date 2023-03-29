@@ -12,7 +12,6 @@ dependencies {
     compileOnly(project(":compiler:fir:entrypoint"))
 
     implementation(project(":kotlinx-jso-compiler-plugin.common"))
-    implementation(project(":kotlinx-jso-compiler-plugin.k1"))
     implementation(project(":kotlinx-jso-compiler-plugin.k2"))
 
     compileOnly(intellijCore())

@@ -5,13 +5,15 @@
 
 package org.jetbrains.kotlinx.jso.compiler.resolve;
 
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-object JsObjectDeclarationNames {
-    private const val BUILDER_INTERFACE = "kotlinx\$jso\$builder"
-    private const val UNSAFE_BUILDER_FUNCTION = "__unsafeJso"
+object StandardIds {
+    val KOTLIN_JS_FQN = FqName("kotlin.js")
+    val JS_FUNCTION_ID = CallableId(KOTLIN_JS_FQN, Name.identifier("js"))
+}
 
-    val BUILDER_INTERFACE_NAME = Name.identifier(BUILDER_INTERFACE)
-    val BUILDER_FUNCTION_FQN = FqName("kotlinx.jso.jso")
+object JsObjectAnnotations {
+    val jsSimpleObjectAnnotationFqName = FqName("kotlinx.jso.JsSimpleObject")
 }

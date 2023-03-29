@@ -1,16 +1,15 @@
 package foo
 
-import kotlinx.jso.jso
+import kotlinx.jso.JsSimpleObject
 
+@JsSimpleObject
 external interface User {
     var name: String
     val age: Int
 }
 
 fun box(): String {
-    val user = jso<User> {
-        name = "Name"
-    }
+    val user = User(name = "Name", age = 10)
 
     if (user.name != "Name") return "Fail: problem with `name` property"
     if (user.age != 10) return "Fail: problem with `age` property"
