@@ -13,22 +13,10 @@ public final class SimpleLock {
 }
 
 @kotlin.Metadata
-final class SimpleLockTest$withLock$result$1 {
-    // source: 'SimpleLockTest.kt'
-    enclosing method SimpleLockTest.withLock()V
-    public final static field INSTANCE: SimpleLockTest$withLock$result$1
-    inner (anonymous) class SimpleLockTest$withLock$result$1
-    static method <clinit>(): void
-    method <init>(): void
-    public synthetic bridge method invoke(): java.lang.Object
-    public final method invoke(): java.lang.String
-}
-
-@kotlin.Metadata
 public final class SimpleLockTest {
     // source: 'SimpleLockTest.kt'
-    inner (anonymous) class SimpleLockTest$withLock$result$1
     public method <init>(): void
+    private final static method withLock$lambda$0(): java.lang.String
     public final method withLock(): void
 }
 

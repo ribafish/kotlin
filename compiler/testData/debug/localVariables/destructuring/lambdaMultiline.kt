@@ -35,13 +35,13 @@ fun box() {
 // test.kt:9 box:
 // test.kt:4 <init>: x:java.lang.String="O":java.lang.String, y:int=123:int
 // test.kt:9 box:
-// test.kt:6 foo: a:A=A, block:kotlin.jvm.functions.Function1=TestKt$box$1
-// test.kt:11 invoke:
-// test.kt:12 invoke:
-// test.kt:11 invoke: x:java.lang.String="O":java.lang.String
-// test.kt:14 invoke: x:java.lang.String="O":java.lang.String
-// test.kt:17 invoke: x:java.lang.String="O":java.lang.String, y:int=123:int
-// test.kt:6 foo: a:A=A, block:kotlin.jvm.functions.Function1=TestKt$box$1
+// test.kt:6 foo: a:A=A, block:kotlin.jvm.functions.Function1=TestKt$<lambda>
+// test.kt:11 box$lambda$0:
+// test.kt:12 box$lambda$0:
+// test.kt:11 box$lambda$0: x:java.lang.String="O":java.lang.String
+// test.kt:14 box$lambda$0: x:java.lang.String="O":java.lang.String
+// test.kt:17 box$lambda$0: x:java.lang.String="O":java.lang.String, y:int=123:int
+// test.kt:6 foo: a:A=A, block:kotlin.jvm.functions.Function1=TestKt$<lambda>
 // test.kt:9 box:
 // test.kt:20 box:
 
