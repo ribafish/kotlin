@@ -103,6 +103,12 @@ public class ClassicNativeCInteropExecutableTest extends AbstractNativeCInteropE
     }
 
     @Test
+    @TestMetadata("kt57640")
+    public void testKt57640() throws Exception {
+        runTest("native/native.tests/testData/CInterop/executable/kt57640/");
+    }
+
+    @Test
     @TestMetadata("kt63048")
     public void testKt63048() throws Exception {
         runTest("native/native.tests/testData/CInterop/executable/kt63048/");
