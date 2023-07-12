@@ -46,7 +46,7 @@ class IrBuiltInsOverFir(
     private val tryLoadBuiltInsFirst: Boolean = false
 ) : IrBuiltIns() {
 
-    override val irFactory: IrFactory = components.symbolTable.irFactory
+    override val irFactory: IrFactory = components.symbolTable.table.irFactory
 
     private val kotlinPackage = StandardClassIds.BASE_KOTLIN_PACKAGE
     private val kotlinInternalPackage = StandardClassIds.BASE_INTERNAL_PACKAGE
@@ -692,7 +692,7 @@ class IrBuiltInsOverFir(
             val loaded = if (tryLoadBuiltInsFirst) {
                 referenceClassByClassId(ClassId(parent.kotlinFqName, Name.identifier(signature.shortName)))
             } else null
-            (loaded != null) to (loaded ?: components.symbolTable.declareClass(
+            (loaded != null) to (loaded ?: components.symbolTable.table.declareClass(
                 signature,
                 { IrClassPublicSymbolImpl(signature) },
                 { symbol ->
@@ -720,7 +720,7 @@ class IrBuiltInsOverFir(
                     }.also {
                         it.parent = parent
                         it.createImplicitParameterDeclarationWithWrappedDescriptor()
-                        components.symbolTable.declareClassWithSignature(irSignatureBuilder.computeSignature(it), it.symbol)
+                        components.symbolTable.table.declareClassWithSignature(irSignatureBuilder.computeSignature(it), it.symbol)
                     }
                 }
             ).symbol)
@@ -769,7 +769,7 @@ class IrBuiltInsOverFir(
         classModality: Modality = Modality.OPEN,
         builderBlock: IrClassBuilder.() -> Unit = {},
         block: IrClass.() -> Unit = {}
-    ): IrClassSymbol = components.symbolTable.declareClass(
+    ): IrClassSymbol = components.symbolTable.table.declareClass(
         signature,
         { IrClassPublicSymbolImpl(signature) },
         { symbol ->
@@ -828,7 +828,7 @@ class IrBuiltInsOverFir(
         ctor.parent = this
         ctor.build()
         declarations.add(ctor)
-        components.symbolTable.declareConstructorWithSignature(
+        components.symbolTable.table.declareConstructorWithSignature(
             irSignatureBuilder.computeSignature(ctor), ctor.symbol
         )
         return ctor.symbol
@@ -962,7 +962,7 @@ class IrBuiltInsOverFir(
 
         val irFun4SignatureCalculation = makeWithSymbol(IrSimpleFunctionSymbolImpl())
         val signature = irSignatureBuilder.computeSignature(irFun4SignatureCalculation)
-        return components.symbolTable.declareSimpleFunction(signature, { IrSimpleFunctionPublicSymbolImpl(signature, null) }, ::makeWithSymbol)
+        return components.symbolTable.table.declareSimpleFunction(signature, { IrSimpleFunctionPublicSymbolImpl(signature, null) }, ::makeWithSymbol)
     }
 
     private fun IrClass.addArrayMembers(elementType: IrType, iteratorType: IrType) {
@@ -1030,16 +1030,16 @@ class IrBuiltInsOverFir(
                 }
             }
             property.builder()
-            components.symbolTable.declarePropertyWithSignature(
+            components.symbolTable.table.declarePropertyWithSignature(
                 irSignatureBuilder.computeSignature(property), property.symbol
             )
             property.getter?.let {
-                components.symbolTable.declareSimpleFunctionWithSignature(
+                components.symbolTable.table.declareSimpleFunctionWithSignature(
                     irSignatureBuilder.computeSignature(it), it.symbol
                 )
             }
             property.backingField?.let {
-                components.symbolTable.declareFieldWithSignature(
+                components.symbolTable.table.declareFieldWithSignature(
                     irSignatureBuilder.computeSignature(it), it.symbol
                 )
             }

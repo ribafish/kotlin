@@ -84,6 +84,6 @@ class JvmFir2IrExtensions(
 
     override fun deserializeToplevelClass(irClass: IrClass, components: Fir2IrComponents): Boolean =
         irDeserializer.deserializeTopLevelClass(
-            irClass, components.irBuiltIns, components.symbolTable, components.irProviders, this
+            irClass, components.irBuiltIns, components.symbolTable.table, components.irProviders, this
         )
 }

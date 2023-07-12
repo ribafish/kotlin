@@ -63,7 +63,7 @@ class Fir2IrPluginContext(
         get() = components.session.moduleData.platform
 
     override val symbolTable: ReferenceSymbolTable
-        get() = components.symbolTable
+        get() = components.symbolTable.table
 
     override val symbols: BuiltinSymbolsBase = BuiltinSymbolsBase(irBuiltIns, symbolTable)
 

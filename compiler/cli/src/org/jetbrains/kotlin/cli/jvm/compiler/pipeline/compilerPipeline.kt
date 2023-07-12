@@ -236,7 +236,7 @@ fun generateCodeFromIr(
     codegenFactory.generateModuleInFrontendIRMode(
         generationState,
         input.irModuleFragment,
-        input.components.symbolTable,
+        input.components.symbolTable.table,
         input.components.irProviders,
         input.extensions,
         FirJvmBackendExtension(input.components, input.irActualizedResult),

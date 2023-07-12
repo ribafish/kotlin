@@ -294,7 +294,7 @@ class Fir2IrClassifierStorage(
         if (signature == null)
             factory(IrTypeAliasSymbolImpl())
         else
-            symbolTable.declareTypeAlias(signature, { Fir2IrTypeAliasSymbol(signature) }, factory)
+            symbolTable.table.declareTypeAlias(signature, { Fir2IrTypeAliasSymbol(signature) }, factory)
 
     fun registerTypeAlias(
         typeAlias: FirTypeAlias,
@@ -332,7 +332,7 @@ class Fir2IrClassifierStorage(
         if (signature == null)
             factory(IrClassSymbolImpl())
         else
-            symbolTable.declareClass(signature, { Fir2IrClassSymbol(signature) }, factory)
+            symbolTable.table.declareClass(signature, { Fir2IrClassSymbol(signature) }, factory)
 
     fun registerIrClass(
         regularClass: FirRegularClass,
@@ -430,7 +430,7 @@ class Fir2IrClassifierStorage(
                     index, ownerSymbol.signature
                 )?.let { signature ->
                     if (ownerSymbol is IrClassifierSymbol) {
-                        symbolTable.declareGlobalTypeParameter(
+                        symbolTable.table.declareGlobalTypeParameter(
                             signature,
                             symbolFactory = { IrTypeParameterPublicSymbolImpl(signature) }
                         ) { symbol ->
@@ -446,7 +446,7 @@ class Fir2IrClassifierStorage(
                             )
                         }
                     } else {
-                        symbolTable.declareScopedTypeParameter(
+                        symbolTable.table.declareScopedTypeParameter(
                             signature,
                             symbolFactory = { IrTypeParameterPublicSymbolImpl(signature) }
                         ) { symbol ->
@@ -520,7 +520,7 @@ class Fir2IrClassifierStorage(
         if (signature == null)
             factory(IrEnumEntrySymbolImpl())
         else
-            symbolTable.declareEnumEntry(signature, { Fir2IrEnumEntrySymbol(signature) }, factory)
+            symbolTable.table.declareEnumEntry(signature, { Fir2IrEnumEntrySymbol(signature) }, factory)
 
     fun getIrEnumEntry(
         enumEntry: FirEnumEntry,
@@ -644,7 +644,7 @@ class Fir2IrClassifierStorage(
         val parentClass = parentId?.let { getIrClassSymbolForNotFoundClass(it.toLookupTag()) }
         val irParent = parentClass?.owner ?: declarationStorage.getIrExternalPackageFragment(classId.packageFqName)
 
-        return symbolTable.referenceClass(signature, { Fir2IrClassSymbol(signature) }) {
+        return symbolTable.table.referenceClass(signature, { Fir2IrClassSymbol(signature) }) {
             irFactory.createClass(
                 startOffset = UNDEFINED_OFFSET,
                 endOffset = UNDEFINED_OFFSET,

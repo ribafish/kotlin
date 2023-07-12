@@ -429,10 +429,11 @@ class Fir2IrConverter(
             initializedIrBuiltIns: IrBuiltInsOverFir?
         ): Fir2IrResult {
             val moduleDescriptor = FirModuleDescriptor(session, kotlinBuiltIns)
+            val fir2IrSymbolTableExtension = Fir2IrSymbolTableExtension(commonMemberStorage.symbolTable)
             val components = Fir2IrComponentsStorage(
                 session,
                 scopeSession,
-                commonMemberStorage.symbolTable,
+                fir2IrSymbolTableExtension,
                 irFactory,
                 commonMemberStorage.firSignatureComposer,
                 fir2IrExtensions,

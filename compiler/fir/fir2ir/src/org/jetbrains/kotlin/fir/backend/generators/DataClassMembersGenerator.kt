@@ -73,7 +73,7 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
     ) {
         private val irDataClassMembersGenerator = object : IrBasedDataClassMembersGenerator(
             IrGeneratorContextBase(components.irBuiltIns),
-            components.symbolTable,
+            components.symbolTable.table,
             irClass,
             irClass.kotlinFqName,
             origin,

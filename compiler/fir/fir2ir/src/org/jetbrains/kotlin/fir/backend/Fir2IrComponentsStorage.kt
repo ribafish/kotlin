@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.ir.util.SymbolTable
 class Fir2IrComponentsStorage(
     override val session: FirSession,
     override val scopeSession: ScopeSession,
-    override val symbolTable: SymbolTable,
+    override val symbolTable: Fir2IrSymbolTableExtension,
     override val irFactory: IrFactory,
     override val signatureComposer: FirBasedSignatureComposer,
     override val extensions: Fir2IrExtensions,
@@ -47,5 +47,5 @@ class Fir2IrComponentsStorage(
     override lateinit var annotationsFromPluginRegistrar: Fir2IrAnnotationsFromPluginRegistrar
 
     override val lock: IrLock
-        get() = symbolTable.lock
+        get() = symbolTable.table.lock
 }

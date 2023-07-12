@@ -502,7 +502,7 @@ class Fir2IrDeclarationStorage(
             return localStorage.getLocalFunction(function)
         }
         return getCachedIrCallable(function, fakeOverrideOwnerLookupTag, functionCache, signatureCalculator) { signature ->
-            symbolTable.referenceSimpleFunctionIfAny(signature)?.owner
+            symbolTable.table.referenceSimpleFunctionIfAny(signature)?.owner
         }
     }
 
@@ -520,7 +520,7 @@ class Fir2IrDeclarationStorage(
         if (signature == null) {
             factory(IrSimpleFunctionSymbolImpl())
         } else {
-            symbolTable.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }, factory)
+            symbolTable.table.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }, factory)
         }
 
     fun getOrCreateIrFunction(
@@ -641,7 +641,7 @@ class Fir2IrDeclarationStorage(
         irParent: IrClass
     ): IrAnonymousInitializer = convertCatching(anonymousInitializer) {
         return anonymousInitializer.convertWithOffsets { startOffset, endOffset ->
-            symbolTable.descriptorExtension.declareAnonymousInitializer(
+            symbolTable.table.descriptorExtension.declareAnonymousInitializer(
                 startOffset,
                 endOffset,
                 IrDeclarationOrigin.DEFINED,
@@ -658,7 +658,7 @@ class Fir2IrDeclarationStorage(
         signatureCalculator: () -> IdSignature? = { null }
     ): IrConstructor? {
         return constructorCache[constructor] ?: signatureCalculator()?.let { signature ->
-            symbolTable.referenceConstructorIfAny(signature)?.let { irConstructorSymbol ->
+            symbolTable.table.referenceConstructorIfAny(signature)?.let { irConstructorSymbol ->
                 val irConstructor = irConstructorSymbol.owner
                 constructorCache[constructor] = irConstructor
                 irConstructor
@@ -670,7 +670,7 @@ class Fir2IrDeclarationStorage(
         if (signature == null)
             factory(IrConstructorSymbolImpl())
         else
-            symbolTable.declareConstructor(signature, { Fir2IrConstructorSymbol(signature) }, factory)
+            symbolTable.table.declareConstructor(signature, { Fir2IrConstructorSymbol(signature) }, factory)
 
 
     fun createIrConstructor(
@@ -731,7 +731,7 @@ class Fir2IrDeclarationStorage(
         if (signature == null)
             factory(IrSimpleFunctionSymbolImpl())
         else
-            symbolTable.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }, factory)
+            symbolTable.table.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }, factory)
 
     private fun createIrPropertyAccessor(
         propertyAccessor: FirPropertyAccessor?,
@@ -870,7 +870,7 @@ class Fir2IrDeclarationStorage(
         if (signature == null)
             factory(IrPropertySymbolImpl())
         else
-            symbolTable.declareProperty(signature, { Fir2IrPropertySymbol(signature) }, factory)
+            symbolTable.table.declareProperty(signature, { Fir2IrPropertySymbol(signature) }, factory)
 
     private fun declareIrField(factory: (IrFieldSymbol) -> IrField): IrField =
         factory(IrFieldSymbolImpl())
@@ -1054,7 +1054,7 @@ class Fir2IrDeclarationStorage(
         signatureCalculator: () -> IdSignature?
     ): IrProperty? {
         return getCachedIrCallable(property, fakeOverrideOwnerLookupTag, propertyCache, signatureCalculator) { signature ->
-            symbolTable.referencePropertyIfAny(signature)?.owner
+            symbolTable.table.referencePropertyIfAny(signature)?.owner
         }
     }
 
@@ -1161,7 +1161,7 @@ class Fir2IrDeclarationStorage(
         val signature = signatureComposer.composeSignature(field, containingClassLookupTag)
         return field.convertWithOffsets { startOffset, endOffset ->
             if (signature != null) {
-                symbolTable.declareField(
+                symbolTable.table.declareField(
                     signature, symbolFactory = { IrFieldPublicSymbolImpl(signature) }
                 ) { symbol ->
                     irFactory.createField(
@@ -1393,7 +1393,7 @@ class Fir2IrDeclarationStorage(
             createIrLazyDeclaration = { signature, lazyParent, declarationOrigin ->
                 val symbol = Fir2IrConstructorSymbol(signature)
                 val irConstructor = fir.convertWithOffsets { startOffset, endOffset ->
-                    symbolTable.declareConstructor(signature, { symbol }) {
+                    symbolTable.table.declareConstructor(signature, { symbol }) {
                         Fir2IrLazyConstructor(
                             components, startOffset, endOffset, declarationOrigin, fir, symbol
                         ).apply {
@@ -1461,9 +1461,9 @@ class Fir2IrDeclarationStorage(
         lazyParent: IrDeclarationParent,
         declarationOrigin: IrDeclarationOrigin
     ): IrSimpleFunction {
-        val symbol = symbolTable.referenceSimpleFunction(signature)
+        val symbol = symbolTable.table.referenceSimpleFunction(signature)
         val irFunction = fir.convertWithOffsets { startOffset, endOffset ->
-            symbolTable.declareSimpleFunction(signature, { symbol }) {
+            symbolTable.table.declareSimpleFunction(signature, { symbol }) {
                 val isFakeOverride = fir.isSubstitutionOrIntersectionOverride
                 Fir2IrLazySimpleFunction(
                     components, startOffset, endOffset, declarationOrigin,
@@ -1557,11 +1557,11 @@ class Fir2IrDeclarationStorage(
             if (fir.isStubPropertyForPureField == true) {
                 // Very special case when two similar properties can exist so conflicts in SymbolTable are possible.
                 // See javaCloseFieldAndKotlinProperty.kt in BB tests
-                symbolTable.declarePropertyWithSignature(signature, symbol)
+                symbolTable.table.declarePropertyWithSignature(signature, symbol)
                 create(startOffset, endOffset)
                 symbol.owner
             } else {
-                symbolTable.declareProperty(signature, { symbol }) {
+                symbolTable.table.declareProperty(signature, { symbol }) {
                     create(startOffset, endOffset)
                 }
             }
@@ -1610,7 +1610,7 @@ class Fir2IrDeclarationStorage(
                 forceExpect = fakeOverrideOwnerLookupTag?.toSymbol(session)?.isExpect == true
             )
         }
-        synchronized(symbolTable.lock) {
+        synchronized(symbolTable.table.lock) {
             getCachedIrDeclaration(fir, fakeOverrideOwnerLookupTag.takeIf { it !is ConeClassLookupTagWithFixedSymbol }) {
                 // Parent calculation provokes declaration calculation for some members from IrBuiltIns
                 @Suppress("UNUSED_EXPRESSION") irParent
@@ -1701,7 +1701,7 @@ class Fir2IrDeclarationStorage(
     fun getOrCreateIrScript(script: FirScript): IrScript =
         getCachedIrScript(script) ?: script.convertWithOffsets { startOffset, endOffset ->
             val signature = signatureComposer.composeSignature(script)!!
-            symbolTable.declareScript(signature, { Fir2IrScriptSymbol(signature) }) { symbol ->
+            symbolTable.table.declareScript(signature, { Fir2IrScriptSymbol(signature) }) { symbol ->
                 IrScriptImpl(symbol, script.name, irFactory, startOffset, endOffset).also { irScript ->
                     irScript.origin = SCRIPT_K2_ORIGIN
                     irScript.metadata = FirMetadataSource.Script(script)

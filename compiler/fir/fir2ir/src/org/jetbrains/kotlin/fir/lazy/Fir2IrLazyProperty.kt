@@ -169,7 +169,7 @@ class Fir2IrLazyProperty(
             isSetter = false,
             containingClass?.symbol?.toLookupTag()
         )!!
-        symbolTable.declareSimpleFunction(signature, symbolFactory = { Fir2IrSimpleFunctionSymbol(signature) }) { symbol ->
+        symbolTable.table.declareSimpleFunction(signature, symbolFactory = { Fir2IrSimpleFunctionSymbol(signature) }) { symbol ->
             Fir2IrLazyPropertyAccessor(
                 components, startOffset, endOffset,
                 when {
@@ -201,7 +201,7 @@ class Fir2IrLazyProperty(
                 isSetter = true,
                 containingClass?.symbol?.toLookupTag()
             )!!
-            symbolTable.declareSimpleFunction(signature, symbolFactory = { Fir2IrSimpleFunctionSymbol(signature) }) { symbol ->
+            symbolTable.table.declareSimpleFunction(signature, symbolFactory = { Fir2IrSimpleFunctionSymbol(signature) }) { symbol ->
                 Fir2IrLazyPropertyAccessor(
                     components, startOffset, endOffset,
                     when {

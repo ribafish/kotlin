@@ -109,7 +109,7 @@ internal fun PhaseContext.fir2Ir(
 
     @OptIn(ObsoleteDescriptorBasedAPI::class, DelicateSymbolTableApi::class)
     val usedPackages = buildSet {
-        components.symbolTable.descriptorExtension.forEachDeclarationSymbol {
+        components.symbolTable.table.descriptorExtension.forEachDeclarationSymbol {
             val p = it.owner as? IrDeclaration ?: return@forEachDeclarationSymbol
             val fragment = (p.getPackageFragment() as? IrExternalPackageFragment) ?: return@forEachDeclarationSymbol
             add(fragment.packageFqName)

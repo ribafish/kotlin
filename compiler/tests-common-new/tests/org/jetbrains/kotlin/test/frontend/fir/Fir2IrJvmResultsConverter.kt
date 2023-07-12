@@ -106,7 +106,7 @@ class Fir2IrJvmResultsConverter(
                 mainModuleComponents = components
                 backendInput = JvmIrCodegenFactory.JvmIrBackendInput(
                     irModuleFragment,
-                    components.symbolTable,
+                    components.symbolTable.table,
                     phaseConfig,
                     components.irProviders,
                     fir2IrExtensions,

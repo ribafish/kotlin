@@ -577,7 +577,7 @@ internal fun IrDeclarationParent.declareThisReceiverParameter(
     name: Name = SpecialNames.THIS,
     explicitReceiver: FirReceiverParameter? = null,
 ): IrValueParameter {
-    return symbolTable.irFactory.createValueParameter(
+    return symbolTable.table.irFactory.createValueParameter(
         startOffset = startOffset,
         endOffset = endOffset,
         origin = thisOrigin,
