@@ -644,7 +644,7 @@ class Fir2IrClassifierStorage(
         val parentClass = parentId?.let { getIrClassSymbolForNotFoundClass(it.toLookupTag()) }
         val irParent = parentClass?.owner ?: declarationStorage.getIrExternalPackageFragment(classId.packageFqName)
 
-        return symbolTable.table.referenceClass(signature, { Fir2IrClassSymbol(signature) }) {
+        val irClass = symbolTable.table.declareClassIfNotExists(signature, { Fir2IrClassSymbol(signature) }) {
             irFactory.createClass(
                 startOffset = UNDEFINED_OFFSET,
                 endOffset = UNDEFINED_OFFSET,
@@ -658,6 +658,7 @@ class Fir2IrClassifierStorage(
                 parent = irParent
             }
         }
+        return irClass.symbol
     }
 
     fun getIrTypeParameterSymbol(

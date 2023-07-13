@@ -85,14 +85,6 @@ open class SymbolTable(
         return classSlice.declareIfNotExists(signature, symbolFactory, classFactory)
     }
 
-    fun referenceClass(
-        signature: IdSignature,
-        symbolFactory: () -> IrClassSymbol,
-        classFactory: (IrClassSymbol) -> IrClass,
-    ): IrClassSymbol {
-        return classSlice.referenced(signature) { declareClass(signature, symbolFactory, classFactory).symbol }
-    }
-
     override fun referenceClass(signature: IdSignature): IrClassSymbol {
         return referenceClassImpl(
             signature,
