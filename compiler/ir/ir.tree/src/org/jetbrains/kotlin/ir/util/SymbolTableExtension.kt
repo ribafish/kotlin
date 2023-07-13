@@ -52,26 +52,26 @@ abstract class SymbolTableExtension<
     protected val lock: IrLock
         get() = table.lock
 
-    private val scriptSlice: SymbolTableSlice.Flat<Script, IrScript, IrScriptSymbol> =
+    protected val scriptSlice: SymbolTableSlice.Flat<Script, IrScript, IrScriptSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val classSlice: SymbolTableSlice.Flat<Class, IrClass, IrClassSymbol> =
+    protected val classSlice: SymbolTableSlice.Flat<Class, IrClass, IrClassSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val constructorSlice: SymbolTableSlice.Flat<Constructor, IrConstructor, IrConstructorSymbol> =
+    protected val constructorSlice: SymbolTableSlice.Flat<Constructor, IrConstructor, IrConstructorSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val enumEntrySlice: SymbolTableSlice.Flat<EnumEntry, IrEnumEntry, IrEnumEntrySymbol> =
+    protected val enumEntrySlice: SymbolTableSlice.Flat<EnumEntry, IrEnumEntry, IrEnumEntrySymbol> =
         SymbolTableSlice.Flat(lock)
-    private val fieldSlice: SymbolTableSlice.Flat<Field, IrField, IrFieldSymbol> =
+    protected val fieldSlice: SymbolTableSlice.Flat<Field, IrField, IrFieldSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val functionSlice: SymbolTableSlice.Flat<Function, IrSimpleFunction, IrSimpleFunctionSymbol> =
+    protected val functionSlice: SymbolTableSlice.Flat<Function, IrSimpleFunction, IrSimpleFunctionSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val propertySlice: SymbolTableSlice.Flat<Property, IrProperty, IrPropertySymbol> =
+    protected val propertySlice: SymbolTableSlice.Flat<Property, IrProperty, IrPropertySymbol> =
         SymbolTableSlice.Flat(lock)
-    private val typeAliasSlice: SymbolTableSlice.Flat<TypeAlias, IrTypeAlias, IrTypeAliasSymbol> =
+    protected val typeAliasSlice: SymbolTableSlice.Flat<TypeAlias, IrTypeAlias, IrTypeAliasSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val globalTypeParameterSlice: SymbolTableSlice.Flat<TypeParameter, IrTypeParameter, IrTypeParameterSymbol> =
+    protected val globalTypeParameterSlice: SymbolTableSlice.Flat<TypeParameter, IrTypeParameter, IrTypeParameterSymbol> =
         SymbolTableSlice.Flat(lock)
 
-    private val scopedTypeParameterSlice: SymbolTableSlice.Scoped<TypeParameter, IrTypeParameter, IrTypeParameterSymbol> by threadLocal {
+    protected val scopedTypeParameterSlice: SymbolTableSlice.Scoped<TypeParameter, IrTypeParameter, IrTypeParameterSymbol> by threadLocal {
         SymbolTableSlice.Scoped(lock)
     }
 
@@ -666,7 +666,7 @@ abstract class SymbolTableExtension<
             addUnbound(globalTypeParameterSlice)
         }
 
-    private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
+    protected inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
         declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         declareBySignature: SymbolTable.(IdSignature, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,
@@ -704,7 +704,7 @@ abstract class SymbolTableExtension<
         )
     }
 
-    private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
+    protected inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
         declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         declareBySignature: SymbolTable.(IdSignature, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,
@@ -719,7 +719,7 @@ abstract class SymbolTableExtension<
         }
     }
 
-    private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> reference(
+    protected inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> reference(
         declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         referenceBySignature: SymbolTable.(IdSignature, () -> Symbol, () -> Symbol) -> Symbol,

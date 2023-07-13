@@ -11,11 +11,12 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazySymbolTable
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.*
+import org.jetbrains.kotlin.util.PrivateForInline
 
 private fun <SymbolOwner : IrSymbolOwner, Symbol : IrBindableSymbol<*, SymbolOwner>> IdSignatureSymbolTableSlice(lock: IrLock) =
     SymbolTableSlice.Flat<IdSignature, SymbolOwner, Symbol>(lock) { it.signature != null }
 
-@OptIn(SymbolTableInternals::class)
+@OptIn(SymbolTableInternals::class, PrivateForInline::class)
 open class SymbolTable(
     val signaturer: IdSignatureComposer,
     val irFactory: IrFactory,
@@ -23,15 +24,41 @@ open class SymbolTable(
 ) : ReferenceSymbolTable {
     val lock: IrLock = IrLock()
 
-    private val scriptSlice = IdSignatureSymbolTableSlice<IrScript, IrScriptSymbol>(lock)
-    private val classSlice = IdSignatureSymbolTableSlice<IrClass, IrClassSymbol>(lock)
-    private val constructorSlice = IdSignatureSymbolTableSlice<IrConstructor, IrConstructorSymbol>(lock)
-    private val enumEntrySlice = IdSignatureSymbolTableSlice<IrEnumEntry, IrEnumEntrySymbol>(lock)
-    private val fieldSlice = IdSignatureSymbolTableSlice<IrField, IrFieldSymbol>(lock)
-    private val functionSlice = IdSignatureSymbolTableSlice<IrSimpleFunction, IrSimpleFunctionSymbol>(lock)
-    private val propertySlice = IdSignatureSymbolTableSlice<IrProperty, IrPropertySymbol>(lock)
-    private val typeAliasSlice = IdSignatureSymbolTableSlice<IrTypeAlias, IrTypeAliasSymbol>(lock)
-    private val globalTypeParameterSlice = IdSignatureSymbolTableSlice<IrTypeParameter, IrTypeParameterSymbol>(lock)
+    @PublishedApi
+    @PrivateForInline
+    internal val scriptSlice = IdSignatureSymbolTableSlice<IrScript, IrScriptSymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val classSlice = IdSignatureSymbolTableSlice<IrClass, IrClassSymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val constructorSlice = IdSignatureSymbolTableSlice<IrConstructor, IrConstructorSymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val enumEntrySlice = IdSignatureSymbolTableSlice<IrEnumEntry, IrEnumEntrySymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val fieldSlice = IdSignatureSymbolTableSlice<IrField, IrFieldSymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val functionSlice = IdSignatureSymbolTableSlice<IrSimpleFunction, IrSimpleFunctionSymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val propertySlice = IdSignatureSymbolTableSlice<IrProperty, IrPropertySymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val typeAliasSlice = IdSignatureSymbolTableSlice<IrTypeAlias, IrTypeAliasSymbol>(lock)
+
+    @PublishedApi
+    @PrivateForInline
+    internal val globalTypeParameterSlice = IdSignatureSymbolTableSlice<IrTypeParameter, IrTypeParameterSymbol>(lock)
 
     @Suppress("LeakingThis")
     val lazyWrapper = IrLazySymbolTable(this)
@@ -94,7 +121,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceClassImpl(
+    inline fun referenceClassImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrClassSymbol,
         privateSymbolFactory: () -> IrClassSymbol,
@@ -144,7 +171,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceConstructorImpl(
+    inline fun referenceConstructorImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrConstructorSymbol,
         privateSymbolFactory: () -> IrConstructorSymbol,
@@ -184,7 +211,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceEnumEntryImpl(
+    inline fun referenceEnumEntryImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrEnumEntrySymbol,
         privateSymbolFactory: () -> IrEnumEntrySymbol,
@@ -224,7 +251,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceFieldImpl(
+    inline fun referenceFieldImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrFieldSymbol,
         privateSymbolFactory: () -> IrFieldSymbol,
@@ -276,7 +303,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referencePropertyImpl(
+    inline fun referencePropertyImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrPropertySymbol,
         privateSymbolFactory: () -> IrPropertySymbol,
@@ -316,7 +343,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceTypeAliasImpl(
+    inline fun referenceTypeAliasImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrTypeAliasSymbol,
         privateSymbolFactory: () -> IrTypeAliasSymbol,
@@ -367,7 +394,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceSimpleFunctionImpl(
+    inline fun referenceSimpleFunctionImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrSimpleFunctionSymbol,
         privateSymbolFactory: () -> IrSimpleFunctionSymbol,
@@ -408,7 +435,7 @@ open class SymbolTable(
     }
 
     @SymbolTableInternals
-    internal inline fun referenceTypeParameterImpl(
+    inline fun referenceTypeParameterImpl(
         signature: IdSignature,
         publicSymbolFactory: () -> IrTypeParameterSymbol,
         privateSymbolFactory: () -> IrTypeParameterSymbol,
