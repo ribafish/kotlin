@@ -14,12 +14,12 @@ import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.utils.threadLocal
 
-abstract class ReferenceSymbolTableExtension<Class, TypeAlias, Script, Function, Constructor, Property, ValueParameter, TypeParameter> {
+abstract class ReferenceSymbolTableExtension<Class, TypeAlias, Script, Function, Constructor, Property, Field, EnumEntry, ValueParameter, TypeParameter> {
     abstract fun referenceScript(declaration: Script): IrScriptSymbol
     abstract fun referenceClass(declaration: Class): IrClassSymbol
     abstract fun referenceConstructor(declaration: Constructor): IrConstructorSymbol
-    abstract fun referenceEnumEntry(declaration: Class): IrEnumEntrySymbol
-    abstract fun referenceField(declaration: Property): IrFieldSymbol
+    abstract fun referenceEnumEntry(declaration: EnumEntry): IrEnumEntrySymbol
+    abstract fun referenceField(declaration: Field): IrFieldSymbol
     abstract fun referenceProperty(declaration: Property): IrPropertySymbol
     abstract fun referenceSimpleFunction(declaration: Function): IrSimpleFunctionSymbol
     abstract fun referenceDeclaredFunction(declaration: Function): IrSimpleFunctionSymbol
@@ -35,16 +35,18 @@ typealias OwnerFactory<Symbol, SymbolOwner> = (Symbol) -> SymbolOwner
 @OptIn(SymbolTableInternals::class)
 abstract class SymbolTableExtension<
         Declaration, Class, TypeAlias, Script, Function, Constructor,
-        Property, ValueParameter, TypeParameter,
+        Property, Field, EnumEntry, ValueParameter, TypeParameter,
         >(
     val table: SymbolTable,
-) : ReferenceSymbolTableExtension<Class, TypeAlias, Script, Function, Constructor, Property, ValueParameter, TypeParameter>()
+) : ReferenceSymbolTableExtension<Class, TypeAlias, Script, Function, Constructor, Property, Field, EnumEntry, ValueParameter, TypeParameter>()
         where Class : Declaration,
               TypeAlias : Declaration,
               Script : Declaration,
               Function : Declaration,
               Constructor : Declaration,
               Property : Declaration,
+              Field : Declaration,
+              EnumEntry: Declaration,
               ValueParameter : Declaration,
               TypeParameter : Declaration {
     protected val lock: IrLock
@@ -56,9 +58,9 @@ abstract class SymbolTableExtension<
         SymbolTableSlice.Flat(lock)
     private val constructorSlice: SymbolTableSlice.Flat<Constructor, IrConstructor, IrConstructorSymbol> =
         SymbolTableSlice.Flat(lock)
-    private val enumEntrySlice: SymbolTableSlice.Flat<Class, IrEnumEntry, IrEnumEntrySymbol> =
+    private val enumEntrySlice: SymbolTableSlice.Flat<EnumEntry, IrEnumEntry, IrEnumEntrySymbol> =
         SymbolTableSlice.Flat(lock)
-    private val fieldSlice: SymbolTableSlice.Flat<Property, IrField, IrFieldSymbol> =
+    private val fieldSlice: SymbolTableSlice.Flat<Field, IrField, IrFieldSymbol> =
         SymbolTableSlice.Flat(lock)
     private val functionSlice: SymbolTableSlice.Flat<Function, IrSimpleFunction, IrSimpleFunctionSymbol> =
         SymbolTableSlice.Flat(lock)
@@ -85,8 +87,8 @@ abstract class SymbolTableExtension<
     // ------------------------------------ signature ------------------------------------
 
     protected abstract fun calculateSignature(declaration: Declaration): IdSignature?
-    protected abstract fun calculateEnumEntrySignature(declaration: Class): IdSignature?
-    protected abstract fun calculateFieldSignature(declaration: Property): IdSignature?
+    protected abstract fun calculateEnumEntrySignature(declaration: EnumEntry): IdSignature?
+    protected abstract fun calculateFieldSignature(declaration: Field): IdSignature?
 
     // ------------------------------------ script ------------------------------------
 
@@ -209,7 +211,7 @@ abstract class SymbolTableExtension<
 
     // ------------------------------------ enum entry ------------------------------------
 
-    fun declareEnumEntry(declaration: Class, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
+    fun declareEnumEntry(declaration: EnumEntry, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
         return declare(
             declaration,
             enumEntrySlice,
@@ -220,13 +222,13 @@ abstract class SymbolTableExtension<
         )
     }
 
-    fun declareEnumEntry(startOffset: Int, endOffset: Int, origin: IrDeclarationOrigin, declaration: Class): IrEnumEntry {
+    fun declareEnumEntry(startOffset: Int, endOffset: Int, origin: IrDeclarationOrigin, declaration: EnumEntry): IrEnumEntry {
         return declareEnumEntry(
             declaration
         ) { enumEntrySymbol -> defaultEnumEntryFactory(startOffset, endOffset, origin, declaration, enumEntrySymbol) }
     }
 
-    fun declareEnumEntryIfNotExists(declaration: Class, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
+    fun declareEnumEntryIfNotExists(declaration: EnumEntry, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
         return declareIfNotExist(
             declaration,
             enumEntrySlice,
@@ -237,7 +239,7 @@ abstract class SymbolTableExtension<
         )
     }
 
-    override fun referenceEnumEntry(declaration: Class): IrEnumEntrySymbol {
+    override fun referenceEnumEntry(declaration: EnumEntry): IrEnumEntrySymbol {
         return reference(
             declaration,
             enumEntrySlice,
@@ -249,15 +251,15 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createEnumEntrySymbol(declaration: Class, signature: IdSignature?): IrEnumEntrySymbol {
+    protected fun createEnumEntrySymbol(declaration: EnumEntry, signature: IdSignature?): IrEnumEntrySymbol {
         return signature?.let { createPublicEnumEntrySymbol(declaration, signature) } ?: createPrivateEnumEntrySymbol(declaration)
     }
 
-    protected open fun createPublicEnumEntrySymbol(declaration: Class, signature: IdSignature): IrEnumEntrySymbol {
+    protected open fun createPublicEnumEntrySymbol(declaration: EnumEntry, signature: IdSignature): IrEnumEntrySymbol {
         return IrEnumEntryPublicSymbolImpl(signature)
     }
 
-    protected open fun createPrivateEnumEntrySymbol(declaration: Class): IrEnumEntrySymbol {
+    protected open fun createPrivateEnumEntrySymbol(declaration: EnumEntry): IrEnumEntrySymbol {
         return IrEnumEntrySymbolImpl()
     }
 
@@ -265,7 +267,7 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        enumEntry: Class,
+        enumEntry: EnumEntry,
         symbol: IrEnumEntrySymbol,
     ): IrEnumEntry
 
@@ -275,7 +277,7 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        declaration: Property,
+        declaration: Field,
         type: IrType,
         visibility: DescriptorVisibility? = null,
         fieldFactory: (IrFieldSymbol) -> IrField = {
@@ -304,7 +306,7 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        declaration: Property,
+        declaration: Field,
         type: IrType,
         irInitializer: IrExpressionBody?,
     ): IrField {
@@ -313,7 +315,7 @@ abstract class SymbolTableExtension<
         }
     }
 
-    override fun referenceField(declaration: Property): IrFieldSymbol {
+    override fun referenceField(declaration: Field): IrFieldSymbol {
         return reference(
             declaration,
             fieldSlice,
@@ -325,15 +327,15 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createFieldSymbol(declaration: Property, signature: IdSignature?): IrFieldSymbol {
+    protected fun createFieldSymbol(declaration: Field, signature: IdSignature?): IrFieldSymbol {
         return signature?.let { createPublicFieldSymbol(declaration, signature) } ?: createPrivateFieldSymbol(declaration)
     }
 
-    protected open fun createPublicFieldSymbol(declaration: Property, signature: IdSignature): IrFieldSymbol {
+    protected open fun createPublicFieldSymbol(declaration: Field, signature: IdSignature): IrFieldSymbol {
         return IrFieldPublicSymbolImpl(signature)
     }
 
-    protected open fun createPrivateFieldSymbol(declaration: Property): IrFieldSymbol {
+    protected open fun createPrivateFieldSymbol(declaration: Field): IrFieldSymbol {
         return IrFieldSymbolImpl()
     }
 
@@ -342,7 +344,7 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        declaration: Property,
+        declaration: Field,
         type: IrType,
         visibility: DescriptorVisibility?,
         symbol: IrFieldSymbol,
