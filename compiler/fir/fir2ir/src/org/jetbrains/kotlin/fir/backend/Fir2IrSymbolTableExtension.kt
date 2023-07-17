@@ -6,18 +6,27 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
+import org.jetbrains.kotlin.utils.threadLocal
 
 class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
         FirBasedSymbol<*>, FirClassSymbol<*>, FirTypeAliasSymbol, FirScriptSymbol, FirFunctionSymbol<*>,
         FirConstructorSymbol, FirPropertySymbol, FirFieldSymbol, FirEnumEntrySymbol, FirValueParameterSymbol, FirTypeParameterSymbol
         >(table) {
+
+
+    private val valueParameterSlice: SymbolTableSlice.Scoped<FirValueParameterSymbol, IrValueParameter, IrValueParameterSymbol> by threadLocal {
+        SymbolTableSlice.Scoped(lock)
+    }
+
     override fun MutableList<SymbolTableSlice.Scoped<*, *, *>>.initializeScopedSlices() {
         TODO("Not yet implemented")
     }
@@ -47,7 +56,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
 
     // ------------------------------------ class ------------------------------------
 
-    fun declareClass(declaration: FirClassSymbol<*>, signature: IdSignature, classFactory: (IrClassSymbol) -> IrClass): IrClass {
+    fun declareClass(declaration: FirClassSymbol<*>, signature: IdSignature?, classFactory: (IrClassSymbol) -> IrClass): IrClass {
         return declare(
             declaration,
             classSlice,
@@ -59,7 +68,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
     }
 
     @OptIn(SymbolTableInternals::class)
-    fun referenceClass(declaration: FirClassSymbol<*>, signature: IdSignature): IrClassSymbol {
+    fun referenceClass(declaration: FirClassSymbol<*>, signature: IdSignature?): IrClassSymbol {
         return reference(
             declaration,
             classSlice,
@@ -236,13 +245,17 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
 
     // ------------------------------------ function ------------------------------------
 
-    fun declareFunction(declaration: FirFunctionSymbol<*>, signature: IdSignature?, classFactory: (IrFunctionSymbol) -> IrSimpleFunction): IrSimpleFunction {
+    fun declareFunction(
+        declaration: FirFunctionSymbol<*>,
+        signature: IdSignature?,
+        functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction,
+    ): IrSimpleFunction {
         return declare(
             declaration,
             functionSlice,
             SymbolTable::declareSimpleFunction,
             { createFunctionSymbol(declaration, it) },
-            classFactory,
+            functionFactory,
             specificCalculateSignature = { signature }
         )
     }
@@ -262,19 +275,45 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
 
     // ------------------------------------ type parameter ------------------------------------
 
-    fun declareTypeParameter(declaration: FirTypeParameterSymbol, signature: IdSignature?, classFactory: (IrTypeParameterSymbol) -> IrTypeParameter): IrTypeParameter {
+    fun declareGlobalTypeParameter(
+        declaration: FirTypeParameterSymbol,
+        signature: IdSignature?,
+        typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter,
+    ): IrTypeParameter {
         return declare(
             declaration,
             globalTypeParameterSlice,
             SymbolTable::declareGlobalTypeParameter,
             { createTypeParameterSymbol(declaration, it) },
-            classFactory,
+            typeParameterFactory,
             specificCalculateSignature = { signature }
         )
     }
 
+    // TODO: add proper forward referencing of general type parameters (without knowing is parameter global or scoped)
     @OptIn(SymbolTableInternals::class)
-    fun referenceTypeParameter(declaration: FirTypeParameterSymbol, signature: IdSignature?): IrTypeParameterSymbol {
+    fun referenceGlobalTypeParameter(declaration: FirTypeParameterSymbol, signature: IdSignature?): IrTypeParameterSymbol {
+        return reference(
+            declaration,
+            globalTypeParameterSlice,
+            SymbolTable::referenceTypeParameterImpl,
+            ::createTypeParameterSymbol,
+            ::createPublicTypeParameterSymbol,
+            ::createPrivateTypeParameterSymbol,
+            specificCalculateSignature = { signature }
+        )
+    }
+
+    fun declareScopedTypeParameter(
+        declaration: FirTypeParameterSymbol,
+        signature: IdSignature?,
+        typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter,
+    ): IrTypeParameter {
+        return declareScopedTypeParameter(declaration, typeParameterFactory, specificCalculateSignature = { signature })
+    }
+
+    @OptIn(SymbolTableInternals::class)
+    fun referenceScopedTypeParameter(declaration: FirTypeParameterSymbol, signature: IdSignature?): IrTypeParameterSymbol {
         return reference(
             declaration,
             globalTypeParameterSlice,
@@ -293,6 +332,22 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
         declaration: FirTypeParameterSymbol,
         symbol: IrTypeParameterSymbol,
     ): IrTypeParameter {
-        TODO("Not yet implemented")
+        shouldNotBeCalled()
+    }
+
+    // ------------------------------------ value parameter ------------------------------------
+
+    // TODO: consider moving to common class
+    override fun referenceValueParameter(declaration: FirValueParameterSymbol): IrValueParameterSymbol {
+        return valueParameterSlice.referenced(declaration) {
+            error("Undefined parameter referenced: $declaration\n${valueParameterSlice.dump()}")
+        }
+    }
+
+    fun declareValueParameter(
+        declaration: FirValueParameterSymbol,
+        valueParameterFactory: (IrValueParameterSymbol) -> IrValueParameter,
+    ): IrValueParameter {
+        return valueParameterSlice.declareLocal(declaration, { IrValueParameterSymbolImpl() }, valueParameterFactory)
     }
 }

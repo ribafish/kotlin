@@ -106,6 +106,11 @@ class Fir2IrTypeConverter(
         }
     }
 
+    @JvmName("toIrTypeNoReceiver")
+    fun toIrType(typeRef: FirTypeRef, typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType {
+        return typeRef.toIrType(typeOrigin)
+    }
+
     fun ConeKotlinType.toIrType(
         typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT,
         annotations: List<FirAnnotation> = emptyList(),

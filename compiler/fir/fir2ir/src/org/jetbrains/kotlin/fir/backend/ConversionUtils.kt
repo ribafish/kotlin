@@ -124,9 +124,7 @@ fun FirClassifierSymbol<*>.toSymbol(
     handleAnnotations: ((List<FirAnnotation>) -> Unit)? = null
 ): IrClassifierSymbol {
     return when (this) {
-        is FirTypeParameterSymbol -> {
-            classifierStorage.getIrTypeParameterSymbol(this, typeOrigin)
-        }
+        is FirTypeParameterSymbol -> symbolTable.referenceTypeParameter(this)
 
         is FirTypeAliasSymbol -> {
             handleAnnotations?.invoke(fir.expandedTypeRef.annotations)

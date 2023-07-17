@@ -557,9 +557,17 @@ abstract class SymbolTableExtension<
             defaultTypeParameterFactory(startOffset, endOffset, origin, declaration, it)
         },
     ): IrTypeParameter {
+        return declareScopedTypeParameter(declaration, typeParameterFactory, { calculateSignature(it) })
+    }
+
+    protected inline fun declareScopedTypeParameter(
+        declaration: TypeParameter,
+        typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter,
+        specificCalculateSignature: (TypeParameter) -> IdSignature?
+    ): IrTypeParameter {
         return scopedTypeParameterSlice.declare(
             declaration,
-            { createTypeParameterSymbol(declaration, calculateSignature(declaration)) },
+            { createTypeParameterSymbol(declaration, specificCalculateSignature(declaration)) },
             typeParameterFactory
         )
     }
@@ -737,4 +745,17 @@ abstract class SymbolTableExtension<
             )
         }
     }
+}
+
+inline fun <T> SymbolTableExtension<*, *, *, *, *, *, *, *, *, *, *>.withScope(owner: IrSymbol, block: () -> T): T {
+    enterScope(owner)
+    return try {
+        block()
+    } finally {
+        leaveScope(owner)
+    }
+}
+
+inline fun <T> SymbolTableExtension<*, *, *, *, *, *, *, *, *, *, *>.withScope(owner: IrSymbolOwner, block: () -> T): T {
+    return withScope(owner.symbol, block)
 }

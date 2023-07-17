@@ -89,7 +89,7 @@ class Fir2IrVisitor(
     }
 
     override fun visitElement(element: FirElement, data: Any?): IrElement {
-        TODO("Should not be here: ${element::class} ${element.render()}")
+        error("Should not be here: ${element::class} ${element.render()}")
     }
 
     override fun visitField(field: FirField, data: Any?): IrField = whileAnalysing(session, field) {
