@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.utils.threadLocal
 
 class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
         FirBasedSymbol<*>, FirClassSymbol<*>, FirTypeAliasSymbol, FirScriptSymbol, FirFunctionSymbol<*>,
-        FirConstructorSymbol, FirPropertySymbol, FirFieldSymbol, FirEnumEntrySymbol, FirValueParameterSymbol, FirTypeParameterSymbol
+        FirConstructorSymbol, FirPropertySymbol, FirVariableSymbol<*>, FirEnumEntrySymbol, FirValueParameterSymbol, FirTypeParameterSymbol
         >(table) {
 
 
@@ -44,7 +44,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
     }
 
     @Deprecated("should not be called", level = DeprecationLevel.HIDDEN)
-    override fun calculateFieldSignature(declaration: FirFieldSymbol): IdSignature? {
+    override fun calculateFieldSignature(declaration: FirVariableSymbol<*>): IdSignature? {
         shouldNotBeCalled()
     }
 
@@ -82,7 +82,11 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
 
     // ------------------------------------ constructor ------------------------------------
 
-    fun declareConstructor(declaration: FirConstructorSymbol, signature: IdSignature, classFactory: (IrConstructorSymbol) -> IrConstructor): IrConstructor {
+    fun declareConstructor(
+        declaration: FirConstructorSymbol,
+        signature: IdSignature?,
+        classFactory: (IrConstructorSymbol) -> IrConstructor,
+    ): IrConstructor {
         return declare(
             declaration,
             constructorSlice,
@@ -94,7 +98,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
     }
 
     @OptIn(SymbolTableInternals::class)
-    fun referenceConstructor(declaration: FirConstructorSymbol, signature: IdSignature): IrConstructorSymbol {
+    fun referenceConstructor(declaration: FirConstructorSymbol, signature: IdSignature?): IrConstructorSymbol {
         return reference(
             declaration,
             constructorSlice,
@@ -148,7 +152,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        declaration: FirFieldSymbol,
+        declaration: FirVariableSymbol<*>,
         type: IrType,
         visibility: DescriptorVisibility?,
         symbol: IrFieldSymbol,
@@ -156,7 +160,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
         TODO("Not yet implemented")
     }
 
-    fun declareField(declaration: FirFieldSymbol, signature: IdSignature?, classFactory: (IrFieldSymbol) -> IrField): IrField {
+    fun declareField(declaration: FirVariableSymbol<*>, signature: IdSignature?, classFactory: (IrFieldSymbol) -> IrField): IrField {
         return declare(
             declaration,
             fieldSlice,
@@ -168,7 +172,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
     }
 
     @OptIn(SymbolTableInternals::class)
-    fun referenceField(declaration: FirFieldSymbol, signature: IdSignature?): IrFieldSymbol {
+    fun referenceField(declaration: FirVariableSymbol<*>, signature: IdSignature?): IrFieldSymbol {
         return reference(
             declaration,
             fieldSlice,

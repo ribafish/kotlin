@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.generators.AnnotationGenerator
 import org.jetbrains.kotlin.fir.backend.generators.CallAndReferenceGenerator
@@ -12,9 +14,12 @@ import org.jetbrains.kotlin.fir.backend.generators.DelegatedMemberGenerator
 import org.jetbrains.kotlin.fir.backend.generators.FakeOverrideGenerator
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.SymbolTable
 
 interface Fir2IrComponents {
@@ -33,6 +38,9 @@ interface Fir2IrComponents {
     val classifierStorage: Fir2IrClassifierStorage
     val declarationStorage: Fir2IrDeclarationStorage
 
+    val callablesGenerator: Fir2IrCallableDeclarationGenerator
+    val classifierGenerator: Fir2IrClassifierGenerator
+
     val typeConverter: Fir2IrTypeConverter
     val signatureComposer: FirBasedSignatureComposer
     val visibilityConverter: Fir2IrVisibilityConverter
@@ -46,4 +54,19 @@ interface Fir2IrComponents {
     val configuration: Fir2IrConfiguration
 
     val annotationsFromPluginRegistrar: Fir2IrAnnotationsFromPluginRegistrar
+}
+
+context(Fir2IrComponents)
+fun FirTypeRef.toIrType(typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType {
+    return with(typeConverter) { toIrType(typeOrigin) }
+}
+
+context(Fir2IrComponents)
+fun ConeKotlinType.toIrType(typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType {
+    return with(typeConverter) { toIrType(typeOrigin) }
+}
+
+context(Fir2IrComponents)
+fun Visibility.toDescriptorVisibility(): DescriptorVisibility {
+    return visibilityConverter.convertToDescriptorVisibility(this)
 }

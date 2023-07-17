@@ -40,40 +40,28 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
-@RequiresOptIn(level = RequiresOptIn.Level.WARNING)
-annotation class ToRemove
-
 class Fir2IrClassifierStorage(
     private val components: Fir2IrComponents,
     commonMemberStorage: Fir2IrCommonMemberStorage
 ) : Fir2IrComponents by components {
     private val firProvider = session.firProvider
 
-    @ToRemove
     private val classCache: MutableMap<FirRegularClass, IrClass> = commonMemberStorage.classCache
 
-    @ToRemove
     private val localClassesCreatedOnTheFly: MutableMap<FirClass, IrClass> = mutableMapOf()
 
-    @ToRemove
     private var processMembersOfClassesOnTheFlyImmediately = false
 
-    @ToRemove
     private val typeAliasCache: MutableMap<FirTypeAlias, IrTypeAlias> = mutableMapOf()
 
-    @ToRemove
     private val typeParameterCache: MutableMap<FirTypeParameter, IrTypeParameter> = commonMemberStorage.typeParameterCache
 
-    @ToRemove
     private val typeParameterCacheForSetter: MutableMap<FirTypeParameter, IrTypeParameter> = mutableMapOf()
 
-    @ToRemove
     private val enumEntryCache: MutableMap<FirEnumEntry, IrEnumEntry> = commonMemberStorage.enumEntryCache
 
-    @ToRemove
     private val fieldsForContextReceivers: MutableMap<IrClass, List<IrField>> = mutableMapOf()
 
-    @ToRemove
     private val localStorage: Fir2IrLocalClassStorage = Fir2IrLocalClassStorage(
         // Using existing cache is necessary here to be able to serialize local classes from common code in expression codegen
         commonMemberStorage.localClassCache
@@ -128,7 +116,6 @@ class Fir2IrClassifierStorage(
         }
     }
 
-    @ToRemove
     internal fun IrTypeParametersContainer.setTypeParameters(
         owner: FirTypeParameterRefsOwner,
         typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT
@@ -303,39 +290,13 @@ class Fir2IrClassifierStorage(
         return irClass
     }
 
-    fun createTypeAlias(typeAlias: FirTypeAlias, parent: IrDeclarationParent): IrTypeAlias {
-        val signature = signatureComposer.composeSignature(typeAlias)
-        return typeAlias.convertWithOffsets { startOffset, endOffset ->
-            symbolTable.declareTypeAlias(typeAlias.symbol, signature) { symbol ->
-                preCacheTypeParameters(typeAlias, symbol)
-                val irTypeAlias = irFactory.createTypeAlias(
-                    startOffset = startOffset,
-                    endOffset = endOffset,
-                    origin = IrDeclarationOrigin.DEFINED,
-                    name = typeAlias.name,
-                    visibility = components.visibilityConverter.convertToDescriptorVisibility(typeAlias.visibility),
-                    symbol = symbol,
-                    isActual = typeAlias.isActual,
-                    expandedType = typeAlias.expandedTypeRef.toIrType(),
-                ).apply {
-                    this.parent = parent
-                    // TODO: where we should handle type parameters?
-                    //   Here or in Fir2IrDeclarationsConverter?
-                    setTypeParameters(typeAlias)
-                }
-                irTypeAlias
-            }
-        }
-    }
 
-    @ToRemove
     private fun declareIrTypeAlias(signature: IdSignature?, factory: (IrTypeAliasSymbol) -> IrTypeAlias): IrTypeAlias =
         if (signature == null)
             factory(IrTypeAliasSymbolImpl())
         else
             symbolTable.table.declareTypeAlias(signature, { Fir2IrTypeAliasSymbol(signature) }, factory)
 
-    @ToRemove
     fun registerTypeAlias(
         typeAlias: FirTypeAlias,
         parent: IrDeclarationParent
@@ -409,7 +370,6 @@ class Fir2IrClassifierStorage(
         return irClass
     }
 
-    @ToRemove
     fun registerIrClass(
         regularClass: FirRegularClass,
         parent: IrDeclarationParent,
@@ -456,7 +416,6 @@ class Fir2IrClassifierStorage(
         return irClass
     }
 
-    @ToRemove
     fun registerIrAnonymousObject(
         anonymousObject: FirAnonymousObject,
         visibility: Visibility = Visibilities.Local,
@@ -555,7 +514,6 @@ class Fir2IrClassifierStorage(
         return irTypeParameter
     }
 
-    @ToRemove
     private fun createIrTypeParameterWithoutBounds(
         typeParameter: FirTypeParameter,
         index: Int,

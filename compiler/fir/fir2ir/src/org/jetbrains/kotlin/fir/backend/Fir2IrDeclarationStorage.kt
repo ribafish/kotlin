@@ -55,7 +55,10 @@ import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.name.*
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.NameUtils
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -241,12 +244,6 @@ class Fir2IrDeclarationStorage(
         }
         symbolTable.leaveScope(declaration)
     }
-
-    private fun FirTypeRef.toIrType(typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType =
-        with(typeConverter) { toIrType(typeOrigin) }
-
-    private fun ConeKotlinType.toIrType(typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType =
-        with(typeConverter) { toIrType(typeOrigin) }
 
     private fun getIrExternalOrBuiltInsPackageFragment(fqName: FqName, firOrigin: FirDeclarationOrigin): IrExternalPackageFragment {
         val isBuiltIn = fqName in BUILT_INS_PACKAGE_FQ_NAMES
@@ -529,7 +526,6 @@ class Fir2IrDeclarationStorage(
         )
     }
 
-    @ToRemove
     fun createIrFunction(
         function: FirFunction,
         irParent: IrDeclarationParent?,
@@ -664,7 +660,6 @@ class Fir2IrDeclarationStorage(
             factory(IrConstructorSymbolImpl())
         else
             symbolTable.table.declareConstructor(signature, { Fir2IrConstructorSymbol(signature) }, factory)
-
 
     fun createIrConstructor(
         constructor: FirConstructor,
@@ -1208,7 +1203,6 @@ class Fir2IrDeclarationStorage(
         return FieldStaticOverrideKey(ownerLookupTag, field.name)
     }
 
-    @ToRemove
     internal fun createIrParameter(
         valueParameter: FirValueParameter,
         index: Int = UNDEFINED_PARAMETER_INDEX,
@@ -1754,152 +1748,6 @@ class Fir2IrDeclarationStorage(
 
     // -------------------------------------------- Good part --------------------------------------------
 
-    // TODO: rename
-    fun createIrFunctionNew(
-        function: FirFunction,
-        irParent: IrDeclarationParent?,
-        predefinedOrigin: IrDeclarationOrigin? = null,
-    ): IrSimpleFunction = convertCatching(function) {
-        val simpleFunction = function as? FirSimpleFunction
-        val isLambda = function is FirAnonymousFunction && function.isLambda
-        val updatedOrigin = when {
-            isLambda -> IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
-            function.symbol.callableId.isKFunctionInvoke() -> IrDeclarationOrigin.FAKE_OVERRIDE
-            simpleFunction?.isStatic == true && simpleFunction.name in ENUM_SYNTHETIC_NAMES -> IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
-
-            // Kotlin built-in class and Java originated method (Collection.forEach, etc.)
-            // It's necessary to understand that such methods do not belong to DefaultImpls but actually generated as default
-            // See org.jetbrains.kotlin.backend.jvm.lower.InheritedDefaultMethodsOnClassesLoweringKt.isDefinitelyNotDefaultImplsMethod
-            (irParent as? IrClass)?.origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB &&
-                    function.isJavaOrEnhancement -> IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
-            else -> function.computeIrOrigin(predefinedOrigin)
-        }
-
-        val signature = signatureComposer.composeSignature(function)
-
-        if (irParent is Fir2IrLazyClass && signature != null) {
-            // For private functions, signature is null, fallback to non-lazy function
-            return createIrLazyFunction(function as FirSimpleFunction, signature, irParent, updatedOrigin)
-        }
-
-        val name = simpleFunction?.name ?: when {
-            isLambda -> SpecialNames.ANONYMOUS
-            else -> SpecialNames.NO_NAME_PROVIDED
-        }
-
-        val visibility = simpleFunction?.visibility ?: Visibilities.Local
-        val isSuspend = when {
-            isLambda -> (function as FirAnonymousFunction).typeRef.coneType.isSuspendOrKSuspendFunctionType(session)
-            else -> function.isSuspend
-        }
-
-        val irFunction = function.convertWithOffsets { startOffset, endOffset ->
-            val result = symbolTable.declareFunction(function.symbol, signature) { symbol ->
-                irFactory.createSimpleFunction(
-                    startOffset = if (updatedOrigin == IrDeclarationOrigin.DELEGATED_MEMBER) SYNTHETIC_OFFSET else startOffset,
-                    endOffset = if (updatedOrigin == IrDeclarationOrigin.DELEGATED_MEMBER) SYNTHETIC_OFFSET else endOffset,
-                    origin = updatedOrigin,
-                    name = name,
-                    visibility = components.visibilityConverter.convertToDescriptorVisibility(visibility),
-                    isInline = simpleFunction?.isInline == true,
-                    isExpect = simpleFunction?.isExpect == true,
-                    returnType = function.returnTypeRef.toIrType(),
-                    modality = simpleFunction?.modality ?: Modality.FINAL,
-                    symbol = symbol,
-                    isTailrec = simpleFunction?.isTailRec == true,
-                    isSuspend = isSuspend,
-                    isOperator = simpleFunction?.isOperator == true,
-                    isInfix = simpleFunction?.isInfix == true,
-                    isExternal = simpleFunction?.isExternal == true,
-                    containerSource = simpleFunction?.containerSource,
-                ).apply {
-                    metadata = FirMetadataSource.Function(function)
-                    irParent?.let { parent = it }
-                }
-            }
-            result
-        }
-        return irFunction
-    }
-
-    /**
-     * Initializes IR value parameters for given [irFunction]
-     */
-    internal fun processValueParameters(function: FirFunction, irFunction: IrFunction, containingClass: IrClass?) {
-        val forSetter = function is FirPropertyAccessor && function.isSetter
-        val typeOrigin = if (forSetter) ConversionTypeOrigin.SETTER else ConversionTypeOrigin.DEFAULT
-        when (function) {
-            is FirDefaultPropertySetter -> {
-                val valueParameter = function.valueParameters.first()
-                val type = valueParameter.returnTypeRef.toIrType(typeConverter, ConversionTypeOrigin.SETTER)
-                irFunction.declareDefaultSetterParameter(type, valueParameter)
-            }
-
-            else -> {
-                val contextReceivers = function.contextReceiversForFunctionOrContainingProperty()
-
-                irFunction.contextReceiverParametersCount = contextReceivers.size
-                irFunction.valueParameters = buildList {
-                    addContextReceiverParametersTo(contextReceivers, irFunction, this)
-
-                    function.valueParameters.mapIndexedTo(this) { index, valueParameter ->
-                        createIrValueParameter(
-                            valueParameter,
-                            index = index + irFunction.contextReceiverParametersCount,
-                            typeOrigin
-                        ).apply {
-                            this.parent = irFunction
-                        }
-                    }
-                }
-            }
-        }
-
-        val functionOrigin = IrDeclarationOrigin.DEFINED
-        when (function) {
-            is FirConstructor -> {
-                // Set dispatch receiver parameter for inner class's constructor.
-                val outerClass = containingClass?.parentClassOrNull
-                if (containingClass?.isInner == true && outerClass != null) {
-                    irFunction.dispatchReceiverParameter = irFunction.declareThisReceiverParameter(
-                        thisType = outerClass.thisReceiver!!.type,
-                        thisOrigin = functionOrigin
-                    )
-                }
-            }
-            else -> {
-                val receiverParameter = when (function) {
-                    is FirPropertyAccessor -> function.propertySymbol.receiverParameter
-                    else -> function.receiverParameter
-                }
-                if (receiverParameter != null) {
-                    irFunction.extensionReceiverParameter = receiverParameter.convertWithOffsets { startOffset, endOffset ->
-                        val name = (function as? FirAnonymousFunction)?.label?.name?.let {
-                            val suffix = it.takeIf(Name::isValidIdentifier) ?: "\$receiver"
-                            Name.identifier("\$this\$$suffix")
-                        } ?: SpecialNames.THIS
-                        irFunction.declareThisReceiverParameter(
-                            thisType = receiverParameter.typeRef.toIrType(this.typeConverter, typeOrigin),
-                            thisOrigin = functionOrigin,
-                            startOffset = startOffset,
-                            endOffset = endOffset,
-                            name = name,
-                            explicitReceiver = receiverParameter,
-                        )
-                    }
-                }
-                // See [LocalDeclarationsLowering]: "local function must not have dispatch receiver."
-                val isLocal = function is FirSimpleFunction && function.isLocal
-                if (function !is FirAnonymousFunction && containingClass != null && !function.isStatic && !isLocal) {
-                    irFunction.dispatchReceiverParameter = irFunction.declareThisReceiverParameter(
-                        thisType = containingClass.thisReceiver?.type ?: error("No this receiver"),
-                        thisOrigin = functionOrigin
-                    )
-                }
-            }
-        }
-    }
-
     private fun createIrLazyFunction(
         fir: FirSimpleFunction,
         signature: IdSignature,
@@ -1918,8 +1766,8 @@ class Fir2IrDeclarationStorage(
                 }
             }
         }
-        functionCache[fir] = irFunction
         // NB: this is needed to prevent recursions in case of self bounds
+        // TODO: extract method to here, use scoped/global type paremeters for members/classes
         (irFunction as Fir2IrLazySimpleFunction).prepareTypeParameters()
         return irFunction
     }
