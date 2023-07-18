@@ -15,14 +15,6 @@ interface Fir2IrTypeParametersContainer : IrTypeParametersContainer, Fir2IrCompo
     val fir: FirMemberDeclaration
 
     fun prepareTypeParameters() {
-        typeParameters = fir.typeParameters.mapIndexedNotNull { index, typeParameter ->
-            if (typeParameter !is FirTypeParameter) return@mapIndexedNotNull null
-            classifierStorage.getIrTypeParameter(typeParameter, index, symbol).apply {
-                parent = this@Fir2IrTypeParametersContainer
-                if (superTypes.isEmpty()) {
-                    superTypes = typeParameter.bounds.map { it.toIrType(typeConverter) }
-                }
-            }
-        }
+        classifierGenerator.processTypeParameters(fir, this)
     }
 }

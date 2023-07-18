@@ -5,20 +5,113 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.descriptors.FirBuiltInsPackageFragment
+import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
+import org.jetbrains.kotlin.fir.descriptors.FirPackageFragmentDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.*
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
+import java.util.concurrent.ConcurrentHashMap
 
-class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
-    private val firProvider = session.firProvider
+class Fir2IrClassifierGenerator(
+    private val components: Fir2IrComponents,
+    private val moduleDescriptor: FirModuleDescriptor,
+) : Fir2IrComponents by components {
+    // -------------------------------------------- Builtins --------------------------------------------
+
+    private val fragmentCache: ConcurrentHashMap<FqName, ExternalPackageFragments> = ConcurrentHashMap()
+    private val builtInsFragmentCache: ConcurrentHashMap<FqName, IrExternalPackageFragment> = ConcurrentHashMap()
+
+    private class ExternalPackageFragments(
+        val fragmentForDependencies: IrExternalPackageFragment,
+        val fragmentForPrecompiledBinaries: IrExternalPackageFragment,
+    )
+
+    // TODO: probably this method should be somehow restricted to use only from builtins
+    //   Maybe it's worth to move it into separate component along with fragments cache
+    fun findDependencyClassByClassId(classId: ClassId): IrClassSymbol? {
+        val firSymbol = session.symbolProvider.getClassLikeSymbolByClassId(classId) ?: return null
+        require(firSymbol.origin == FirDeclarationOrigin.Library || firSymbol.origin == FirDeclarationOrigin.BuiltIns)
+
+        val firClassSymbol = firSymbol as? FirRegularClassSymbol ?: return null
+        val signature = signatureComposer.composeSignature(firClassSymbol.fir)
+        val irClass = symbolTable.declareClassIfNotExists(firClassSymbol, signature) { symbol ->
+            val firClass = firClassSymbol.fir
+            Fir2IrLazyClass(
+                components,
+                UNDEFINED_OFFSET,
+                UNDEFINED_OFFSET,
+                firClass.irOrigin(session.firProvider),
+                firClass,
+                symbol
+            ).apply {
+                prepareTypeParameters()
+                parent = when (val outerClassId = classId.outerClassId) {
+                    null -> getIrExternalPackageFragment(classId.packageFqName)
+                    else -> findDependencyClassByClassId(outerClassId)!!.owner
+                }
+            }
+        }
+
+        return irClass.symbol
+    }
+
+    private fun getIrExternalOrBuiltInsPackageFragment(fqName: FqName, firOrigin: FirDeclarationOrigin): IrExternalPackageFragment {
+        val isBuiltIn = fqName in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES
+        return if (isBuiltIn) getIrBuiltInsPackageFragment(fqName) else getIrExternalPackageFragment(fqName, firOrigin)
+    }
+
+    private fun getIrBuiltInsPackageFragment(fqName: FqName): IrExternalPackageFragment {
+        return builtInsFragmentCache.getOrPut(fqName) {
+            createExternalPackageFragment(FirBuiltInsPackageFragment(fqName, moduleDescriptor))
+        }
+    }
+
+    fun getIrExternalPackageFragment(
+        fqName: FqName,
+        firOrigin: FirDeclarationOrigin = FirDeclarationOrigin.Library,
+    ): IrExternalPackageFragment {
+        val fragments = fragmentCache.getOrPut(fqName) {
+            ExternalPackageFragments(
+                fragmentForDependencies = createExternalPackageFragment(fqName, FirModuleDescriptor(session, moduleDescriptor.builtIns)),
+                fragmentForPrecompiledBinaries = createExternalPackageFragment(fqName, moduleDescriptor)
+            )
+        }
+        // Make sure that external package fragments have a different module descriptor. The module descriptors are compared
+        // to determine if objects need regeneration because they are from different modules.
+        // But keep original module descriptor for the fragments coming from parts compiled on the previous incremental step
+        return when (firOrigin) {
+            FirDeclarationOrigin.Precompiled -> fragments.fragmentForPrecompiledBinaries
+            else -> fragments.fragmentForDependencies
+        }
+    }
+
+    private fun createExternalPackageFragment(fqName: FqName, moduleDescriptor: FirModuleDescriptor): IrExternalPackageFragment {
+        return createExternalPackageFragment(FirPackageFragmentDescriptor(fqName, moduleDescriptor))
+    }
+
+    private fun createExternalPackageFragment(packageFragmentDescriptor: PackageFragmentDescriptor): IrExternalPackageFragment {
+        val symbol = IrExternalPackageFragmentSymbolImpl(packageFragmentDescriptor)
+        return IrExternalPackageFragmentImpl(symbol, packageFragmentDescriptor.fqName)
+    }
+
+    // -------------------------------------------- Main --------------------------------------------
 
     fun createIrClass(regularClass: FirRegularClass, parent: IrDeclarationParent): IrClass {
         val visibility = regularClass.visibility

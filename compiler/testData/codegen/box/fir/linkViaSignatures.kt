@@ -2,25 +2,30 @@
 // TARGET_BACKEND: JVM_IR
 // LINK_VIA_SIGNATURES
 
-class Class
-interface Interface
-sealed class Sealed<T>
-enum class E { ENTRY }
+fun box(): String = "OK"
 
-fun function(s: String): Array<Int> {
-    fun Boolean.local() {}
-    return arrayOf(s.length)
+interface A {
+    fun foo()
 }
-typealias S = String
-var property: S? = "OK"
 
-fun box(): String {
-    val c = Class()
-    val o = object : Interface {}
-    if (property != "OK") return property!!
-    if (E.ENTRY.ordinal != 0) return E.ENTRY.ordinal.toString()
-    val result = function("AlphaBeta")
-    if (result.size != 1) return result.size.toString()
-    if (result[0] != 9) return result[0].toString()
-    return "OK"
+fun test() {
+    var x: Any? = null
+    while (true) {
+        try {
+            x = ""
+            require(x is A)
+        } catch (e: Exception) {
+            x = 1
+            require(x is A)
+            break
+        } finally {
+            x.inc() // should be error
+            x.length // should be error
+            x.foo() // should be ok
+        }
+        x.length // should be ok
+        x.foo() // should be ok
+    }
+    x.inc() // should be ok
+    x.foo() // should be ok
 }

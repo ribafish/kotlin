@@ -49,6 +49,7 @@ class Fir2IrConverter(
     ) {
         session.lazyDeclarationResolver.disableLazyResolveContractChecks()
         val converter = Fir2IrDeclarationsConverter(components)
+        converter.processBuiltinClasses()
         for (firFile in allFirFiles) {
             converter.generateFile(firFile)
         }
@@ -329,7 +330,7 @@ class Fir2IrConverter(
             initializedIrBuiltIns: IrBuiltInsOverFir?
         ): Fir2IrResult {
             val moduleDescriptor = FirModuleDescriptor(session, kotlinBuiltIns)
-            val fir2IrSymbolTableExtension = Fir2IrSymbolTableExtension(commonMemberStorage.symbolTable)
+            val fir2IrSymbolTableExtension = Fir2IrSymbolTableExtension(commonMemberStorage.symbolTable, commonMemberStorage.firSignatureComposer)
             val components = Fir2IrComponentsStorage(
                 session,
                 scopeSession,
@@ -346,7 +347,7 @@ class Fir2IrConverter(
             components.delegatedMemberGenerator = DelegatedMemberGenerator(components)
             components.declarationStorage = Fir2IrDeclarationStorage(components, moduleDescriptor, commonMemberStorage)
 
-            components.classifierGenerator = Fir2IrClassifierGenerator(components)
+            components.classifierGenerator = Fir2IrClassifierGenerator(components, moduleDescriptor)
             components.callablesGenerator = Fir2IrCallableDeclarationGenerator(components)
 
             components.visibilityConverter = visibilityConverter

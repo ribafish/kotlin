@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.ir.BuiltInOperatorNames
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -732,9 +731,7 @@ class IrBuiltInsOverFir(
         referenceClassByClassId(ClassId.topLevel(topLevelFqName))
 
     private fun referenceClassByClassId(classId: ClassId): IrClassSymbol? {
-        val firSymbol = components.session.symbolProvider.getClassLikeSymbolByClassId(classId) ?: return null
-        val firClassSymbol = firSymbol as? FirClassSymbol ?: return null
-        return components.classifierStorage.getIrClassSymbol(firClassSymbol)
+        return components.classifierGenerator.findDependencyClassByClassId(classId)
     }
 
     private fun IrType.getMaybeBuiltinClass(): IrClass? {
@@ -962,7 +959,7 @@ class IrBuiltInsOverFir(
 
         val irFun4SignatureCalculation = makeWithSymbol(IrSimpleFunctionSymbolImpl())
         val signature = irSignatureBuilder.computeSignature(irFun4SignatureCalculation)
-        return components.symbolTable.table.declareSimpleFunction(signature, { IrSimpleFunctionPublicSymbolImpl(signature, null) }, ::makeWithSymbol)
+        return components.symbolTable.table.declareSimpleFunction(signature, ::makeWithSymbol)
     }
 
     private fun IrClass.addArrayMembers(elementType: IrType, iteratorType: IrType) {

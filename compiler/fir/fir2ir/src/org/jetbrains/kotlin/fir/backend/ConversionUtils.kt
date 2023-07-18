@@ -124,7 +124,17 @@ fun FirClassifierSymbol<*>.toSymbol(
     handleAnnotations: ((List<FirAnnotation>) -> Unit)? = null
 ): IrClassifierSymbol {
     return when (this) {
-        is FirTypeParameterSymbol -> symbolTable.referenceTypeParameter(this)
+        is FirTypeParameterSymbol -> {
+            val container = this.containingDeclarationSymbol
+            when (container) {
+                is FirClassLikeSymbol<*> -> {
+                    val containerSignature = signatureComposer.composeSignature(container.fir)
+                    val signature = signatureComposer.composeTypeParameterSignature(container.typeParameterSymbols.indexOf(this), containerSignature)
+                    symbolTable.referenceGlobalTypeParameter(this, signature)
+                }
+                else -> symbolTable.referenceScopedTypeParameter(this)
+            }
+        }
 
         is FirTypeAliasSymbol -> {
             handleAnnotations?.invoke(fir.expandedTypeRef.annotations)

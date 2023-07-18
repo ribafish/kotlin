@@ -43,11 +43,18 @@ class Fir2IrLazyClass(
     IrMaybeDeserializedClass, DeserializableClass, Fir2IrComponents by components {
     init {
         symbol.bind(this)
-        classifierStorage.preCacheTypeParameters(fir, symbol)
     }
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
-    override lateinit var typeParameters: List<IrTypeParameter>
+
+    private var _typeParameters: List<IrTypeParameter>? = null
+
+    override var typeParameters: List<IrTypeParameter>
+        get() = _typeParameters
+            ?: error("No parameters")
+        set(value) {
+            _typeParameters = value
+        }
     override lateinit var parent: IrDeclarationParent
 
     override val source: SourceElement

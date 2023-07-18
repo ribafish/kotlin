@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.ir.declarations.*
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import org.jetbrains.kotlin.utils.threadLocal
 
-class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
+class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirBasedSignatureComposer) : SymbolTableExtension<
         FirBasedSymbol<*>, FirClassSymbol<*>, FirTypeAliasSymbol, FirScriptSymbol, FirFunctionSymbol<*>,
         FirConstructorSymbol, FirPropertySymbol, FirVariableSymbol<*>, FirEnumEntrySymbol, FirValueParameterSymbol, FirTypeParameterSymbol
         >(table) {
@@ -61,6 +62,17 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
             declaration,
             classSlice,
             SymbolTable::declareClass,
+            { createClassSymbol(declaration, it) },
+            classFactory,
+            specificCalculateSignature = { signature }
+        )
+    }
+
+    fun declareClassIfNotExists(declaration: FirClassSymbol<*>, signature: IdSignature?, classFactory: (IrClassSymbol) -> IrClass): IrClass {
+        return declareIfNotExist(
+            declaration,
+            classSlice,
+            SymbolTable::declareClassIfNotExists,
             { createClassSymbol(declaration, it) },
             classFactory,
             specificCalculateSignature = { signature }

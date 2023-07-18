@@ -693,7 +693,7 @@ abstract class SymbolTableExtension<
         )
     }
 
-    private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declareIfNotExist(
+    protected inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declareIfNotExist(
         declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         declareBySignature: SymbolTable.(IdSignature, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,

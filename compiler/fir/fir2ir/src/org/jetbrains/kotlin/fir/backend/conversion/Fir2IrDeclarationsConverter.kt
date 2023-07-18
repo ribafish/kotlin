@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.fir.backend.conversion
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtPsiSourceFileLinesMapping
 import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
@@ -18,23 +20,64 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.descriptors.FirBuiltInsPackageFragment
+import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
+import org.jetbrains.kotlin.fir.descriptors.FirPackageFragmentDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.toSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.processAllCallables
 import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrEnumConstructorCallImpl
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrExternalPackageFragmentSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.NameUtils
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComponents by components {
+
+    // -------------------------------------------- Builtins --------------------------------------------
+
+    fun processBuiltinClasses() {
+        val conversionScope = Fir2IrConversionScope()
+        for ((classId, irBuiltinSymbol) in typeConverter.classIdToSymbolMap) {
+            // toSymbol() can return null when using an old stdlib that's missing some types
+            val firClass = classId.toSymbol(session)?.fir as FirRegularClass? ?: continue
+            val irClass = irBuiltinSymbol.owner
+            processClassDeclarations(conversionScope, firClass, irClass)
+            declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
+        }
+        for ((primitiveClassId, primitiveArrayId) in StandardClassIds.primitiveArrayTypeByElementType) {
+            // toSymbol() can return null when using an old stdlib that's missing some types
+            val firClass = primitiveArrayId.toLookupTag().toSymbol(session)?.fir as FirRegularClass? ?: continue
+            val irType = typeConverter.classIdToTypeMap[primitiveClassId]
+            val irClass = irBuiltIns.primitiveArrayForType[irType]!!.owner
+            processClassDeclarations(conversionScope, firClass, irClass)
+            declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
+        }
+    }
+
+
+    // -------------------------------------------- Main --------------------------------------------
+
     fun generateFile(file: FirFile): IrFile {
         val fileEntry = when (file.origin) {
             FirDeclarationOrigin.Source ->
@@ -92,6 +135,11 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
             is FirRegularClass -> classifierGenerator.createIrClass(klass, parent)
             is FirAnonymousObject -> classifierGenerator.createIrAnonymousObject(klass, irParent = parent)
         }
+        processClassDeclarations(conversionScope, klass, irClass)
+        return irClass
+    }
+
+    private fun processClassDeclarations(conversionScope: Fir2IrConversionScope, klass: FirClass, irClass: IrClass) {
         conversionScope.withScopeAndParent(irClass) {
             conversionScope.withClass(irClass) {
                 classifierGenerator.processTypeParameters(klass, irClass)
@@ -101,7 +149,6 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
                 }
             }
         }
-        return irClass
     }
 
     private fun collectAllClassMembers(klass: FirClass): List<FirDeclaration> {
@@ -281,7 +328,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
 
         // TODO: probably move this into Fir2IrVisitor
         symbolTable.withScope(irEnumEntry) {
-            val irEnumType = irParentEnumClass.defaultType
+            val irEnumType = enumEntry.returnTypeRef.toIrType()
             val initializer = enumEntry.initializer
             when {
                 isEnumEntryWhichRequiresSubclass(enumEntry) -> {
