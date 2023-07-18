@@ -60,13 +60,14 @@ abstract class IrBindablePublicSymbolBase<out Descriptor, Owner>(
 
     private var _owner: Owner? = null
     override val owner: Owner
-        get() = _owner ?: throw IllegalStateException("Symbol for $signature is unbound")
+        get() = _owner
+            ?: error("Symbol for \"$signature\" is unbound")
 
     override fun bind(owner: Owner) {
         if (_owner == null) {
             _owner = owner
         } else {
-            throw IllegalStateException("${javaClass.simpleName} for $signature is already bound: ${_owner?.render()}")
+            error("${javaClass.simpleName} for \"$signature\" is already bound: ${_owner?.render()}")
         }
     }
 

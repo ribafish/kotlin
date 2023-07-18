@@ -66,13 +66,14 @@ abstract class IrBindableSymbolBase<out Descriptor, Owner>(
 
     private var _owner: Owner? = null
     override val owner: Owner
-        get() = _owner ?: error("${javaClass.simpleName} is unbound. Signature: $signature")
+        get() = _owner
+            ?: error("${javaClass.simpleName} is unbound. Signature: \"$signature\"")
 
     override fun bind(owner: Owner) {
         if (_owner == null) {
             _owner = owner
         } else {
-            error("${javaClass.simpleName} is already bound. Signature: $signature. Owner: ${_owner?.render()}")
+            error("${javaClass.simpleName} is already bound. Signature: \"$signature\". Owner: ${_owner?.render()}")
         }
     }
 
