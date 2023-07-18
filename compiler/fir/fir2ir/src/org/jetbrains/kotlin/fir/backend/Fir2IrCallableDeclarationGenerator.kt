@@ -40,11 +40,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 @Suppress("DuplicatedCode")
-@OptIn(ObsoleteDescriptorBasedAPI::class)
-class Fir2IrCallableDeclarationGenerator(
-    private val components: Fir2IrComponents,
-    private val moduleDescriptor: FirModuleDescriptor,
-) : Fir2IrComponents by components {
+class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
     companion object {
         internal val ENUM_SYNTHETIC_NAMES = mapOf(
             Name.identifier("values") to IrSyntheticBodyKind.ENUM_VALUES,
@@ -239,7 +235,7 @@ class Fir2IrCallableDeclarationGenerator(
         val origin = valueParameter.computeIrOrigin()
         val type = valueParameter.returnTypeRef.toIrType(typeOrigin)
         val irParameter = valueParameter.convertWithOffsets { startOffset, endOffset ->
-            symbolTable.declareValueParameter(valueParameter.symbol) {
+            symbolTable.declareValueParameter(valueParameter.symbol) { symbol ->
                 irFactory.createValueParameter(
                     startOffset = startOffset,
                     endOffset = endOffset,
@@ -247,7 +243,7 @@ class Fir2IrCallableDeclarationGenerator(
                     name = valueParameter.name,
                     type = type,
                     isAssignable = false,
-                    symbol = IrValueParameterSymbolImpl(),
+                    symbol = symbol,
                     index = index,
                     varargElementType =
                     if (!valueParameter.isVararg) null

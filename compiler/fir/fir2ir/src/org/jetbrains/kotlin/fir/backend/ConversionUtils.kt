@@ -134,8 +134,9 @@ fun FirClassifierSymbol<*>.toSymbol(
                 ?: classifierStorage.getIrClassSymbolForNotFoundClass(coneClassLikeType.lookupTag)
         }
 
-        is FirClassSymbol -> {
-            classifierStorage.getIrClassSymbol(this)
+        is FirClassSymbol<*> -> {
+            val signature = signatureComposer.composeSignature(this.fir)
+            symbolTable.referenceClass(this, signature)
         }
 
         else -> error("Unknown symbol: $this")

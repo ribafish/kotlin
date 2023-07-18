@@ -5,14 +5,12 @@
 
 package org.jetbrains.kotlin.fir.backend
 
-import org.jetbrains.kotlin.KtFakeSourceElementKind
-import org.jetbrains.kotlin.KtPsiSourceFileLinesMapping
-import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.backend.conversion.Fir2IrDeclarationsConverter
 import org.jetbrains.kotlin.fir.backend.generators.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
@@ -22,11 +20,11 @@ import org.jetbrains.kotlin.fir.extensions.declarationGenerators
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.generatedMembers
 import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
+import org.jetbrains.kotlin.fir.isEnumEntries
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
-import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreter
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
@@ -34,8 +32,6 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
 import org.jetbrains.kotlin.ir.util.KotlinMangler
-import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
-import org.jetbrains.kotlin.psi.KtFile
 
 class Fir2IrConverter(
     private val moduleDescriptor: FirModuleDescriptor,
@@ -49,50 +45,13 @@ class Fir2IrConverter(
 
     private fun runSourcesConversion(
         allFirFiles: List<FirFile>,
-        irModuleFragment: IrModuleFragmentImpl,
-        fir2irVisitor: Fir2IrVisitor,
-        runPreCacheBuiltinClasses: Boolean
+        irModuleFragment: IrModuleFragmentImpl
     ) {
         session.lazyDeclarationResolver.disableLazyResolveContractChecks()
+        val converter = Fir2IrDeclarationsConverter(components)
         for (firFile in allFirFiles) {
-            registerFileAndClasses(firFile, irModuleFragment)
+            converter.generateFile(firFile)
         }
-        if (runPreCacheBuiltinClasses) {
-            classifierStorage.preCacheBuiltinClasses()
-        }
-        // The file processing is performed phase-to-phase:
-        //   1. Creation of all non-local regular classes
-        //   2. Class header processing (type parameters, supertypes, this receiver)
-        for (firFile in allFirFiles) {
-            processClassHeaders(firFile)
-        }
-        //   3. Class member (functions/properties/constructors) processing. This doesn't involve bodies (only types).
-        //   If we encounter local class / anonymous object in signature, then (1) and (2) is performed immediately for this class,
-        //   and (3) and (4) a bit later
-        for (firFile in allFirFiles) {
-            processFileAndClassMembers(firFile)
-        }
-        //   4. Override processing which sets overridden symbols for everything inside non-local regular classes
-        for (firFile in allFirFiles) {
-            bindFakeOverridesInFile(firFile)
-        }
-
-        wereSourcesFakeOverridesBound = true
-        fakeOverrideGenerator.bindOverriddenSymbols(postponedDeclarationsForFakeOverridesBinding)
-        postponedDeclarationsForFakeOverridesBinding.clear()
-
-        //   Do (3) and (4) for local classes encountered during (3)
-        classifierStorage.processMembersOfClassesCreatedOnTheFly()
-
-        //   5. Body processing
-        //   If we encounter local class / anonymous object here, then we perform all (1)-(5) stages immediately
-        delegatedMemberGenerator.generateBodies()
-        for (firFile in allFirFiles) {
-            withFileAnalysisExceptionWrapping(firFile) {
-                firFile.accept(fir2irVisitor, null)
-            }
-        }
-
         evaluateConstants(irModuleFragment, configuration)
     }
 
@@ -117,56 +76,6 @@ class Fir2IrConverter(
         processClassMembers(klass, irClass)
         bindFakeOverridesInClass(irClass)
         return irClass
-    }
-
-    private fun registerFileAndClasses(file: FirFile, moduleFragment: IrModuleFragment) {
-        val fileEntry = when (file.origin) {
-            FirDeclarationOrigin.Source ->
-                file.psi?.let { PsiIrFileEntry(it as KtFile) }
-                    ?: when (val linesMapping = file.sourceFileLinesMapping) {
-                        is KtSourceFileLinesMappingFromLineStartOffsets ->
-                            NaiveSourceBasedFileEntryImpl(
-                                file.sourceFile?.path ?: file.sourceFile?.name ?: file.name,
-                                linesMapping.lineStartOffsets,
-                                linesMapping.lastOffset
-                            )
-                        is KtPsiSourceFileLinesMapping -> PsiIrFileEntry(linesMapping.psiFile)
-                        else ->
-                            NaiveSourceBasedFileEntryImpl(file.sourceFile?.path ?: file.sourceFile?.name ?: file.name)
-                    }
-            FirDeclarationOrigin.Synthetic -> NaiveSourceBasedFileEntryImpl(file.name)
-            else -> error("Unsupported file origin: ${file.origin}")
-        }
-        val irFile = IrFileImpl(
-            fileEntry,
-            moduleDescriptor.getPackage(file.packageFqName).fragments.first(),
-            moduleFragment
-        )
-        declarationStorage.registerFile(file, irFile)
-        file.declarations.forEach {
-            if (it is FirRegularClass) {
-                registerClassAndNestedClasses(it, irFile)
-            }
-        }
-        moduleFragment.files += irFile
-    }
-
-    private fun processClassHeaders(file: FirFile) {
-        file.declarations.forEach {
-            when (it) {
-                is FirRegularClass -> processClassAndNestedClassHeaders(it)
-                is FirTypeAlias -> classifierStorage.registerTypeAlias(it, declarationStorage.getIrFile(file))
-                else -> {}
-            }
-        }
-    }
-
-    private fun processFileAndClassMembers(file: FirFile) {
-        val irFile = declarationStorage.getIrFile(file)
-        for (declaration in file.declarations) {
-            val irDeclaration = processMemberDeclaration(declaration, null, irFile) ?: continue
-            irFile.declarations += irDeclaration
-        }
     }
 
     fun processAnonymousObjectHeaders(
@@ -222,15 +131,6 @@ class Fir2IrConverter(
         }
 
         return irClass
-    }
-
-    private fun bindFakeOverridesInFile(file: FirFile) {
-        val irFile = declarationStorage.getIrFile(file)
-        for (irDeclaration in irFile.declarations) {
-            if (irDeclaration is IrClass) {
-                bindFakeOverridesInClass(irDeclaration)
-            }
-        }
     }
 
     fun bindFakeOverridesInClass(klass: IrClass) {
@@ -445,6 +345,10 @@ class Fir2IrConverter(
             components.classifierStorage = Fir2IrClassifierStorage(components, commonMemberStorage)
             components.delegatedMemberGenerator = DelegatedMemberGenerator(components)
             components.declarationStorage = Fir2IrDeclarationStorage(components, moduleDescriptor, commonMemberStorage)
+
+            components.classifierGenerator = Fir2IrClassifierGenerator(components)
+            components.callablesGenerator = Fir2IrCallableDeclarationGenerator(components)
+
             components.visibilityConverter = visibilityConverter
             components.typeConverter = Fir2IrTypeConverter(components)
             val irBuiltIns = initializedIrBuiltIns ?: IrBuiltInsOverFir(
@@ -471,7 +375,7 @@ class Fir2IrConverter(
             }
 
             converter.runSourcesConversion(
-                allFirFiles, irModuleFragment, fir2irVisitor, runPreCacheBuiltinClasses = initializedIrBuiltIns == null
+                allFirFiles, irModuleFragment
             )
 
             return Fir2IrResult(irModuleFragment, components, moduleDescriptor)

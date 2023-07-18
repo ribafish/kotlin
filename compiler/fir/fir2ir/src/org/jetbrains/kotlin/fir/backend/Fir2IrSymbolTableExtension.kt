@@ -28,7 +28,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable) : SymbolTableExtension<
     }
 
     override fun MutableList<SymbolTableSlice.Scoped<*, *, *>>.initializeScopedSlices() {
-        TODO("Not yet implemented")
+        add(valueParameterSlice)
     }
 
     // ------------------------------------ signature ------------------------------------

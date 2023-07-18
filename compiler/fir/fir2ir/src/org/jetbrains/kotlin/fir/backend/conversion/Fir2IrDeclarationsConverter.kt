@@ -11,18 +11,15 @@ import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.comparators.FirMemberDeclarationComparator
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
-import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
-import org.jetbrains.kotlin.fir.references.toResolvedBaseSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.resolve.transformers.withScopeCleanup
 import org.jetbrains.kotlin.fir.scopes.processAllCallables
 import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
@@ -34,6 +31,8 @@ import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.util.PrivateForInline
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComponents by components {
     fun generateFile(file: FirFile): IrFile {
@@ -93,10 +92,10 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
             is FirRegularClass -> classifierGenerator.createIrClass(klass, parent)
             is FirAnonymousObject -> classifierGenerator.createIrAnonymousObject(klass, irParent = parent)
         }
-        symbolTable.withScope(irClass) {
-            classifierGenerator.processTypeParameters(klass, irClass)
-            val classMembers = collectAllClassMembers(klass)
-            conversionScope.withParent(irClass) {
+        conversionScope.withScopeAndParent(irClass) {
+            conversionScope.withClass(irClass) {
+                classifierGenerator.processTypeParameters(klass, irClass)
+                val classMembers = collectAllClassMembers(klass)
                 for (declaration in classMembers) {
                     irClass.declarations += generateIrDeclaration(declaration, conversionScope)
                 }
@@ -150,7 +149,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
     fun generateIrTypeAlias(typeAlias: FirTypeAlias, conversionScope: Fir2IrConversionScope): IrTypeAlias {
         val parent = conversionScope.parentFromStack()
         val irTypeAlias = classifierGenerator.createTypeAlias(typeAlias, parent)
-        symbolTable.withScope(irTypeAlias) {
+        conversionScope.withScopeAndParent(irTypeAlias) {
             classifierGenerator.processTypeParameters(typeAlias, irTypeAlias)
         }
         return irTypeAlias
@@ -158,7 +157,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
 
     fun generateIrFunction(function: FirFunction, conversionScope: Fir2IrConversionScope): IrSimpleFunction {
         val irFunction = callablesGenerator.createIrFunction(function, conversionScope.parent())
-        symbolTable.withScope(irFunction) {
+        conversionScope.withScopeAndParent(irFunction) {
             classifierGenerator.processTypeParameters(function, irFunction)
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
             // TODO: process default values of value parameters
@@ -170,7 +169,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
     fun generateIrConstructor(constructor: FirConstructor, conversionScope: Fir2IrConversionScope): IrConstructor {
         val containingIrClass = conversionScope.lastClass()!!
         val irConstructor = callablesGenerator.createIrConstructor(constructor, containingIrClass)
-        symbolTable.withScope(irConstructor) {
+        conversionScope.withScopeAndParent(irConstructor) {
             classifierGenerator.processTypeParameters(constructor, irConstructor)
             callablesGenerator.processValueParameters(constructor, irConstructor, containingIrClass)
             // TODO: process default values of value parameters
@@ -254,7 +253,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
             )
         }
         // TODO: pass IR type origin
-        symbolTable.withScope(irAccessor) {
+        conversionScope.withScopeAndParent(irAccessor) {
             classifierGenerator.processTypeParameters(accessor, irAccessor)
             callablesGenerator.processValueParameters(accessor, irAccessor, conversionScope.lastClass())
             // TODO: process body
@@ -277,22 +276,64 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
     }
 
     fun generateIrEnumEntry(enumEntry: FirEnumEntry, conversionScope: Fir2IrConversionScope): IrEnumEntry {
-        val irEnumEntry = classifierGenerator.createIrEnumEntry(enumEntry, conversionScope.lastClass()!!)
+        val irParentEnumClass = conversionScope.lastClass()!!
+        val irEnumEntry = classifierGenerator.createIrEnumEntry(enumEntry, irParentEnumClass)
 
+        // TODO: probably move this into Fir2IrVisitor
         symbolTable.withScope(irEnumEntry) {
-            if (isEnumEntryWhichRequiresSubclass(enumEntry)) {
-                val initializingObjectExpression = enumEntry.initializer as FirAnonymousObjectExpression
-                val irClassForEntry = generateIrClass(initializingObjectExpression.anonymousObject, conversionScope)
-                irEnumEntry.correspondingClass = irClassForEntry
-                val irConstructor = irClassForEntry.constructors.first()
-                irEnumEntry.initializerExpression = irFactory.createExpressionBody(
-                    IrEnumConstructorCallImpl(
-                        startOffset, endOffset, irType,
-                        constructor.symbol,
-                        typeArgumentsCount = constructor.typeParameters.size,
-                        valueArgumentsCount = constructor.valueParameters.size
-                    )
-                )
+            val irEnumType = irParentEnumClass.defaultType
+            val initializer = enumEntry.initializer
+            when {
+                isEnumEntryWhichRequiresSubclass(enumEntry) -> {
+                    // If the enum entry has its own members, we need to introduce a synthetic class.
+                    val initializingObjectExpression = initializer as FirAnonymousObjectExpression
+                    val irClassForEntry = generateIrClass(initializingObjectExpression.anonymousObject, conversionScope)
+                    irEnumEntry.correspondingClass = irClassForEntry
+                    conversionScope.withScopeAndParent(irClassForEntry) {
+                        val constructor = irClassForEntry.declarations.firstIsInstance<IrConstructor>()
+                        irEnumEntry.initializerExpression = irFactory.createExpressionBody(
+                            IrEnumConstructorCallImpl(
+                                irClassForEntry.startOffset,
+                                irClassForEntry.endOffset,
+                                irEnumType,
+                                constructor.symbol,
+                                typeArgumentsCount = constructor.typeParameters.size,
+                                valueArgumentsCount = constructor.valueParameters.size
+                            )
+                        )
+                    }
+                }
+
+                initializer is FirAnonymousObjectExpression -> {
+                    // Otherwise, this is a default-ish enum entry, which doesn't need its own synthetic class.
+                    // During raw FIR building, we put the delegated constructor call inside an anonymous object.
+                    val delegatedConstructor = initializer.anonymousObject.primaryConstructorIfAny(session)?.fir?.delegatedConstructor
+                    if (delegatedConstructor != null) {
+                        val fir2IrVisitor = Fir2IrVisitor(components, conversionScope)
+                        with(ClassMemberGenerator(components, fir2IrVisitor, conversionScope)) {
+                            irEnumEntry.initializerExpression = irFactory.createExpressionBody(
+                                // TODO: this method should be moved into Fir2IrVisitor
+                                delegatedConstructor.toIrDelegatingConstructorCall()
+                            )
+                        }
+                    } else {}
+                }
+
+                else -> {
+                    // a default-ish enum entry whose initializer would be a delegating constructor call
+                    val constructor = irParentEnumClass.defaultConstructor
+                        ?: error("Assuming that default constructor should exist and be converted at this point")
+                    enumEntry.convertWithOffsets { startOffset, endOffset ->
+                        irEnumEntry.initializerExpression = irFactory.createExpressionBody(
+                            IrEnumConstructorCallImpl(
+                                startOffset, endOffset, irEnumType, constructor.symbol,
+                                valueArgumentsCount = constructor.valueParameters.size,
+                                typeArgumentsCount = constructor.typeParameters.size
+                            )
+                        )
+                        irEnumEntry
+                    }
+                }
             }
         }
 
@@ -315,13 +356,37 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         // TODO: rewrite with scopes
         return initializer is FirAnonymousObjectExpression && initializer.anonymousObject.declarations.any { it !is FirConstructor }
     }
+}
 
-    private inline fun <E, R> Fir2IrConversionScope.withScopeAndParent(
-        owner: E,
-        block: () -> R,
-    ): R where E : IrSymbolOwner, E : IrDeclarationParent {
-        symbolTable.withScope(owner) {
-            withParent(owner, block) // TODO
-        }
+context(Fir2IrComponents)
+@PrivateForInline
+@PublishedApi
+internal inline fun <E, R> Fir2IrConversionScope.withScopeAndParentBase(
+    owner: E,
+    block: () -> R,
+): R where E : IrSymbolOwner, E : IrDeclarationParent {
+    return symbolTable.withScope(owner) {
+        withParent(owner) { block() }
     }
+}
+
+context(Fir2IrComponents)
+@OptIn(PrivateForInline::class)
+inline fun <E, R> Fir2IrConversionScope.withScopeAndParent(
+    owner: E,
+    block: () -> R,
+): R where E : IrSymbolOwner, E : IrDeclarationParent {
+    return withScopeAndParentBase(owner, block)
+}
+
+context(Fir2IrComponents)
+@OptIn(PrivateForInline::class)
+inline fun <R> Fir2IrConversionScope.withScopeAndParent(klass: IrClass, block: () -> R): R {
+    return withScopeAndParentBase(klass) { withClass(klass) { block() } }
+}
+
+context(Fir2IrComponents)
+@OptIn(PrivateForInline::class)
+inline fun <R> Fir2IrConversionScope.withScopeAndParent(function: IrFunction, block: () -> R): R {
+    return withScopeAndParentBase(function) { withFunction(function) { block() } }
 }

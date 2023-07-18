@@ -17,10 +17,7 @@ import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
-class Fir2IrClassifierGenerator(
-    private val components: Fir2IrComponents,
-    commonMemberStorage: Fir2IrCommonMemberStorage
-) : Fir2IrComponents by components {
+class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
     private val firProvider = session.firProvider
 
     fun createIrClass(regularClass: FirRegularClass, parent: IrDeclarationParent): IrClass {

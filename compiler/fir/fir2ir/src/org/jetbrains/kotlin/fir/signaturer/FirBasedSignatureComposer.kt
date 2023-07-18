@@ -195,7 +195,7 @@ class FirBasedSignatureComposer(val mangler: FirMangler) {
         }
 
         override fun visitElement(element: FirElement, data: Any?) {
-            TODO("Should not be here")
+            error("Unexpected element: ${element.render()}")
         }
 
         override fun visitRegularClass(regularClass: FirRegularClass, data: Any?) {
