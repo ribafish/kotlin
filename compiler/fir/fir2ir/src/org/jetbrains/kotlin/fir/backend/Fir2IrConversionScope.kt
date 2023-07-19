@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.util.isSetter
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.util.PrivateForInline
@@ -174,7 +175,11 @@ class Fir2IrConversionScope {
     fun defaultConversionTypeOrigin(): ConversionTypeOrigin =
         if ((parent() as? IrFunction)?.isSetter == true) ConversionTypeOrigin.SETTER else ConversionTypeOrigin.DEFAULT
 
-    fun dispatchReceiverParameter(irClass: IrClass): IrValueParameter? {
+    // contract: returns not null => irClassSymbol is bound
+    fun dispatchReceiverParameter(irClassSymbol: IrClassSymbol): IrValueParameter? {
+        // If class symbol is not bound then this class came from dependencies and can not appear in coversion scope
+        if (!irClassSymbol.isBound) return null
+        val irClass = irClassSymbol.owner
         for (function in functionStack.asReversed()) {
             if (function.parentClassOrNull == irClass) {
                 // An inner class's constructor needs an instance of the outer class as a dispatch receiver.

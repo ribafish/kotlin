@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -28,20 +27,28 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         SymbolTableSlice.Scoped(lock)
     }
 
+    private val variableSlice: SymbolTableSlice.Scoped<FirVariableSymbol<*>, IrVariable, IrVariableSymbol> by threadLocal {
+        SymbolTableSlice.Scoped(lock)
+    }
+
     override fun MutableList<SymbolTableSlice.Scoped<*, *, *>>.initializeScopedSlices() {
         add(valueParameterSlice)
+        add(variableSlice)
     }
 
     // ------------------------------------ signature ------------------------------------
 
-    @Deprecated("should not be called", level = DeprecationLevel.HIDDEN)
     override fun calculateSignature(declaration: FirBasedSymbol<*>): IdSignature? {
-        shouldNotBeCalled()
+        return when (declaration) {
+            is FirClassSymbol<*> -> signatureComposer.composeSignature(declaration.fir)
+            is FirScriptSymbol -> signatureComposer.composeSignature(declaration.fir)
+            is FirConstructorSymbol -> signatureComposer.composeSignature(declaration.fir)
+            else -> error("Signature can not be calculated for this declaration: ${declaration::class.simpleName}")
+        }
     }
 
-    @Deprecated("should not be called", level = DeprecationLevel.HIDDEN)
     override fun calculateEnumEntrySignature(declaration: FirEnumEntrySymbol): IdSignature? {
-        shouldNotBeCalled()
+        return signatureComposer.composeSignature(declaration.fir)
     }
 
     @Deprecated("should not be called", level = DeprecationLevel.HIDDEN)
@@ -105,6 +112,21 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             SymbolTable::declareConstructor,
             { createConstructorSymbol(declaration, it) },
             classFactory,
+            specificCalculateSignature = { signature }
+        )
+    }
+
+    fun declareConstructorIfNotExists(
+        declaration: FirConstructorSymbol,
+        signature: IdSignature?,
+        constructorFactory: (IrConstructorSymbol) -> IrConstructor,
+    ): IrConstructor {
+        return declareIfNotExist(
+            declaration,
+            constructorSlice,
+            SymbolTable::declareConstructorIfNotExists,
+            { createConstructorSymbol(declaration, it) },
+            constructorFactory,
             specificCalculateSignature = { signature }
         )
     }
@@ -209,6 +231,21 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         )
     }
 
+    fun declarePropertyIfNotExists(
+        declaration: FirPropertySymbol,
+        signature: IdSignature?,
+        propertyFactory: (IrPropertySymbol) -> IrProperty,
+    ): IrProperty {
+        return declareIfNotExist(
+            declaration,
+            propertySlice,
+            SymbolTable::declarePropertyIfNotExists,
+            { createPropertySymbol(declaration, it) },
+            propertyFactory,
+            specificCalculateSignature = { signature }
+        )
+    }
+
     @OptIn(SymbolTableInternals::class)
     fun referenceProperty(declaration: FirPropertySymbol, signature: IdSignature?): IrPropertySymbol {
         return reference(
@@ -220,6 +257,11 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             ::createPrivatePropertySymbol,
             specificCalculateSignature = { signature }
         )
+    }
+
+    @Deprecated("Should not be called", level = DeprecationLevel.HIDDEN)
+    override fun referenceProperty(declaration: FirPropertySymbol): IrPropertySymbol {
+        shouldNotBeCalled()
     }
 
     override fun defaultPropertyFactory(
@@ -266,6 +308,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         signature: IdSignature?,
         functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction,
     ): IrSimpleFunction {
+        require(declaration !is FirConstructorSymbol)
         return declare(
             declaration,
             functionSlice,
@@ -276,8 +319,25 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         )
     }
 
+    fun declareFunctionIfNotExists(
+        declaration: FirFunctionSymbol<*>,
+        signature: IdSignature?,
+        functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction,
+    ): IrSimpleFunction {
+        return declareIfNotExist(
+            declaration,
+            functionSlice,
+            SymbolTable::declareSimpleFunctionIfNotExists,
+            { createFunctionSymbol(declaration, it) },
+            functionFactory,
+            specificCalculateSignature = { signature }
+        )
+    }
+
+
     @OptIn(SymbolTableInternals::class)
     fun referenceFunction(declaration: FirFunctionSymbol<*>, signature: IdSignature?): IrFunctionSymbol {
+        require(declaration !is FirConstructorSymbol)
         return reference(
             declaration,
             functionSlice,
@@ -287,6 +347,11 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             ::createPrivateFunctionSymbol,
             specificCalculateSignature = { signature }
         )
+    }
+
+    @Deprecated("Should not be called", level = DeprecationLevel.HIDDEN)
+    override fun referenceSimpleFunction(declaration: FirFunctionSymbol<*>): IrSimpleFunctionSymbol {
+        shouldNotBeCalled()
     }
 
     // ------------------------------------ type parameter ------------------------------------
@@ -328,17 +393,15 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         return declareScopedTypeParameter(declaration, typeParameterFactory, specificCalculateSignature = { signature })
     }
 
-    @OptIn(SymbolTableInternals::class)
-    fun referenceScopedTypeParameter(declaration: FirTypeParameterSymbol, signature: IdSignature?): IrTypeParameterSymbol {
-        return reference(
-            declaration,
-            globalTypeParameterSlice,
-            SymbolTable::referenceTypeParameterImpl,
-            ::createTypeParameterSymbol,
-            ::createPublicTypeParameterSymbol,
-            ::createPrivateTypeParameterSymbol,
-            specificCalculateSignature = { signature }
-        )
+    override fun referenceTypeParameter(declaration: FirTypeParameterSymbol): IrTypeParameterSymbol {
+        return when (val container = declaration.containingDeclarationSymbol) {
+            is FirClassLikeSymbol<*> -> {
+                val containerSignature = signatureComposer.composeSignature(container.fir)
+                val signature = signatureComposer.composeTypeParameterSignature(container.typeParameterSymbols.indexOf(declaration), containerSignature)
+                referenceGlobalTypeParameter(declaration, signature)
+            }
+            else -> referenceScopedTypeParameter(declaration)
+        }
     }
 
     override fun defaultTypeParameterFactory(
@@ -365,5 +428,13 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         valueParameterFactory: (IrValueParameterSymbol) -> IrValueParameter,
     ): IrValueParameter {
         return valueParameterSlice.declareLocal(declaration, { IrValueParameterSymbolImpl() }, valueParameterFactory)
+    }
+
+    // ------------------------------------ variable ------------------------------------
+
+    fun referenceVariable(declaration: FirVariableSymbol<*>): IrVariableSymbol {
+        return variableSlice.referenced(declaration) {
+            error("Undefined variable referenced: $declaration\n${variableSlice.dump()}")
+        }
     }
 }

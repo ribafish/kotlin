@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.backend.generators
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.comparators.FirCallableDeclarationComparator
@@ -134,7 +135,7 @@ internal class ClassMemberGenerator(
                             ?: error("Not found context receiver fields")
 
                     val thisParameter =
-                        conversionScope.dispatchReceiverParameter(irClass) ?: error("No found this parameter for $irClass")
+                        conversionScope.dispatchReceiverParameter(irClass.symbol) ?: error("No found this parameter for $irClass")
 
                     for (index in containingClass.contextReceivers.indices) {
                         val irValueParameter = valueParameters[index]
@@ -350,7 +351,7 @@ internal class ClassMemberGenerator(
 
         val firDispatchReceiver = dispatchReceiver
         return convertWithOffsets { startOffset, endOffset ->
-            val irConstructorSymbol = declarationStorage.getIrFunctionSymbol(constructorSymbol) as IrConstructorSymbol
+            val irConstructorSymbol = symbolTable.referenceConstructor(constructorSymbol)
             val typeArguments = constructedTypeRef.coneType.fullyExpandedType(session).typeArguments
             val constructor = constructorSymbol.fir
             /*
@@ -379,7 +380,8 @@ internal class ClassMemberGenerator(
                     irBuiltIns.unitType,
                     irConstructorSymbol,
                     typeArgumentsCount = constructor.typeParameters.size,
-                    valueArgumentsCount = irConstructorSymbol.owner.valueParameters.size
+                    // TODO: handle inner classes
+                    valueArgumentsCount = constructor.valueParameters.size // irConstructorSymbol.owner.valueParameters.size
                 )
             }.let {
                 if (constructor.typeParameters.isNotEmpty()) {
@@ -395,10 +397,7 @@ internal class ClassMemberGenerator(
                     it.dispatchReceiver = visitor.convertToIrExpression(firDispatchReceiver)
                 }
                 with(callGenerator) {
-                    declarationStorage.enterScope(irConstructorSymbol.owner)
-                    val result = it.applyCallArguments(this@toIrDelegatingConstructorCall)
-                    declarationStorage.leaveScope(irConstructorSymbol.owner)
-                    result
+                    it.applyCallArguments(this@toIrDelegatingConstructorCall)
                 }
             }
         }

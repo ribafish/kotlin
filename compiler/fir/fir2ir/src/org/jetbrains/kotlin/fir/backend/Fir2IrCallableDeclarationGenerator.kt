@@ -339,7 +339,6 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         val visibility = if (irParent.isAnonymousObject) Visibilities.Public else constructor.visibility
         return constructor.convertWithOffsets { startOffset, endOffset ->
             symbolTable.declareConstructor(constructor.symbol, signature) { symbol ->
-                classifierStorage.preCacheTypeParameters(constructor, symbol)
                 irFactory.createConstructor(
                     startOffset = startOffset,
                     endOffset = endOffset,
@@ -354,6 +353,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                     isExternal = false,
                 ).apply {
                     metadata = FirMetadataSource.Function(constructor)
+                    parent = irParent
                 }
             }
         }
@@ -400,7 +400,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         fieldSymbol: FirVariableSymbol<*>,
         origin: IrDeclarationOrigin,
         name: Name,
-        isFinal: Boolean,
+        isFinal: Boolean = property.isVal,
         // TODO: maybe can remove?
         // firInitializerExpression: FirExpression?,
         // type: IrType? = null,

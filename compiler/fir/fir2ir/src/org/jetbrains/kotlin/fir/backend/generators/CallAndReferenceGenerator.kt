@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticFunctionSymbol
+import org.jetbrains.kotlin.fir.resolve.dfa.symbol
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.isMarkedWithImplicitIntegerCoercion
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -243,10 +244,11 @@ class CallAndReferenceGenerator(
         val superTypeRef = dispatchReceiverReference.superTypeRef
         val coneSuperType = superTypeRef.coneTypeSafe<ConeClassLikeType>() ?: return null
         val firClassSymbol = coneSuperType.fullyExpandedType(session).lookupTag.toSymbol(session) as? FirClassSymbol<*>
-        if (firClassSymbol != null) {
-            return classifierStorage.getIrClassSymbol(firClassSymbol)
+        return if (firClassSymbol != null) {
+            symbolTable.referenceClass(firClassSymbol)
+        } else {
+            null
         }
-        return null
     }
 
     private val Name.dynamicOperator
@@ -402,7 +404,22 @@ class CallAndReferenceGenerator(
                     }
                 }
                 when (symbol) {
-                    is IrConstructorSymbol -> IrConstructorCallImpl.fromSymbolOwner(startOffset, endOffset, type, symbol)
+                    is IrConstructorSymbol -> {
+                        val firConstructorSymbol = calleeReference.toResolvedConstructorSymbol()!!
+                        val constructedClass = firConstructorSymbol.getConstructedClass(session)!!
+                        val constructorTypeParametersCount = firConstructorSymbol.fir.typeParameters.size
+                        val classTypeParametersCount = constructedClass.fir.typeParameters.size
+                        val totalTypeParametersCount = classTypeParametersCount + constructorTypeParametersCount
+                        IrConstructorCallImpl(
+                            startOffset,
+                            endOffset,
+                            type,
+                            symbol,
+                            totalTypeParametersCount,
+                            constructorTypeParametersCount,
+                            firConstructorSymbol.fir.valueParameters.size
+                        )
+                    }
                     is IrSimpleFunctionSymbol -> {
                         require(firSymbol is FirCallableSymbol<*>) { "Illegal symbol: ${firSymbol!!::class}" }
                         val valueParametersNumber = when (firSymbol) {

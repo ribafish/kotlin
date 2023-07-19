@@ -21,9 +21,9 @@ class FirJvmElementAwareStringTable(
     private val components: Fir2IrComponents,
     nameResolver: JvmNameResolver? = null
 ) : JvmStringTable(nameResolver), FirElementAwareStringTable {
-    override fun getLocalClassIdReplacement(firClass: FirClass): ClassId =
-        components.classifierStorage.getCachedIrClass(firClass)?.getLocalClassIdReplacement()
-            ?: throw AssertionError("not a local class: ${firClass.symbol.classId}")
+    override fun getLocalClassIdReplacement(firClass: FirClass): ClassId {
+        return components.symbolTable.referenceClass(firClass.symbol).owner.getLocalClassIdReplacement()
+    }
 
     private fun IrClass.getLocalClassIdReplacement(): ClassId =
         when (val parent = parent) {

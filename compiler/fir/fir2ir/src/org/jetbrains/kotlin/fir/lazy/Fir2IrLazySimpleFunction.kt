@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
@@ -36,7 +37,6 @@ class Fir2IrLazySimpleFunction(
 ) : AbstractFir2IrLazyFunction<FirSimpleFunction>(components, startOffset, endOffset, origin, symbol, isFakeOverride) {
     init {
         symbol.bind(this)
-        classifierStorage.preCacheTypeParameters(fir, symbol)
     }
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
@@ -65,24 +65,24 @@ class Fir2IrLazySimpleFunction(
     override var contextReceiverParametersCount: Int = fir.contextReceiversForFunctionOrContainingProperty().size
 
     override var valueParameters: List<IrValueParameter> by lazyVar(lock) {
-        declarationStorage.enterScope(this)
+        symbolTable.withScope(this) {
+            buildList {
+                callablesGenerator.addContextReceiverParametersTo(
+                    fir.contextReceiversForFunctionOrContainingProperty(),
+                    this@Fir2IrLazySimpleFunction,
+                    this@buildList,
+                )
 
-        buildList {
-            declarationStorage.addContextReceiverParametersTo(
-                fir.contextReceiversForFunctionOrContainingProperty(),
-                this@Fir2IrLazySimpleFunction,
-                this@buildList,
-            )
-
-            fir.valueParameters.mapIndexedTo(this) { index, valueParameter ->
-                declarationStorage.createIrParameter(
-                    valueParameter, index + contextReceiverParametersCount, skipDefaultParameter = isFakeOverride
-                ).apply {
-                    this.parent = this@Fir2IrLazySimpleFunction
+                fir.valueParameters.mapIndexedTo(this) { index, valueParameter ->
+                    callablesGenerator.createIrValueParameter(
+                        valueParameter,
+                        index + contextReceiverParametersCount,
+                        // skipDefaultParameter = isFakeOverride // TODO check if this really needed
+                    ).apply {
+                        this.parent = this@Fir2IrLazySimpleFunction
+                    }
                 }
             }
-        }.apply {
-            declarationStorage.leaveScope(this@Fir2IrLazySimpleFunction)
         }
     }
 

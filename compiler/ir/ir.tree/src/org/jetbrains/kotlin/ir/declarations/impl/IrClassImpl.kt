@@ -45,6 +45,9 @@ open class IrClassImpl(
         get() = symbol.descriptor
 
     override var thisReceiver: IrValueParameter? = null
+        set(value) {
+            field = value
+        }
 
     override val declarations: MutableList<IrDeclaration> = ArrayList()
 

@@ -15,14 +15,15 @@ import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isExternal
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
-import org.jetbrains.kotlin.fir.symbols.Fir2IrConstructorSymbol
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
@@ -34,12 +35,11 @@ class Fir2IrLazyConstructor(
     override val endOffset: Int,
     override var origin: IrDeclarationOrigin,
     override val fir: FirConstructor,
-    override val symbol: Fir2IrConstructorSymbol,
+    override val symbol: IrConstructorSymbol,
 ) : IrConstructor(), AbstractFir2IrLazyDeclaration<FirConstructor>, Fir2IrTypeParametersContainer,
     Fir2IrComponents by components {
     init {
         symbol.bind(this)
-        classifierStorage.preCacheTypeParameters(fir, symbol)
     }
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
@@ -83,12 +83,11 @@ class Fir2IrLazyConstructor(
         val containingClass = parent as? IrClass
         val outerClass = containingClass?.parentClassOrNull
         if (containingClass?.isInner == true && outerClass != null) {
-            declarationStorage.enterScope(this)
-            declareThisReceiverParameter(
-                thisType = outerClass.thisReceiver!!.type,
-                thisOrigin = origin
-            ).apply {
-                declarationStorage.leaveScope(this@Fir2IrLazyConstructor)
+            symbolTable.withScope(this) {
+                declareThisReceiverParameter(
+                    thisType = outerClass.thisReceiver!!.type,
+                    thisOrigin = origin
+                )
             }
         } else null
     }
@@ -98,24 +97,22 @@ class Fir2IrLazyConstructor(
     override var contextReceiverParametersCount: Int = fir.contextReceivers.size
 
     override var valueParameters: List<IrValueParameter> by lazyVar(lock) {
-        declarationStorage.enterScope(this)
+        symbolTable.withScope(this) {
+            buildList {
+                callablesGenerator.addContextReceiverParametersTo(
+                    fir.contextReceivers,
+                    this@Fir2IrLazyConstructor,
+                    this@buildList,
+                )
 
-        buildList {
-            declarationStorage.addContextReceiverParametersTo(
-                fir.contextReceivers,
-                this@Fir2IrLazyConstructor,
-                this@buildList,
-            )
-
-            fir.valueParameters.mapIndexedTo(this) { index, valueParameter ->
-                declarationStorage.createIrParameter(
-                    valueParameter, index + contextReceiverParametersCount
-                ).apply {
-                    this.parent = this@Fir2IrLazyConstructor
+                fir.valueParameters.mapIndexedTo(this) { index, valueParameter ->
+                    declarationStorage.createIrParameter(
+                        valueParameter, index + contextReceiverParametersCount
+                    ).apply {
+                        this.parent = this@Fir2IrLazyConstructor
+                    }
                 }
             }
-        }.apply {
-            declarationStorage.leaveScope(this@Fir2IrLazyConstructor)
         }
     }
 

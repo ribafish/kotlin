@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.*
+import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.isIteratorNext
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -66,7 +67,7 @@ class Fir2IrVisitor(
 
     internal val implicitCastInserter = Fir2IrImplicitCastInserter(components)
 
-    private val memberGenerator = ClassMemberGenerator(components, this, conversionScope)
+    internal val memberGenerator = ClassMemberGenerator(components, this, conversionScope)
 
     private val operatorGenerator = OperatorExpressionGenerator(components, this, conversionScope)
 
@@ -626,6 +627,18 @@ class Fir2IrVisitor(
     }
 
     // Note that this mimics psi2ir [StatementGenerator#shouldGenerateReceiverAsSingletonReference].
+    /*
+    TODO: function before rebase
+    private fun isThisForClassPhysicallyAvailable(irClassSymbol: IrClassSymbol): Boolean {
+        var lastClass = conversionScope.lastClass()
+        while (lastClass != null) {
+            if (irClassSymbol == lastClass.symbol) return true
+            if (!lastClass.isInner) return false
+            lastClass = lastClass.parentClassOrNull
+        }
+        return false
+    }
+     */
     private fun shouldGenerateReceiverAsSingletonReference(irClass: IrClass): Boolean {
         val scopeOwner = conversionScope.parent()
         return irClass.isObject &&
@@ -640,51 +653,25 @@ class Fir2IrVisitor(
         val calleeReference = thisReceiverExpression.calleeReference
         val boundSymbol = calleeReference.boundSymbol
         when (boundSymbol) {
-            is FirClassSymbol -> {
+            is FirClassSymbol<*> -> {
                 // Object case
-                val firClass = boundSymbol.fir as FirClass
-                val irClass = if (firClass.origin == FirDeclarationOrigin.Source) {
-                    // We anyway can use 'else' branch as fallback, but
-                    // this is an additional check of FIR2IR invariants
-                    // (source classes should be already built when we analyze bodies)
-                    classifierStorage.getCachedIrClass(firClass)!!
-                } else {
-                    classifierStorage.getIrClassSymbol(boundSymbol).owner
-                }
+                val firClass = boundSymbol.fir
+                val irClassSymbol = symbolTable.referenceClass(boundSymbol)
 
-                if (shouldGenerateReceiverAsSingletonReference(irClass)) {
+                if (shouldGenerateReceiverAsSingletonReference(irClassSymbol)) {
                     return thisReceiverExpression.convertWithOffsets { startOffset, endOffset ->
-                        IrGetObjectValueImpl(startOffset, endOffset, irClass.defaultType, irClass.symbol)
+                        IrGetObjectValueImpl(startOffset, endOffset, firClass.defaultType().toIrType(), irClassSymbol)
                     }
                 }
 
-                val dispatchReceiver = conversionScope.dispatchReceiverParameter(irClass)
+                val dispatchReceiver = conversionScope.dispatchReceiverParameter(irClassSymbol)
                 if (dispatchReceiver != null) {
-                    return thisReceiverExpression.convertWithOffsets { startOffset, endOffset ->
-                        val thisRef = IrGetValueImpl(startOffset, endOffset, dispatchReceiver.type, dispatchReceiver.symbol)
-                        if (calleeReference.contextReceiverNumber != -1) {
-                            val constructorForCurrentlyGeneratedDelegatedConstructor =
-                                conversionScope.getConstructorForCurrentlyGeneratedDelegatedConstructor(irClass)
-
-                            if (constructorForCurrentlyGeneratedDelegatedConstructor != null) {
-                                val constructorParameter =
-                                    constructorForCurrentlyGeneratedDelegatedConstructor.valueParameters[calleeReference.contextReceiverNumber]
-                                IrGetValueImpl(startOffset, endOffset, constructorParameter.type, constructorParameter.symbol)
-                            } else {
-                                val contextReceivers =
-                                    components.classifierStorage.getFieldsWithContextReceiversForClass(irClass)
-                                        ?: error("Not defined context receivers for $irClass")
-
-                                IrGetFieldImpl(
-                                    startOffset, endOffset, contextReceivers[calleeReference.contextReceiverNumber].symbol,
-                                    thisReceiverExpression.typeRef.toIrType(),
-                                    thisRef,
-                                )
-                            }
-                        } else {
-                            thisRef
-                        }
-                    }
+                    return convertThisExpressionWithSpecificDispatchReceiver(
+                        thisReceiverExpression,
+                        irClassSymbol.owner,
+                        dispatchReceiver,
+                        calleeReference
+                    )
                 }
             }
             is FirScriptSymbol -> {
@@ -725,6 +712,38 @@ class Fir2IrVisitor(
             }
         }
         return visitQualifiedAccessExpression(thisReceiverExpression, data)
+    }
+
+    private fun convertThisExpressionWithSpecificDispatchReceiver(
+        thisReceiverExpression: FirThisReceiverExpression,
+        irClass: IrClass,
+        dispatchReceiver: IrValueParameter,
+        calleeReference: FirThisReference,
+    ): IrDeclarationReference {
+        return thisReceiverExpression.convertWithOffsets { startOffset, endOffset ->
+            val thisRef = IrGetValueImpl(startOffset, endOffset, dispatchReceiver.type, dispatchReceiver.symbol)
+            if (calleeReference.contextReceiverNumber == -1) {
+                return thisRef
+            }
+            val constructorForCurrentlyGeneratedDelegatedConstructor =
+                conversionScope.getConstructorForCurrentlyGeneratedDelegatedConstructor(irClass)
+
+            if (constructorForCurrentlyGeneratedDelegatedConstructor != null) {
+                val constructorParameter =
+                    constructorForCurrentlyGeneratedDelegatedConstructor.valueParameters[calleeReference.contextReceiverNumber]
+                IrGetValueImpl(startOffset, endOffset, constructorParameter.type, constructorParameter.symbol)
+            } else {
+                val contextReceivers =
+                    components.classifierStorage.getFieldsWithContextReceiversForClass(irClass)
+                        ?: error("Not defined context receivers for $irClass")
+
+                IrGetFieldImpl(
+                    startOffset, endOffset, contextReceivers[calleeReference.contextReceiverNumber].symbol,
+                    thisReceiverExpression.typeRef.toIrType(),
+                    thisRef,
+                )
+            }
+        }
     }
 
     override fun visitInaccessibleReceiverExpression(
@@ -1427,12 +1446,12 @@ class Fir2IrVisitor(
             }
         val irClassReferenceSymbol = when (argument) {
             is FirResolvedReifiedParameterReference -> {
-                classifierStorage.getIrTypeParameterSymbol(argument.symbol, ConversionTypeOrigin.DEFAULT)
+                symbolTable.referenceTypeParameter(argument.symbol)
             }
             is FirResolvedQualifier -> {
                 when (val symbol = argument.symbol) {
                     is FirClassSymbol -> {
-                        classifierStorage.getIrClassSymbol(symbol)
+                        symbolTable.referenceClass(symbol)
                     }
                     is FirTypeAliasSymbol -> {
                         symbol.fir.expandedConeType.toIrClassSymbol()
@@ -1464,10 +1483,10 @@ class Fir2IrVisitor(
         }
     }
 
-    private fun ConeClassLikeType?.toIrClassSymbol(): IrClassSymbol? =
-        (this?.lookupTag?.toSymbol(session) as? FirClassSymbol<*>)?.let {
-            classifierStorage.getIrClassSymbol(it)
-        }
+    private fun ConeClassLikeType?.toIrClassSymbol(): IrClassSymbol? {
+        val classSymbol = this?.lookupTag?.toSymbol(session) as? FirClassSymbol<*> ?: return null
+        return symbolTable.referenceClass(classSymbol)
+    }
 
     private fun convertToArrayOfCall(arrayOfCall: FirArrayOfCall): IrVararg {
         return arrayOfCall.convertWithOffsets { startOffset, endOffset ->

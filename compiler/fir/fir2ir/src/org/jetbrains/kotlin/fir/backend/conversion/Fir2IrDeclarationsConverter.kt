@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.fir.backend.conversion
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtPsiSourceFileLinesMapping
 import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
@@ -20,61 +18,25 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
-import org.jetbrains.kotlin.fir.descriptors.FirBuiltInsPackageFragment
-import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
-import org.jetbrains.kotlin.fir.descriptors.FirPackageFragmentDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.resolve.providers.firProvider
-import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.resolve.providers.toSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.processAllCallables
 import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.fir.types.toLookupTag
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrEnumConstructorCallImpl
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrExternalPackageFragmentSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.NameUtils
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComponents by components {
-
-    // -------------------------------------------- Builtins --------------------------------------------
-
-    fun processBuiltinClasses() {
-        val conversionScope = Fir2IrConversionScope()
-        for ((classId, irBuiltinSymbol) in typeConverter.classIdToSymbolMap) {
-            // toSymbol() can return null when using an old stdlib that's missing some types
-            val firClass = classId.toSymbol(session)?.fir as FirRegularClass? ?: continue
-            val irClass = irBuiltinSymbol.owner
-            processClassDeclarations(conversionScope, firClass, irClass)
-            declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
-        }
-        for ((primitiveClassId, primitiveArrayId) in StandardClassIds.primitiveArrayTypeByElementType) {
-            // toSymbol() can return null when using an old stdlib that's missing some types
-            val firClass = primitiveArrayId.toLookupTag().toSymbol(session)?.fir as FirRegularClass? ?: continue
-            val irType = typeConverter.classIdToTypeMap[primitiveClassId]
-            val irClass = irBuiltIns.primitiveArrayForType[irType]!!.owner
-            processClassDeclarations(conversionScope, firClass, irClass)
-            declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
-        }
-    }
-
 
     // -------------------------------------------- Main --------------------------------------------
 
@@ -111,7 +73,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         val conversionScope = Fir2IrConversionScope()
         conversionScope.withParent(irFile) {
             for (declaration in file.declarations) {
-                generateIrDeclaration(declaration, conversionScope)
+                irFile.declarations += generateIrDeclaration(declaration, conversionScope)
             }
         }
     }
@@ -142,10 +104,12 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
     private fun processClassDeclarations(conversionScope: Fir2IrConversionScope, klass: FirClass, irClass: IrClass) {
         conversionScope.withScopeAndParent(irClass) {
             conversionScope.withClass(irClass) {
-                classifierGenerator.processTypeParameters(klass, irClass)
-                val classMembers = collectAllClassMembers(klass)
-                for (declaration in classMembers) {
-                    irClass.declarations += generateIrDeclaration(declaration, conversionScope)
+                conversionScope.withContainingFirClass(klass) {
+                    classifierGenerator.processTypeParameters(klass, irClass)
+                    val classMembers = collectAllClassMembers(klass)
+                    for (declaration in classMembers) {
+                        irClass.declarations += generateIrDeclaration(declaration, conversionScope)
+                    }
                 }
             }
         }
@@ -209,6 +173,13 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
             // TODO: process default values of value parameters
             // TODO: process body
+            val visitor = Fir2IrVisitor(components, conversionScope)
+            val memberGenerator = visitor.memberGenerator
+            memberGenerator.convertFunctionContent(
+                irFunction,
+                function,
+                (function.dispatchReceiverType?.toSymbol(session) as? FirClassSymbol<*>)?.fir
+            )
         }
         return irFunction
     }
@@ -219,6 +190,8 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         conversionScope.withScopeAndParent(irConstructor) {
             classifierGenerator.processTypeParameters(constructor, irConstructor)
             callablesGenerator.processValueParameters(constructor, irConstructor, containingIrClass)
+            val visitor = Fir2IrVisitor(components, conversionScope)
+            visitor.memberGenerator.convertFunctionContent(irConstructor, constructor, conversionScope.containerFirClass())
             // TODO: process default values of value parameters
             // TODO: process body
         }
@@ -258,8 +231,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
                     irProperty,
                     property.backingField!!.symbol,
                     IrDeclarationOrigin.PROPERTY_BACKING_FIELD,
-                    property.name,
-                    isFinal = property.isVal
+                    property.name
                 )
                 // TODO: process initializer
             }
@@ -267,18 +239,10 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
     }
 
     private fun processPropertyAccessors(property: FirProperty, irProperty: IrProperty, conversionScope: Fir2IrConversionScope) {
-        val getter = property.getter ?: FirDefaultPropertyAccessor.createGetterOrSetter(
-            property.source?.fakeElement(KtFakeSourceElementKind.DefaultAccessor),
-            property.moduleData, property.origin, property.returnTypeRef,
-            property.visibility, property.symbol, isGetter = true
-        )
+        val getter = property.getterOrDefault
         processPropertyAccessor(property, irProperty, getter, isSetter = false, conversionScope)
         if (property.isVar) {
-            val setter = property.getter ?: FirDefaultPropertyAccessor.createGetterOrSetter(
-                property.source?.fakeElement(KtFakeSourceElementKind.DefaultAccessor),
-                property.moduleData, property.origin, property.returnTypeRef,
-                property.visibility, property.symbol, isGetter = false
-            )
+            val setter = property.getterOrDefault
             processPropertyAccessor(property, irProperty, setter, isSetter = true, conversionScope)
         }
     }
@@ -436,4 +400,21 @@ context(Fir2IrComponents)
 @OptIn(PrivateForInline::class)
 inline fun <R> Fir2IrConversionScope.withScopeAndParent(function: IrFunction, block: () -> R): R {
     return withScopeAndParentBase(function) { withFunction(function) { block() } }
+}
+
+val FirProperty.getterOrDefault: FirPropertyAccessor
+    get() = getter ?: createDefaultAccessor(isGetter = true)
+
+val FirProperty.setterOrDefault: FirPropertyAccessor
+    get() {
+        require(isVar) { "val property can not have setter" }
+        return setter ?: createDefaultAccessor(isGetter = false)
+    }
+
+private fun FirProperty.createDefaultAccessor(isGetter: Boolean): FirDefaultPropertyAccessor {
+    return FirDefaultPropertyAccessor.createGetterOrSetter(
+        source?.fakeElement(KtFakeSourceElementKind.DefaultAccessor),
+        moduleData, origin, returnTypeRef,
+        visibility, symbol, isGetter
+    )
 }

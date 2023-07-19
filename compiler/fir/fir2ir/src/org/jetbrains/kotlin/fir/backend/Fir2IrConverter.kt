@@ -49,9 +49,8 @@ class Fir2IrConverter(
     ) {
         session.lazyDeclarationResolver.disableLazyResolveContractChecks()
         val converter = Fir2IrDeclarationsConverter(components)
-        converter.processBuiltinClasses()
         for (firFile in allFirFiles) {
-            converter.generateFile(firFile)
+            irModuleFragment.files += converter.generateFile(firFile)
         }
         evaluateConstants(irModuleFragment, configuration)
     }
@@ -299,20 +298,20 @@ class Fir2IrConverter(
 
     companion object {
         private fun evaluateConstants(irModuleFragment: IrModuleFragment, fir2IrConfiguration: Fir2IrConfiguration) {
-            val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
-            val targetPlatform = firModuleDescriptor?.platform
-            val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings
-            val intrinsicConstEvaluation = languageVersionSettings?.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
-
-            val configuration = IrInterpreterConfiguration(
-                platform = targetPlatform,
-                printOnlyExceptionMessage = true,
-            )
-            val interpreter = IrInterpreter(IrInterpreterEnvironment(irModuleFragment.irBuiltins, configuration))
-            val mode = if (intrinsicConstEvaluation) EvaluationMode.ONLY_INTRINSIC_CONST else EvaluationMode.ONLY_BUILTINS
-            irModuleFragment.files.forEach {
-                it.transformConst(interpreter, mode, fir2IrConfiguration.evaluatedConstTracker, fir2IrConfiguration.inlineConstTracker)
-            }
+//            val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
+//            val targetPlatform = firModuleDescriptor?.platform
+//            val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings
+//            val intrinsicConstEvaluation = languageVersionSettings?.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
+//
+//            val configuration = IrInterpreterConfiguration(
+//                platform = targetPlatform,
+//                printOnlyExceptionMessage = true,
+//            )
+//            val interpreter = IrInterpreter(IrInterpreterEnvironment(irModuleFragment.irBuiltins, configuration))
+//            val mode = if (intrinsicConstEvaluation) EvaluationMode.ONLY_INTRINSIC_CONST else EvaluationMode.ONLY_BUILTINS
+//            irModuleFragment.files.forEach {
+//                it.transformConst(interpreter, mode, fir2IrConfiguration.evaluatedConstTracker, fir2IrConfiguration.inlineConstTracker)
+//            }
         }
 
         fun createModuleFragmentWithSignaturesIfNeeded(
@@ -347,14 +346,14 @@ class Fir2IrConverter(
             components.delegatedMemberGenerator = DelegatedMemberGenerator(components)
             components.declarationStorage = Fir2IrDeclarationStorage(components, moduleDescriptor, commonMemberStorage)
 
-            components.classifierGenerator = Fir2IrClassifierGenerator(components, moduleDescriptor)
+            components.classifierGenerator = Fir2IrClassifierGenerator(components)
             components.callablesGenerator = Fir2IrCallableDeclarationGenerator(components)
+            components.externalDeclarationsGenerator = Fir2IrExternalDeclarationsGenerator(components, moduleDescriptor)
 
             components.visibilityConverter = visibilityConverter
             components.typeConverter = Fir2IrTypeConverter(components)
             val irBuiltIns = initializedIrBuiltIns ?: IrBuiltInsOverFir(
-                components, fir2IrConfiguration.languageVersionSettings, moduleDescriptor, irMangler,
-                fir2IrConfiguration.languageVersionSettings.getFlag(AnalysisFlags.builtInsFromSources) || kotlinBuiltIns !== DefaultBuiltIns.Instance
+                components, fir2IrConfiguration.languageVersionSettings, moduleDescriptor, irMangler
             )
             components.irBuiltIns = irBuiltIns
             val conversionScope = Fir2IrConversionScope()

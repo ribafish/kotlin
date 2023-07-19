@@ -40,6 +40,7 @@ interface Fir2IrComponents {
 
     val callablesGenerator: Fir2IrCallableDeclarationGenerator
     val classifierGenerator: Fir2IrClassifierGenerator
+    val externalDeclarationsGenerator: Fir2IrExternalDeclarationsGenerator
 
     val typeConverter: Fir2IrTypeConverter
     val signatureComposer: FirBasedSignatureComposer

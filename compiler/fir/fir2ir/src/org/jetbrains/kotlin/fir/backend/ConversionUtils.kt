@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 fun AbstractKtSourceElement?.startOffsetSkippingComments(): Int? {
     return when (this) {
@@ -124,17 +125,7 @@ fun FirClassifierSymbol<*>.toSymbol(
     handleAnnotations: ((List<FirAnnotation>) -> Unit)? = null
 ): IrClassifierSymbol {
     return when (this) {
-        is FirTypeParameterSymbol -> {
-            val container = this.containingDeclarationSymbol
-            when (container) {
-                is FirClassLikeSymbol<*> -> {
-                    val containerSignature = signatureComposer.composeSignature(container.fir)
-                    val signature = signatureComposer.composeTypeParameterSignature(container.typeParameterSymbols.indexOf(this), containerSignature)
-                    symbolTable.referenceGlobalTypeParameter(this, signature)
-                }
-                else -> symbolTable.referenceScopedTypeParameter(this)
-            }
-        }
+        is FirTypeParameterSymbol -> symbolTable.referenceTypeParameter(this)
 
         is FirTypeAliasSymbol -> {
             handleAnnotations?.invoke(fir.expandedTypeRef.annotations)
@@ -200,14 +191,19 @@ fun FirReference.toSymbolForCall(
         }
 
         is FirThisReference -> {
+            // TODO: `ownerSafe` can be probably replaced with just `owner`
             when (val boundSymbol = boundSymbol) {
-                is FirClassSymbol<*> -> classifierStorage.getIrClassSymbol(boundSymbol).owner.thisReceiver?.symbol
-                is FirFunctionSymbol -> declarationStorage.getIrFunctionSymbol(boundSymbol).owner.extensionReceiverParameter?.symbol
-                is FirPropertySymbol -> {
-                    val property = declarationStorage.getIrPropertySymbol(boundSymbol).owner as? IrProperty
-                    property?.let { conversionScope.parentAccessorOfPropertyFromStack(it) }?.symbol
+                is FirClassSymbol<*> -> symbolTable.referenceClass(boundSymbol).ownerSafe?.thisReceiver?.symbol
+                is FirFunctionSymbol<*> -> {
+                    val signature = signatureComposer.composeSignature(boundSymbol.fir)
+                    symbolTable.referenceFunction(boundSymbol, signature).owner.extensionReceiverParameter?.symbol
                 }
-                is FirScriptSymbol -> declarationStorage.getCachedIrScript(boundSymbol.fir)?.thisReceiver?.symbol
+                is FirPropertySymbol -> {
+                    val signature = signatureComposer.composeSignature(boundSymbol.fir)
+                    val property = symbolTable.referenceProperty(boundSymbol, signature).owner
+                    conversionScope.parentAccessorOfPropertyFromStack(property)?.symbol
+                }
+                is FirScriptSymbol -> symbolTable.referenceScript(boundSymbol).owner.thisReceiver?.symbol
                 else -> null
             }
         }
@@ -255,34 +251,35 @@ private fun FirCallableSymbol<*>.toSymbolForCall(
         else -> null
     }
 
+    val signature = signatureComposer.composeSignature(fir, fakeOverrideOwnerLookupTag)
     return when (this) {
         is FirSimpleSyntheticPropertySymbol -> {
-            if (isDelegate) {
-                declarationStorage.getIrPropertySymbol(this)
-            } else {
-                (fir as? FirSyntheticProperty)?.let { syntheticProperty ->
+            val firProperty = fir
+            when {
+                isDelegate -> symbolTable.referenceProperty(this, signature)
+                firProperty is FirSyntheticProperty -> {
                     if (isReference) {
-                        declarationStorage.getIrPropertySymbol(this, fakeOverrideOwnerLookupTag)
+                        symbolTable.referenceProperty(this, signature)
                     } else {
                         val delegateSymbol = if (preferGetter) {
-                            syntheticProperty.getter.delegate.symbol
+                            firProperty.getter.delegate.symbol
                         } else {
-                            syntheticProperty.setter?.delegate?.symbol
-                                ?: throw AssertionError("Written synthetic property must have a setter")
+                            firProperty.setter?.delegate?.symbol ?: error("Written synthetic property must have a setter")
                         }
                         delegateSymbol.unwrapCallRepresentative()
                             .toSymbolForCall(dispatchReceiver, preferGetter, isDelegate = false)
                     }
-                } ?: declarationStorage.getIrPropertySymbol(this)
+                }
+                else -> symbolTable.referenceProperty(this, signature)
             }
         }
-
-        is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(this, fakeOverrideOwnerLookupTag)
-        is FirPropertySymbol -> declarationStorage.getIrPropertySymbol(this, fakeOverrideOwnerLookupTag)
-        is FirFieldSymbol -> declarationStorage.getIrFieldSymbol(this, fakeOverrideOwnerLookupTag)
-        is FirBackingFieldSymbol -> declarationStorage.getIrBackingFieldSymbol(this)
-        is FirDelegateFieldSymbol -> declarationStorage.getIrDelegateFieldSymbol(this)
-        is FirVariableSymbol<*> -> declarationStorage.getIrValueSymbol(this)
+        is FirConstructorSymbol -> symbolTable.referenceConstructor(this, signature)
+        is FirFunctionSymbol<*> -> symbolTable.referenceFunction(this, signature)
+        is FirPropertySymbol -> symbolTable.referenceProperty(this, signature)
+        is FirFieldSymbol -> symbolTable.referenceField(this, signature)
+        is FirBackingFieldSymbol -> symbolTable.referenceField(this, signature)
+        is FirDelegateFieldSymbol -> symbolTable.referenceField(this, signature)
+        is FirVariableSymbol<*> -> symbolTable.referenceVariable(this)
         else -> null
     }
 }
@@ -412,17 +409,19 @@ internal fun FirSimpleFunction.processOverriddenFunctionSymbols(
 
 context(Fir2IrComponents)
 internal fun FirSimpleFunction.generateOverriddenFunctionSymbols(containingClass: FirClass): List<IrSimpleFunctionSymbol> {
-    val superClasses = containingClass.getSuperTypesAsIrClasses() ?: return emptyList()
-    val overriddenSet = mutableSetOf<IrSimpleFunctionSymbol>()
-
-    processOverriddenFunctionSymbols(containingClass) {
-        for (overridden in fakeOverrideGenerator.getOverriddenSymbolsInSupertypes(it, superClasses)) {
-            assert(overridden != symbol) { "Cannot add function $overridden to its own overriddenSymbols" }
-            overriddenSet += overridden
-        }
-    }
-
-    return overriddenSet.toList()
+    // TODO: should be performed later
+    return emptyList()
+//    val superClasses = containingClass.getSuperTypesAsIrClasses()
+//    val overriddenSet = mutableSetOf<IrSimpleFunctionSymbol>()
+//
+//    processOverriddenFunctionSymbols(containingClass) {
+//        for (overridden in fakeOverrideGenerator.getOverriddenSymbolsInSupertypes(it, superClasses)) {
+//            assert(overridden != symbol) { "Cannot add function $overridden to its own overriddenSymbols" }
+//            overriddenSet += overridden
+//        }
+//    }
+//
+//    return overriddenSet.toList()
 }
 
 fun FirTypeScope.processOverriddenFunctionsFromSuperClasses(
@@ -458,9 +457,8 @@ fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
     }
 
 context(Fir2IrComponents)
-private fun FirClass.getSuperTypesAsIrClasses(): Set<IrClass>? {
-    val irClass =
-        declarationStorage.classifierStorage.getIrClassSymbol(symbol).owner as? IrClass ?: return null
+private fun FirClass.getSuperTypesAsIrClasses(): Set<IrClass> {
+    val irClass = symbolTable.referenceClass(symbol).owner
 
     return irClass.superTypes.mapNotNull { it.classifierOrNull?.owner as? IrClass }.toSet()
 }
@@ -789,3 +787,6 @@ fun FirCallableDeclaration.contextReceiversForFunctionOrContainingProperty(): Li
 fun IrActualizedResult?.extractFirDeclarations(): Set<FirDeclaration>? {
     return this?.actualizedExpectDeclarations?.mapNotNullTo(mutableSetOf()) { ((it as IrMetadataSourceOwner).metadata as FirMetadataSource).fir }
 }
+
+internal val <T: IrSymbolOwner> IrBindableSymbol<*, T>.ownerSafe: T?
+    get() = runIf(isBound) { owner }

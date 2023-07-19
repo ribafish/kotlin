@@ -34,6 +34,7 @@ class Fir2IrComponentsStorage(
 
     override lateinit var callablesGenerator: Fir2IrCallableDeclarationGenerator
     override lateinit var classifierGenerator: Fir2IrClassifierGenerator
+    override lateinit var externalDeclarationsGenerator: Fir2IrExternalDeclarationsGenerator
 
     override lateinit var irBuiltIns: IrBuiltInsOverFir
     override lateinit var builtIns: Fir2IrBuiltIns

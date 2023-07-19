@@ -2,30 +2,16 @@
 // TARGET_BACKEND: JVM_IR
 // LINK_VIA_SIGNATURES
 
-fun box(): String = "OK"
+// MODULE: lib
 
-interface A {
-    fun foo()
-}
-
-fun test() {
-    var x: Any? = null
-    while (true) {
-        try {
-            x = ""
-            require(x is A)
-        } catch (e: Exception) {
-            x = 1
-            require(x is A)
-            break
-        } finally {
-            x.inc() // should be error
-            x.length // should be error
-            x.foo() // should be ok
+class Some {
+    class Nested {
+        class DeeplyNested {
+            fun test(): String = "OK"
         }
-        x.length // should be ok
-        x.foo() // should be ok
     }
-    x.inc() // should be ok
-    x.foo() // should be ok
 }
+
+// MODULE: main(lib)
+
+fun box(): String = Some.Nested.DeeplyNested().test()
