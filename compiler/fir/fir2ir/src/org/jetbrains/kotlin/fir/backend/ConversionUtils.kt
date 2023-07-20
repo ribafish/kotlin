@@ -275,11 +275,12 @@ private fun FirCallableSymbol<*>.toSymbolForCall(
         }
         is FirConstructorSymbol -> symbolTable.referenceConstructor(this, signature)
         is FirFunctionSymbol<*> -> symbolTable.referenceFunction(this, signature)
-        is FirPropertySymbol -> symbolTable.referenceProperty(this, signature)
+        is FirPropertySymbol -> symbolTable.referencePotentiallyLocalProperty(this, signature)
         is FirFieldSymbol -> symbolTable.referenceField(this, signature)
         is FirBackingFieldSymbol -> symbolTable.referenceField(this, signature)
         is FirDelegateFieldSymbol -> symbolTable.referenceField(this, signature)
-        is FirVariableSymbol<*> -> symbolTable.referenceVariable(this)
+        is FirEnumEntrySymbol -> symbolTable.referenceEnumEntry(this, signature)
+        is FirValueParameterSymbol -> symbolTable.referenceValueParameter(this)
         else -> null
     }
 }

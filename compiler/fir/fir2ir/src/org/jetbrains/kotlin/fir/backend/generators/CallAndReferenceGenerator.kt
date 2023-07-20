@@ -147,10 +147,10 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                 }
 
                 is IrFunctionSymbol -> {
-                    assert(type.isFunctionTypeOrSubtype()) {
-                        "Callable reference whose symbol refers to a function should be of functional type."
-                    }
-                    type as IrSimpleType
+//                    assert(type.isFunctionTypeOrSubtype()) {
+//                        "Callable reference whose symbol refers to a function should be of functional type."
+//                    }
+                    require(type is IrSimpleType)
                     val function = symbol.owner
                     if (adapterGenerator.needToGenerateAdaptedCallableReference(callableReferenceAccess, type, function)) {
                         // Receivers are being applied inside

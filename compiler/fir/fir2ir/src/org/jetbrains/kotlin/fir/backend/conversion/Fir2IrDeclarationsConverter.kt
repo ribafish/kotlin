@@ -248,7 +248,6 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         irProperty: IrProperty,
         accessor: FirPropertyAccessor,
         isSetter: Boolean,
-
     ) {
         val irAccessor = accessor.convertWithOffsets { startOffset, endOffset ->
             callablesGenerator.createIrPropertyAccessor(
@@ -264,6 +263,10 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
             classifierGenerator.processTypeParameters(accessor, irAccessor)
             callablesGenerator.processValueParameters(accessor, irAccessor, conversionScope.lastClass())
             // TODO: process body
+        }
+        when (isSetter) {
+            true -> irProperty.setter = irAccessor
+            false -> irProperty.getter = irAccessor
         }
     }
 

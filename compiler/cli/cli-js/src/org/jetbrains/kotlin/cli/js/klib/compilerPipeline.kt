@@ -229,7 +229,7 @@ fun transformFirToIr(
         fir2IrExtensions,
         Fir2IrConfiguration(
             languageVersionSettings = moduleStructure.compilerConfiguration.languageVersionSettings,
-            linkViaSignatures = false,
+            qqq = false,
             evaluatedConstTracker = moduleStructure.compilerConfiguration
                 .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
             inlineConstTracker = null,

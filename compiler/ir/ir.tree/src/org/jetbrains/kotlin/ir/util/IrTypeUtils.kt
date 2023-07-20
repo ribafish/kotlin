@@ -46,6 +46,9 @@ private fun IrClassifierSymbol.isClassWithName(name: String, packageFqName: FqNa
 }
 
 private fun IrClassifierSymbol.isClassWithNamePrefix(prefix: String, packageFqName: FqName): Boolean {
+    (signature as? IdSignature.CommonSignature)?.let { sig ->
+        return sig.packageFqName() == packageFqName && sig.nameSegments.size == 1 && sig.nameSegments.first().startsWith(prefix)
+    }
     val declaration = owner as IrDeclarationWithName
     return declaration.name.asString().startsWith(prefix) && (declaration.parent as? IrPackageFragment)?.packageFqName == packageFqName
 }

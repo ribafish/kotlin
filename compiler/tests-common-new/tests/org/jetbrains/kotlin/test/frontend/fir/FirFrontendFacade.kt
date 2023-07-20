@@ -314,7 +314,7 @@ open class FirFrontendFacade(
             moduleBasedSession,
             Fir2IrConfiguration(
                 languageVersionSettings = module.languageVersionSettings,
-                linkViaSignatures = compilerConfiguration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
+                qqq = compilerConfiguration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
                 evaluatedConstTracker = compilerConfiguration
                     .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
                 inlineConstTracker = compilerConfiguration[CommonConfigurationKeys.INLINE_CONST_TRACKER],

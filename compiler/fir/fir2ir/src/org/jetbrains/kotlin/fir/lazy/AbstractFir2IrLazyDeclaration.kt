@@ -27,9 +27,10 @@ interface AbstractFir2IrLazyDeclaration<F> :
         get() = irFactory
 
     override fun createLazyAnnotations(): ReadWriteProperty<Any?, List<IrConstructorCall>> = lazyVar(lock) {
-        fir.annotations.mapNotNull {
-            callGenerator.convertToIrConstructorCall(it) as? IrConstructorCall
-        }
+        emptyList()
+    //        fir.annotations.mapNotNull {
+//            callGenerator.convertToIrConstructorCall(it) as? IrConstructorCall
+//        }
     }
 
     override fun lazyParent(): IrDeclarationParent {

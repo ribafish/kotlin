@@ -124,7 +124,7 @@ object GenerationUtils {
             session,
             Fir2IrConfiguration(
                 languageVersionSettings = configuration.languageVersionSettings,
-                linkViaSignatures = configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
+                qqq = configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
                 evaluatedConstTracker = configuration
                     .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
                 inlineConstTracker = configuration[CommonConfigurationKeys.INLINE_CONST_TRACKER],

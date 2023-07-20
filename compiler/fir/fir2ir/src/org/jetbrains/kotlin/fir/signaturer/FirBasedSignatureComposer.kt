@@ -104,6 +104,7 @@ class FirBasedSignatureComposer(val mangler: FirMangler) {
         if (declaration is FirAnonymousObject || declaration is FirAnonymousFunction) return null
         if (declaration is FirRegularClass && declaration.classId.isLocal) return null
         if (declaration is FirBackingField) return null
+        if (declaration is FirValueParameter) return null
         if (declaration is FirCallableDeclaration) {
             if (declaration.visibility == Visibilities.Local) return null
             if (declaration.dispatchReceiverClassLookupTagOrNull()?.classId?.isLocal == true || containingClass?.classId?.isLocal == true) return null

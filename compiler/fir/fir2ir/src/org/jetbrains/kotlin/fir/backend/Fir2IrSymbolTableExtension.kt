@@ -47,6 +47,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             is FirClassSymbol<*> -> signatureComposer.composeSignature(declaration.fir)
             is FirScriptSymbol -> signatureComposer.composeSignature(declaration.fir)
             is FirConstructorSymbol -> signatureComposer.composeSignature(declaration.fir)
+            is FirTypeParameterSymbol -> null
             else -> error("Signature can not be calculated for this declaration: ${declaration::class.simpleName}")
         }
     }
@@ -261,6 +262,11 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             ::createPrivatePropertySymbol,
             specificCalculateSignature = { signature }
         )
+    }
+
+    fun referencePotentiallyLocalProperty(declaration: FirPropertySymbol, signature: IdSignature?): IrSymbol {
+        if (declaration.isLocal) return referenceVariable(declaration)
+        return referenceProperty(declaration, signature)
     }
 
     @Deprecated("Should not be called", level = DeprecationLevel.HIDDEN)

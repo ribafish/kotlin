@@ -173,7 +173,7 @@ fun AbstractFirAnalyzerFacade.convertToWasmIr(
 
     val fir2IrConfiguration = Fir2IrConfiguration(
         languageVersionSettings = configuration.languageVersionSettings,
-        linkViaSignatures = generateSignatures,
+        qqq = generateSignatures,
         evaluatedConstTracker = configuration
             .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
         inlineConstTracker = null,

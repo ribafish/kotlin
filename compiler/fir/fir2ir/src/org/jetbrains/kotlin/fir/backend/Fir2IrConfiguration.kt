@@ -22,7 +22,9 @@ import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 
 data class Fir2IrConfiguration(
     val languageVersionSettings: LanguageVersionSettings,
-    val linkViaSignatures: Boolean,
+    val qqq: Boolean,
     val evaluatedConstTracker: EvaluatedConstTracker,
     val inlineConstTracker: InlineConstTracker?,
-)
+) {
+    val linkViaSignatures: Boolean = true
+}

@@ -178,7 +178,8 @@ fun convertAnalyzedFirToIr(
         } ?: emptyList()
     val fir2IrConfiguration = Fir2IrConfiguration(
         languageVersionSettings = input.configuration.languageVersionSettings,
-        linkViaSignatures = input.configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
+        qqq = input.configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
+//        linkViaSignatures = input.configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
         evaluatedConstTracker = input.configuration
             .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
         inlineConstTracker = input.configuration[CommonConfigurationKeys.INLINE_CONST_TRACKER],

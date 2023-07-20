@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrExternalPackageFragmentSymbolImpl
 import org.jetbrains.kotlin.ir.util.IdSignature
+import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import java.util.concurrent.ConcurrentHashMap
@@ -42,7 +43,6 @@ class Fir2IrExternalDeclarationsGenerator(
         val fragmentForDependencies: IrExternalPackageFragment,
         val fragmentForPrecompiledBinaries: IrExternalPackageFragment,
     )
-
 
     private fun getIrExternalOrBuiltInsPackageFragment(fqName: FqName, firOrigin: FirDeclarationOrigin): IrExternalPackageFragment {
         val isBuiltIn = fqName in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES
@@ -112,7 +112,7 @@ class Fir2IrExternalDeclarationsGenerator(
                 symbol
             ).apply {
                 parent = irParent
-                prepareTypeParameters()
+                processTypeParameters()
             }
         }
         return irClass.symbol
@@ -134,7 +134,7 @@ class Fir2IrExternalDeclarationsGenerator(
                 symbol
             ).apply {
                 parent = irParent
-                prepareTypeParameters()
+                processTypeParameters()
             }
         }
         return irConstructor.symbol
@@ -162,7 +162,7 @@ class Fir2IrExternalDeclarationsGenerator(
                 isFakeOverride
             ).apply {
                 parent = irParent
-                prepareTypeParameters()
+                processTypeParameters()
             }
         }
         return irFunction.symbol
@@ -195,11 +195,21 @@ class Fir2IrExternalDeclarationsGenerator(
         return irProperty.symbol
     }
 
+    private fun Fir2IrTypeParametersContainer.processTypeParameters() {
+        symbolTable.withScope(this) {
+            prepareTypeParameters()
+        }
+    }
+
     // TODO: probably worth to leave only part about external declaration stub
     private fun FirCallableDeclaration.computeExternalOrigin(
         irParent: IrDeclarationParent
     ): IrDeclarationOrigin {
-        val parentOrigin = (irParent as IrDeclaration).origin
+        val parentOrigin = when (irParent) {
+            is IrDeclaration -> irParent.origin
+            is IrExternalPackageFragment -> IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB
+            else -> error("Unsupported declaration: ${irParent::class.simpleName}")
+        }
         return when {
             this.isIntersectionOverride || this.isSubstitutionOverride -> IrDeclarationOrigin.FAKE_OVERRIDE
             parentOrigin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB && this.isJavaOrEnhancement -> {
