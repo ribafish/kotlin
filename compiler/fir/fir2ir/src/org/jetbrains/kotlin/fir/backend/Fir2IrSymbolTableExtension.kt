@@ -6,14 +6,18 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
+import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import org.jetbrains.kotlin.utils.threadLocal
 
@@ -437,4 +441,24 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             error("Undefined variable referenced: $declaration\n${variableSlice.dump()}")
         }
     }
+
+    fun declareVariable(
+        startOffset: Int,
+        endOffset: Int,
+        origin: IrDeclarationOrigin,
+        declaration: FirVariableSymbol<*>,
+        name: Name,
+        type: IrType,
+        isVar: Boolean,
+        isConst: Boolean,
+        isLateinit: Boolean,
+    ): IrVariable {
+        return variableSlice.declareLocal(declaration, { IrVariableSymbolImpl() }) { symbol ->
+            IrVariableImpl(
+                startOffset, endOffset, origin, symbol, name, type,
+                isVar, isConst, isLateinit
+            )
+        }
+    }
+
 }

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.backend.generators
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.conversion.Fir2IrDeclarationsConverter
 import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
@@ -40,64 +41,21 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.constructedClassType
 import org.jetbrains.kotlin.ir.util.isSetter
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.resolve.DataClassResolver
 
 internal class ClassMemberGenerator(
     private val components: Fir2IrComponents,
-    private val visitor: Fir2IrVisitor,
-    private val conversionScope: Fir2IrConversionScope
+    private val conversionScope: Fir2IrConversionScope,
+    private val declarationsConverter: Fir2IrDeclarationsConverter
 ) : Fir2IrComponents by components {
+    private val visitor = Fir2IrVisitor(components, conversionScope, declarationsConverter)
 
     private fun FirTypeRef.toIrType(): IrType = with(typeConverter) { toIrType() }
 
     private fun ConeKotlinType.toIrType(): IrType = with(typeConverter) { toIrType() }
 
     private fun <T : IrDeclaration> applyParentFromStackTo(declaration: T): T = conversionScope.applyParentFromStackTo(declaration)
-
-    fun convertClassContent(irClass: IrClass, klass: FirClass): Unit = conversionScope.withContainingFirClass(klass) {
-        declarationStorage.enterScope(irClass)
-        conversionScope.withClass(irClass) {
-            val allDeclarations = buildList {
-                addAll(klass.declarations)
-                if (klass is FirRegularClass && session.extensionService.declarationGenerators.isNotEmpty()) {
-                    addAll(klass.generatedMembers(session).sortedWith(FirCallableDeclarationComparator))
-                    addAll(klass.generatedNestedClassifiers(session).sortedWith(FirMemberDeclarationComparator))
-                }
-            }
-
-            val primaryConstructor = allDeclarations.firstOrNull { it is FirConstructor && it.isPrimary } as FirConstructor?
-            val irPrimaryConstructor = primaryConstructor?.let { declarationStorage.getCachedIrConstructor(it)!! }
-            if (irPrimaryConstructor != null) {
-                with(declarationStorage) {
-                    enterScope(irPrimaryConstructor)
-                    irPrimaryConstructor.putParametersInScope(primaryConstructor)
-                    convertFunctionContent(irPrimaryConstructor, primaryConstructor, containingClass = klass)
-                }
-            }
-
-            allDeclarations.forEach { declaration ->
-                when {
-                    declaration is FirTypeAlias -> {
-                    }
-                    declaration is FirConstructor && declaration.isPrimary -> {
-                    }
-                    declaration is FirRegularClass && declaration.visibility == Visibilities.Local -> {
-                        val irNestedClass = classifierStorage.getCachedIrClass(declaration)!!
-                        irNestedClass.parent = irClass
-                        conversionScope.withParent(irNestedClass) {
-                            convertClassContent(irNestedClass, declaration)
-                        }
-                    }
-                    else -> declaration.accept(visitor, null)
-                }
-            }
-            annotationGenerator.generate(irClass, klass)
-            if (irPrimaryConstructor != null) {
-                declarationStorage.leaveScope(irPrimaryConstructor)
-            }
-        }
-        declarationStorage.leaveScope(irClass)
-    }
 
     fun <T : IrFunction> convertFunctionContent(irFunction: T, firFunction: FirFunction?, containingClass: FirClass?): T {
         conversionScope.withParent(irFunction) {
@@ -320,6 +278,15 @@ internal class ClassMemberGenerator(
                 this.overriddenSymbols = property.generateOverriddenAccessorSymbols(containingClass, isGetter)
             }
 
+        }
+    }
+
+    fun convertAnonymousInitializerContent(
+        irAnonymousInitializer: IrAnonymousInitializer,
+        anonymousInitializer: FirAnonymousInitializer,
+    ) {
+        symbolTable.withScope(irAnonymousInitializer) {
+            irAnonymousInitializer.body = visitor.convertToIrBlockBody(anonymousInitializer.body!!)
         }
     }
 

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
+import org.jetbrains.kotlin.fir.expressions.FirComponentCall
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.arrayElementType
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isSuspendOrKSuspendFunctionType
-import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
@@ -362,7 +361,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
     fun createIrProperty(
         property: FirProperty,
         irParent: IrDeclarationParent,
-        predefinedOrigin: IrDeclarationOrigin? = null
+        predefinedOrigin: IrDeclarationOrigin? = null,
     ): IrProperty = convertCatching(property) {
         val origin =
             if (property.isStatic && property.name in Fir2IrDeclarationStorage.ENUM_SYNTHETIC_NAMES) IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
@@ -479,6 +478,34 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
             }
         }
     }
+
+    fun createLocalVariable(
+        variable: FirVariable,
+        irParent: IrDeclarationParent,
+        givenOrigin: IrDeclarationOrigin? = null,
+    ): IrVariable {
+        // Note: for components call, we have to change type here (to original component type) to keep compatibility with PSI2IR
+        // Some backend optimizations related to withIndex() probably depend on this type: index should always be Int
+        // See e.g. forInStringWithIndexWithExplicitlyTypedIndexVariable.kt from codegen box tests
+        val type = ((variable.initializer as? FirComponentCall)?.typeRef ?: variable.returnTypeRef).toIrType()
+        // Some temporary variables are produced in RawFirBuilder, but we consistently use special names for them.
+        val origin = when {
+            givenOrigin != null -> givenOrigin
+            variable.name == SpecialNames.ITERATOR -> IrDeclarationOrigin.FOR_LOOP_ITERATOR
+            variable.name.isSpecial -> IrDeclarationOrigin.IR_TEMPORARY_VARIABLE
+            else -> IrDeclarationOrigin.DEFINED
+        }
+        val isLateInit = if (variable is FirProperty) variable.isLateInit else false
+        val irVariable = variable.convertWithOffsets { startOffset, endOffset ->
+            symbolTable.declareVariable(
+                startOffset, endOffset, origin, variable.symbol,
+                variable.name, type, variable.isVar, isConst = false, isLateinit = isLateInit
+            )
+        }
+        irVariable.parent = irParent
+        return irVariable
+    }
+
 
     // -------------------------------------------- Utilities --------------------------------------------
 

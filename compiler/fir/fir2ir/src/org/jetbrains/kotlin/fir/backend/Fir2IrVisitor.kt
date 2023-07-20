@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.backend.conversion.Fir2IrDeclarationsConverter
 import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
 import org.jetbrains.kotlin.fir.backend.generators.OperatorExpressionGenerator
 import org.jetbrains.kotlin.fir.declarations.*
@@ -58,16 +60,16 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 class Fir2IrVisitor(
     private val components: Fir2IrComponents,
-    private val conversionScope: Fir2IrConversionScope
+    private val conversionScope: Fir2IrConversionScope,
+    private val declarationsConverter: Fir2IrDeclarationsConverter
 ) : Fir2IrComponents by components, FirDefaultVisitor<IrElement, Any?>(), IrGeneratorContextInterface {
 
     internal val implicitCastInserter = Fir2IrImplicitCastInserter(components)
-
-    internal val memberGenerator = ClassMemberGenerator(components, this, conversionScope)
 
     private val operatorGenerator = OperatorExpressionGenerator(components, this, conversionScope)
 
@@ -93,123 +95,14 @@ class Fir2IrVisitor(
         error("Should not be here: ${element::class} ${element.render()}")
     }
 
-    override fun visitField(field: FirField, data: Any?): IrField = whileAnalysing(session, field) {
-        if (field.isSynthetic) {
-            return declarationStorage.getCachedIrDelegateOrBackingField(field)!!.apply {
-                // If this is a property backing field, then it has no separate initializer,
-                // so we shouldn't convert it
-                if (correspondingPropertySymbol == null) {
-                    memberGenerator.convertFieldContent(this, field)
-                }
-            }
-        } else {
-            throw AssertionError("Unexpected field: ${field.render()}")
-        }
-    }
-
-    override fun visitFile(file: FirFile, data: Any?): IrFile {
-        val irFile = declarationStorage.getIrFile(file)
-        conversionScope.withParent(irFile) {
-            file.declarations.forEach {
-                it.toIrDeclaration()
-            }
-            annotationGenerator.generate(this, file)
-            metadata = FirMetadataSource.File(listOf(file))
-        }
-        return irFile
-    }
-
-    private fun FirDeclaration.toIrDeclaration(): IrDeclaration =
-        accept(this@Fir2IrVisitor, null) as IrDeclaration
-
     // ==================================================================================
 
-    override fun visitTypeAlias(typeAlias: FirTypeAlias, data: Any?): IrElement = whileAnalysing(session, typeAlias) {
-        val irTypeAlias = classifierStorage.getCachedTypeAlias(typeAlias)!!
-        annotationGenerator.generate(irTypeAlias, typeAlias)
-        return irTypeAlias
-    }
-
-    override fun visitEnumEntry(enumEntry: FirEnumEntry, data: Any?): IrElement = whileAnalysing(session, enumEntry) {
-        val irEnumEntry = classifierStorage.getCachedIrEnumEntry(enumEntry)!!
-        annotationGenerator.generate(irEnumEntry, enumEntry)
-        val correspondingClass = irEnumEntry.correspondingClass
-        val initializer = enumEntry.initializer
-        val irType = enumEntry.returnTypeRef.toIrType()
-        val irParentEnumClass = irEnumEntry.parent as? IrClass
-        // If the enum entry has its own members, we need to introduce a synthetic class.
-        if (correspondingClass != null) {
-            declarationStorage.enterScope(irEnumEntry)
-            classifierStorage.putEnumEntryClassInScope(enumEntry, correspondingClass)
-            val anonymousObject = (enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject
-            converter.processAnonymousObjectHeaders(anonymousObject, correspondingClass)
-            converter.processClassMembers(anonymousObject, correspondingClass)
-            converter.bindFakeOverridesInClass(correspondingClass)
-            conversionScope.withParent(correspondingClass) {
-                memberGenerator.convertClassContent(correspondingClass, anonymousObject)
-                val constructor = correspondingClass.constructors.first()
-                irEnumEntry.initializerExpression = irFactory.createExpressionBody(
-                    IrEnumConstructorCallImpl(
-                        startOffset, endOffset, irType,
-                        constructor.symbol,
-                        typeArgumentsCount = constructor.typeParameters.size,
-                        valueArgumentsCount = constructor.valueParameters.size
-                    )
-                )
-            }
-            declarationStorage.leaveScope(irEnumEntry)
-        } else if (initializer is FirAnonymousObjectExpression) {
-            // Otherwise, this is a default-ish enum entry, which doesn't need its own synthetic class.
-            // During raw FIR building, we put the delegated constructor call inside an anonymous object.
-            val delegatedConstructor = initializer.anonymousObject.primaryConstructorIfAny(session)?.fir?.delegatedConstructor
-            if (delegatedConstructor != null) {
-                with(memberGenerator) {
-                    irEnumEntry.initializerExpression = irFactory.createExpressionBody(
-                        delegatedConstructor.toIrDelegatingConstructorCall()
-                    )
-                }
-            }
-        } else if (irParentEnumClass != null && initializer == null) {
-            // a default-ish enum entry whose initializer would be a delegating constructor call
-            val constructor = irParentEnumClass.defaultConstructor
-                ?: error("Assuming that default constructor should exist and be converted at this point")
-            enumEntry.convertWithOffsets { startOffset, endOffset ->
-                irEnumEntry.initializerExpression = irFactory.createExpressionBody(
-                    IrEnumConstructorCallImpl(
-                        startOffset, endOffset, irType, constructor.symbol,
-                        valueArgumentsCount = constructor.valueParameters.size,
-                        typeArgumentsCount = constructor.typeParameters.size
-                    )
-                )
-                irEnumEntry
-            }
-        }
-        return irEnumEntry
-    }
-
     override fun visitRegularClass(regularClass: FirRegularClass, data: Any?): IrElement = whileAnalysing(session, regularClass) {
-        if (regularClass.visibility == Visibilities.Local) {
-            val irParent = conversionScope.parentFromStack()
-            // NB: for implicit types it is possible that local class is already cached
-            val irClass = classifierStorage.getCachedIrClass(regularClass)?.apply { this.parent = irParent }
-            if (irClass != null) {
-                conversionScope.withParent(irClass) {
-                    memberGenerator.convertClassContent(irClass, regularClass)
-                }
-                return irClass
-            }
-            converter.processLocalClassAndNestedClasses(regularClass, irParent)
-        }
-        val irClass = classifierStorage.getCachedIrClass(regularClass)!!
-        if (regularClass.isSealed) {
-            irClass.sealedSubclasses = regularClass.getIrSymbolsForSealedSubclasses()
-        }
-        conversionScope.withParent(irClass) {
-            memberGenerator.convertClassContent(irClass, regularClass)
-        }
-        return irClass
+        requireLocal(regularClass.visibility)
+        declarationsConverter.generateIrClass(regularClass, conversionScope)
     }
 
+    // TODO: do something with scripts
     @OptIn(UnexpandedTypeCheck::class)
     override fun visitScript(script: FirScript, data: Any?): IrElement {
         return declarationStorage.getCachedIrScript(script)!!.also { irScript ->
@@ -317,20 +210,13 @@ class Fir2IrVisitor(
     }
 
     override fun visitAnonymousObjectExpression(anonymousObjectExpression: FirAnonymousObjectExpression, data: Any?): IrElement {
-        return visitAnonymousObject(anonymousObjectExpression.anonymousObject, data)
+        return whileAnalysing(session, anonymousObjectExpression) {
+            visitAnonymousObject(anonymousObjectExpression.anonymousObject, data)
+        }
     }
 
-    override fun visitAnonymousObject(anonymousObject: FirAnonymousObject, data: Any?): IrElement = whileAnalysing(
-        session, anonymousObject
-    ) {
-        val irParent = conversionScope.parentFromStack()
-        // NB: for implicit types it is possible that anonymous object is already cached
-        val irAnonymousObject = classifierStorage.getCachedIrClass(anonymousObject)?.apply { this.parent = irParent }
-            ?: converter.processLocalClassAndNestedClasses(anonymousObject, irParent)
-
-        conversionScope.withParent(irAnonymousObject) {
-            memberGenerator.convertClassContent(irAnonymousObject, anonymousObject)
-        }
+    override fun visitAnonymousObject(anonymousObject: FirAnonymousObject, data: Any?): IrElement {
+        val irAnonymousObject = declarationsConverter.generateIrClass(anonymousObject, conversionScope)
         val anonymousClassType = irAnonymousObject.thisReceiver!!.type
         return anonymousObject.convertWithOffsets { startOffset, endOffset ->
             IrBlockImpl(
@@ -350,39 +236,15 @@ class Fir2IrVisitor(
         }
     }
 
+    private fun requireLocal(visibility: Visibility) {
+        require(visibility == Visibilities.Local) { "Only local declarations should be traversed with Fir2IrVisitor" }
+    }
+
     // ==================================================================================
 
-    override fun visitConstructor(constructor: FirConstructor, data: Any?): IrElement = whileAnalysing(session, constructor) {
-        val irConstructor = declarationStorage.getCachedIrConstructor(constructor)!!
-        return conversionScope.withFunction(irConstructor) {
-            memberGenerator.convertFunctionContent(irConstructor, constructor, containingClass = conversionScope.containerFirClass())
-        }
-    }
-
-    override fun visitAnonymousInitializer(
-        anonymousInitializer: FirAnonymousInitializer,
-        data: Any?
-    ): IrElement = whileAnalysing(session, anonymousInitializer) {
-        val irAnonymousInitializer = declarationStorage.getCachedIrAnonymousInitializer(anonymousInitializer)!!
-        declarationStorage.enterScope(irAnonymousInitializer)
-        irAnonymousInitializer.body = convertToIrBlockBody(anonymousInitializer.body!!)
-        declarationStorage.leaveScope(irAnonymousInitializer)
-        return irAnonymousInitializer
-    }
-
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: Any?): IrElement = whileAnalysing(session, simpleFunction) {
-        val irFunction = if (simpleFunction.visibility == Visibilities.Local) {
-            declarationStorage.createIrFunction(
-                simpleFunction, irParent = conversionScope.parent(), predefinedOrigin = IrDeclarationOrigin.LOCAL_FUNCTION, isLocal = true
-            )
-        } else {
-            declarationStorage.getCachedIrFunction(simpleFunction)!!
-        }
-        return conversionScope.withFunction(irFunction) {
-            memberGenerator.convertFunctionContent(
-                irFunction, simpleFunction, containingClass = conversionScope.containerFirClass()
-            )
-        }
+        requireLocal(simpleFunction.visibility)
+        return declarationsConverter.generateIrFunction(simpleFunction, conversionScope)
     }
 
     override fun visitAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression, data: Any?): IrElement {
@@ -394,16 +256,7 @@ class Fir2IrVisitor(
         data: Any?
     ): IrElement = whileAnalysing(session, anonymousFunction) {
         return anonymousFunction.convertWithOffsets { startOffset, endOffset ->
-            val irFunction = declarationStorage.createIrFunction(
-                anonymousFunction,
-                irParent = conversionScope.parent(),
-                predefinedOrigin = IrDeclarationOrigin.LOCAL_FUNCTION,
-                isLocal = true
-            )
-            conversionScope.withFunction(irFunction) {
-                memberGenerator.convertFunctionContent(irFunction, anonymousFunction, containingClass = null)
-            }
-
+            val irFunction = declarationsConverter.generateIrFunction(anonymousFunction, conversionScope)
             val type = anonymousFunction.typeRef.toIrType()
 
             IrFunctionExpressionImpl(
@@ -414,67 +267,53 @@ class Fir2IrVisitor(
         }
     }
 
-    private fun visitLocalVariable(variable: FirProperty): IrElement = whileAnalysing(session, variable) {
-        assert(variable.isLocal)
-        val delegate = variable.delegate
-        if (delegate != null) {
-            val irProperty = declarationStorage.createIrLocalDelegatedProperty(variable, conversionScope.parentFromStack())
-            irProperty.delegate.initializer = convertToIrExpression(delegate, isDelegate = true)
-            conversionScope.withFunction(irProperty.getter) {
-                memberGenerator.convertFunctionContent(irProperty.getter, variable.getter, null)
-            }
-            irProperty.setter?.let {
-                conversionScope.withFunction(it) {
-                    memberGenerator.convertFunctionContent(it, variable.setter, null)
-                }
-            }
-            return irProperty
-        }
-        val initializer = variable.initializer
-        val isNextVariable = initializer is FirFunctionCall &&
-                initializer.calleeReference.toResolvedFunctionSymbol()?.callableId?.isIteratorNext() == true &&
-                variable.source?.isChildOfForLoop == true
-        val irVariable = declarationStorage.createIrVariable(
-            variable, conversionScope.parentFromStack(),
-            if (isNextVariable) {
-                if (variable.name.isSpecial && variable.name == SpecialNames.DESTRUCT) {
-                    IrDeclarationOrigin.IR_TEMPORARY_VARIABLE
-                } else {
-                    IrDeclarationOrigin.FOR_LOOP_VARIABLE
-                }
-            } else {
-                null
-            }
-        )
-        if (initializer != null) {
-            irVariable.initializer =
-                convertToIrExpression(initializer)
-                    .insertImplicitCast(initializer, initializer.typeRef, variable.returnTypeRef)
-        }
-        annotationGenerator.generate(irVariable, variable)
-        return irVariable
-    }
-
     private fun IrExpression.insertImplicitCast(
         baseExpression: FirExpression,
         valueType: FirTypeRef,
         expectedType: FirTypeRef
-    ) =
-        with(implicitCastInserter) {
+    ): IrExpression {
+        return with(implicitCastInserter) {
             this@insertImplicitCast.cast(baseExpression, valueType, expectedType)
         }
+    }
 
     override fun visitProperty(property: FirProperty, data: Any?): IrElement = whileAnalysing(session, property) {
-        if (property.isLocal) return visitLocalVariable(property)
-        val irProperty = declarationStorage.getCachedIrProperty(property)
-            ?: return IrErrorExpressionImpl(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                IrErrorTypeImpl(null, emptyList(), Variance.INVARIANT),
-                "Stub for Enum.entries"
-            )
-        return conversionScope.withProperty(irProperty, property) {
-            memberGenerator.convertPropertyContent(irProperty, property, containingClass = conversionScope.containerFirClass())
+        require(property.isLocal) { "Only local properties should be traversed with Fir2IrVisitor" }
+        val delegate = property.delegate
+        if (delegate != null) {
+            TODO("Handle local delegated properties")
+//            val irProperty = declarationStorage.createIrLocalDelegatedProperty(property, conversionScope.parentFromStack())
+//            irProperty.delegate.initializer = convertToIrExpression(delegate, isDelegate = true)
+//            conversionScope.withFunction(irProperty.getter) {
+//                memberGenerator.convertFunctionContent(irProperty.getter, property.getter, null)
+//            }
+//            irProperty.setter?.let {
+//                conversionScope.withFunction(it) {
+//                    memberGenerator.convertFunctionContent(it, property.setter, null)
+//                }
+//            }
+//            return irProperty
         }
+        val initializer = property.initializer
+        val isNextVariable = initializer is FirFunctionCall &&
+                initializer.calleeReference.toResolvedFunctionSymbol()?.callableId?.isIteratorNext() == true &&
+                property.source?.isChildOfForLoop == true
+        val irVariable = callablesGenerator.createLocalVariable(
+            property, conversionScope.parentFromStack(),
+            givenOrigin = runIf(isNextVariable) {
+                if (property.name.isSpecial && property.name == SpecialNames.DESTRUCT) {
+                    IrDeclarationOrigin.IR_TEMPORARY_VARIABLE
+                } else {
+                    IrDeclarationOrigin.FOR_LOOP_VARIABLE
+                }
+            }
+        )
+        if (initializer != null) {
+            irVariable.initializer = convertToIrExpression(initializer)
+                .insertImplicitCast(initializer, initializer.typeRef, property.returnTypeRef)
+        }
+        annotationGenerator.generate(irVariable, property)
+        return irVariable
     }
 
     // ==================================================================================
@@ -1351,7 +1190,7 @@ class Fir2IrVisitor(
 
     override fun visitCatch(catch: FirCatch, data: Any?): IrElement {
         return catch.convertWithOffsets { startOffset, endOffset ->
-            val catchParameter = declarationStorage.createIrVariable(
+            val catchParameter = callablesGenerator.createLocalVariable(
                 catch.parameter, conversionScope.parentFromStack(), IrDeclarationOrigin.CATCH_PARAMETER
             )
             IrCatchImpl(startOffset, endOffset, catchParameter, catch.block.convertToIrBlock(forceUnitType = false))

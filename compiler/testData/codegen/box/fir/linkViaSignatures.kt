@@ -7,11 +7,14 @@
 class Some {
     class Nested {
         class DeeplyNested {
-            fun test(): String = "OK"
+            fun test(): String = "O"
         }
     }
 }
 
 // MODULE: main(lib)
 
-fun box(): String = Some.Nested.DeeplyNested().test()
+fun box(): String {
+    val x = Some.Nested.DeeplyNested().test()
+    return x + "K"
+}

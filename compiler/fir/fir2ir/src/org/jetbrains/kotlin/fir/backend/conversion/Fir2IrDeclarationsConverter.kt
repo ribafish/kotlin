@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComponents by components {
-
     // -------------------------------------------- Main --------------------------------------------
 
     fun generateFile(file: FirFile): IrFile {
@@ -173,8 +172,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
             // TODO: process default values of value parameters
             // TODO: process body
-            val visitor = Fir2IrVisitor(components, conversionScope)
-            val memberGenerator = visitor.memberGenerator
+            val memberGenerator = ClassMemberGenerator(components, conversionScope, this)
             memberGenerator.convertFunctionContent(
                 irFunction,
                 function,
@@ -190,8 +188,8 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         conversionScope.withScopeAndParent(irConstructor) {
             classifierGenerator.processTypeParameters(constructor, irConstructor)
             callablesGenerator.processValueParameters(constructor, irConstructor, containingIrClass)
-            val visitor = Fir2IrVisitor(components, conversionScope)
-            visitor.memberGenerator.convertFunctionContent(irConstructor, constructor, conversionScope.containerFirClass())
+            val memberGenerator = ClassMemberGenerator(components, conversionScope, this)
+            memberGenerator.convertFunctionContent(irConstructor, constructor, conversionScope.containerFirClass())
             // TODO: process default values of value parameters
             // TODO: process body
         }
@@ -320,8 +318,8 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
                     // During raw FIR building, we put the delegated constructor call inside an anonymous object.
                     val delegatedConstructor = initializer.anonymousObject.primaryConstructorIfAny(session)?.fir?.delegatedConstructor
                     if (delegatedConstructor != null) {
-                        val fir2IrVisitor = Fir2IrVisitor(components, conversionScope)
-                        with(ClassMemberGenerator(components, fir2IrVisitor, conversionScope)) {
+                        val memberGenerator = ClassMemberGenerator(components, conversionScope, this)
+                        with(memberGenerator) {
                             irEnumEntry.initializerExpression = irFactory.createExpressionBody(
                                 // TODO: this method should be moved into Fir2IrVisitor
                                 delegatedConstructor.toIrDelegatingConstructorCall()
