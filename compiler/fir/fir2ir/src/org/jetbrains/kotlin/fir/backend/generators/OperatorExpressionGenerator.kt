@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.ir.util.getSimpleFunction
 internal class OperatorExpressionGenerator(
     private val components: Fir2IrComponents,
     private val visitor: Fir2IrVisitor,
-    private val conversionScope: Fir2IrConversionScope
+    override val conversionScope: Fir2IrConversionScope
 ) : Fir2IrComponents by components {
 
     fun convertComparisonExpression(comparisonExpression: FirComparisonExpression): IrExpression {

@@ -58,7 +58,7 @@ import org.jetbrains.kotlin.types.model.TypeVariance
  */
 internal class AdapterGenerator(
     private val components: Fir2IrComponents,
-    private val conversionScope: Fir2IrConversionScope
+    override val conversionScope: Fir2IrConversionScope,
 ) : Fir2IrComponents by components {
 
     private val samResolver = FirSamResolver(session, scopeSession)

@@ -335,46 +335,25 @@ class Fir2IrConverter(
                 scopeSession,
                 fir2IrSymbolTableExtension,
                 irFactory,
-                commonMemberStorage.firSignatureComposer,
                 fir2IrExtensions,
                 fir2IrConfiguration,
+                visibilityConverter,
+                moduleDescriptor,
+                commonMemberStorage,
+                initializedIrBuiltIns,
+                irMangler,
+                specialSymbolProvider
             )
-            val converter = Fir2IrConverter(moduleDescriptor, components)
-
-            components.converter = converter
-            components.classifierStorage = Fir2IrClassifierStorage(components, commonMemberStorage)
-            components.delegatedMemberGenerator = DelegatedMemberGenerator(components)
-            components.declarationStorage = Fir2IrDeclarationStorage(components, moduleDescriptor, commonMemberStorage)
-
-            components.classifierGenerator = Fir2IrClassifierGenerator(components)
-            components.callablesGenerator = Fir2IrCallableDeclarationGenerator(components)
-            components.externalDeclarationsGenerator = Fir2IrExternalDeclarationsGenerator(components, moduleDescriptor)
-
-            components.visibilityConverter = visibilityConverter
-            components.typeConverter = Fir2IrTypeConverter(components)
-            val irBuiltIns = initializedIrBuiltIns ?: IrBuiltInsOverFir(
-                components, fir2IrConfiguration.languageVersionSettings, moduleDescriptor, irMangler
-            )
-            components.irBuiltIns = irBuiltIns
-            val conversionScope = Fir2IrConversionScope()
-            val fir2irVisitor = Fir2IrVisitor(components, conversionScope)
-            components.builtIns = Fir2IrBuiltIns(components, specialSymbolProvider)
-            components.annotationGenerator = AnnotationGenerator(components)
-            components.fakeOverrideGenerator = FakeOverrideGenerator(components, conversionScope)
-            components.callGenerator = CallAndReferenceGenerator(components, fir2irVisitor, conversionScope)
-            components.irProviders = listOf(FirIrProvider(components))
-            components.annotationsFromPluginRegistrar = Fir2IrAnnotationsFromPluginRegistrar(components)
-
             fir2IrExtensions.registerDeclarations(commonMemberStorage.symbolTable)
 
-            val irModuleFragment = IrModuleFragmentImpl(moduleDescriptor, irBuiltIns)
+            val irModuleFragment = IrModuleFragmentImpl(moduleDescriptor, components.irBuiltIns)
 
             val allFirFiles = buildList {
                 addAll(firFiles)
                 addAll(session.createFilesWithGeneratedDeclarations())
             }
 
-            converter.runSourcesConversion(
+            components.converter.runSourcesConversion(
                 allFirFiles, irModuleFragment
             )
 

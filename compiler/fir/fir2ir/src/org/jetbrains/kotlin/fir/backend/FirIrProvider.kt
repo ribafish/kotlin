@@ -8,31 +8,29 @@ package org.jetbrains.kotlin.fir.backend
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData.SymbolKind
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData.SymbolKind.*
 import org.jetbrains.kotlin.backend.common.serialization.kind
-import org.jetbrains.kotlin.fir.backend.generators.FakeOverrideGenerator
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.classId
-import org.jetbrains.kotlin.fir.resolve.providers.getRegularClassSymbolByClassId
+import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
+import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.scopes.FirScope
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
-import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.ConeClassLikeType
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.linkage.IrProvider
-import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import kotlin.math.sign
 
 @OptIn(SymbolInternals::class)
 class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
     private val symbolProvider = components.session.symbolProvider
     val symbolTable = components.symbolTable
-    private val fakeOverrideGenerator = FakeOverrideGenerator(components, Fir2IrConversionScope())
     private val externalDeclarationsGenerator = components.externalDeclarationsGenerator
 
     override fun getDeclaration(symbol: IrSymbol): IrDeclaration? {

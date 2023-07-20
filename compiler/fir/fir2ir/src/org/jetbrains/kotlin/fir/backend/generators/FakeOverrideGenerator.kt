@@ -27,10 +27,7 @@ import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.Name
 
-class FakeOverrideGenerator(
-    private val components: Fir2IrComponents,
-    private val conversionScope: Fir2IrConversionScope
-) : Fir2IrComponents by components {
+class FakeOverrideGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
     private val baseFunctionSymbols: MutableMap<IrFunction, List<FirNamedFunctionSymbol>> = mutableMapOf()
     private val basePropertySymbols: MutableMap<IrProperty, List<FirPropertySymbol>> = mutableMapOf()
     private val baseStaticFieldSymbols: MutableMap<IrField, List<FirFieldSymbol>> = mutableMapOf()

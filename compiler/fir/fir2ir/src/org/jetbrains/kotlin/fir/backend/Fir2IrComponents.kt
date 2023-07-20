@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.backend
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.backend.conversion.Fir2IrDeclarationsConverter
 import org.jetbrains.kotlin.fir.backend.generators.AnnotationGenerator
 import org.jetbrains.kotlin.fir.backend.generators.CallAndReferenceGenerator
 import org.jetbrains.kotlin.fir.backend.generators.DelegatedMemberGenerator
@@ -26,7 +27,8 @@ interface Fir2IrComponents {
     val session: FirSession
     val scopeSession: ScopeSession
 
-    val converter: Fir2IrConverter
+    val converter: Fir2IrConverter // TODO: to remove
+    val declarationsConverter: Fir2IrDeclarationsConverter
 
     val symbolTable: Fir2IrSymbolTableExtension
     val irBuiltIns: IrBuiltInsOverFir
@@ -35,8 +37,10 @@ interface Fir2IrComponents {
     val irProviders: List<IrProvider>
     val lock: IrLock
 
-    val classifierStorage: Fir2IrClassifierStorage
-    val declarationStorage: Fir2IrDeclarationStorage
+    val classifierStorage: Fir2IrClassifierStorage // TODO: to remove
+    val declarationStorage: Fir2IrDeclarationStorage // TODO: to remove
+
+    val conversionScope: Fir2IrConversionScope
 
     val callablesGenerator: Fir2IrCallableDeclarationGenerator
     val classifierGenerator: Fir2IrClassifierGenerator

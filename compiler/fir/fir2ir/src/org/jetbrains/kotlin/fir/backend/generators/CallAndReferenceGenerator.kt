@@ -51,12 +51,8 @@ import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSup
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class CallAndReferenceGenerator(
-    private val components: Fir2IrComponents,
-    private val visitor: Fir2IrVisitor,
-    private val conversionScope: Fir2IrConversionScope
-) : Fir2IrComponents by components {
-
+class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
+    private val visitor = Fir2IrVisitor(components)
     private val adapterGenerator = AdapterGenerator(components, conversionScope)
 
     private fun FirTypeRef.toIrType(): IrType =

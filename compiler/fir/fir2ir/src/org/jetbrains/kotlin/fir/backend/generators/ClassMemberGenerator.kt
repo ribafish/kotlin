@@ -44,12 +44,8 @@ import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.resolve.DataClassResolver
 
-internal class ClassMemberGenerator(
-    private val components: Fir2IrComponents,
-    private val conversionScope: Fir2IrConversionScope,
-    private val declarationsConverter: Fir2IrDeclarationsConverter
-) : Fir2IrComponents by components {
-    private val visitor = Fir2IrVisitor(components, conversionScope, declarationsConverter)
+internal class ClassMemberGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
+    private val visitor = Fir2IrVisitor(components)
 
     private fun FirTypeRef.toIrType(): IrType = with(typeConverter) { toIrType() }
 

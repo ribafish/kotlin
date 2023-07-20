@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.backend.conversion.Fir2IrDeclarationsConverter
-import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
 import org.jetbrains.kotlin.fir.backend.generators.OperatorExpressionGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
@@ -50,23 +48,19 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrErrorClassImpl
 import org.jetbrains.kotlin.ir.types.impl.IrErrorTypeImpl
 import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.defaultConstructor
-import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtForExpression
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 class Fir2IrVisitor(
     private val components: Fir2IrComponents,
-    private val conversionScope: Fir2IrConversionScope,
-    private val declarationsConverter: Fir2IrDeclarationsConverter
+    override val conversionScope: Fir2IrConversionScope = components.conversionScope
 ) : Fir2IrComponents by components, FirDefaultVisitor<IrElement, Any?>(), IrGeneratorContextInterface {
 
     internal val implicitCastInserter = Fir2IrImplicitCastInserter(components)
@@ -99,7 +93,7 @@ class Fir2IrVisitor(
 
     override fun visitRegularClass(regularClass: FirRegularClass, data: Any?): IrElement = whileAnalysing(session, regularClass) {
         requireLocal(regularClass.visibility)
-        declarationsConverter.generateIrClass(regularClass, conversionScope)
+        declarationsConverter.generateIrClass(regularClass)
     }
 
     // TODO: do something with scripts
@@ -216,7 +210,7 @@ class Fir2IrVisitor(
     }
 
     override fun visitAnonymousObject(anonymousObject: FirAnonymousObject, data: Any?): IrElement {
-        val irAnonymousObject = declarationsConverter.generateIrClass(anonymousObject, conversionScope)
+        val irAnonymousObject = declarationsConverter.generateIrClass(anonymousObject)
         val anonymousClassType = irAnonymousObject.thisReceiver!!.type
         return anonymousObject.convertWithOffsets { startOffset, endOffset ->
             IrBlockImpl(
@@ -244,7 +238,7 @@ class Fir2IrVisitor(
 
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: Any?): IrElement = whileAnalysing(session, simpleFunction) {
         requireLocal(simpleFunction.visibility)
-        return declarationsConverter.generateIrFunction(simpleFunction, conversionScope)
+        return declarationsConverter.generateIrFunction(simpleFunction)
     }
 
     override fun visitAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression, data: Any?): IrElement {
@@ -256,7 +250,7 @@ class Fir2IrVisitor(
         data: Any?
     ): IrElement = whileAnalysing(session, anonymousFunction) {
         return anonymousFunction.convertWithOffsets { startOffset, endOffset ->
-            val irFunction = declarationsConverter.generateIrFunction(anonymousFunction, conversionScope)
+            val irFunction = declarationsConverter.generateIrFunction(anonymousFunction)
             val type = anonymousFunction.typeRef.toIrType()
 
             IrFunctionExpressionImpl(
