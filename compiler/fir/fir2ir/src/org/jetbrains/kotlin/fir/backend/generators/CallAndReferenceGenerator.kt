@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.conversion.getterOrDefault
+import org.jetbrains.kotlin.fir.backend.conversion.setterOrDefault
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.isMethodOfAny
@@ -39,7 +40,6 @@ import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
-import org.jetbrains.kotlin.fir.unwrapFakeOverrides
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
-import org.jetbrains.kotlin.ir.util.isFunctionTypeOrSubtype
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
@@ -612,37 +611,49 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                     }
 
                     is IrPropertySymbol -> {
-                        val irProperty = symbol.owner
-                        val setter = irProperty.setter
-                        var backingField = irProperty.backingField
+                        val propertySymbol = firSymbol!!.unwrapCallSiteSubstitutionOverride() as FirPropertySymbol
+                        /*
 
+                        // TODO: handle this
                         // If we found neither a setter nor a backing field, check if we have an override (possibly fake) of a val with
                         // backing field. This can happen in a class initializer where `this` was smart-casted. See KT-57105.
                         if (setter == null && backingField == null) {
                             backingField = irProperty.overriddenBackingFieldOrNull()
                         }
-
+                         */
                         when {
-                            setter != null -> IrCallImpl(
-                                startOffset, endOffset, type, setter.symbol,
-                                typeArgumentsCount = setter.typeParameters.size,
-                                valueArgumentsCount = setter.valueParameters.size,
-                                origin = origin,
-                                superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
-                            ).apply {
-                                putValueArgument(putContextReceiverArguments(lValue), assignedValue)
+                            propertySymbol.hasBackingField -> {
+                                val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
+                                val irBackingFieldSymbol = symbolTable.referenceField(backingFieldSymbol, signature = null)
+                                IrSetFieldImpl(
+                                    startOffset, endOffset, irBackingFieldSymbol, type,
+                                    origin = null, // NB: to be consistent with PSI2IR, origin should be null here
+                                    superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+                                ).apply {
+                                    value = assignedValue
+                                }
                             }
+                            propertySymbol.isVar -> {
+                                val setter = propertySymbol.fir.setterOrDefault
+                                // TODO: calculate proper fake-override lookup tag
+                                val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = false, containingClass = null)
+                                val irSetterSymbol = symbolTable.referenceFunction(setter.symbol, signature)
+                                when (irSetterSymbol) {
+                                    is IrSimpleFunctionSymbol -> IrCallImpl(
+                                        startOffset, endOffset, type, irSetterSymbol,
+                                        typeArgumentsCount = setter.typeParameters.size,
+                                        valueArgumentsCount = setter.valueParameters.size,
+                                        origin = origin,
+                                        superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+                                    ).apply {
+                                        putValueArgument(putContextReceiverArguments(lValue), assignedValue)
+                                    }
 
-                            backingField != null -> IrSetFieldImpl(
-                                startOffset, endOffset, backingField.symbol, type,
-                                origin = null, // NB: to be consistent with PSI2IR, origin should be null here
-                                superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
-                            ).apply {
-                                value = assignedValue
+                                    else -> null
+                                }
                             }
-
-                            else -> generateErrorCallExpression(startOffset, endOffset, calleeReference)
-                        }
+                            else -> null
+                        } ?: generateErrorCallExpression(startOffset, endOffset, calleeReference)
                     }
 
                     is IrSimpleFunctionSymbol -> {
