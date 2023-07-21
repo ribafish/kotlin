@@ -27,10 +27,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.util.DeserializableClass
-import org.jetbrains.kotlin.ir.util.isEnumClass
-import org.jetbrains.kotlin.ir.util.isObject
-import org.jetbrains.kotlin.ir.util.withScope
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -173,10 +170,11 @@ class Fir2IrLazyClass(
             }
 
             if (fir.classKind == ClassKind.ENUM_CLASS) {
+                val defaultConstructor = result.firstOrNull() { it is IrConstructor && it.isDefaultConstructor } as IrConstructor?
                 for (declaration in fir.declarations) {
                     if (declaration is FirEnumEntry && shouldBuildStub(declaration)) {
                         // TODO: consider this
-                        result += declarationsConverter.generateIrEnumEntry(declaration)
+                        result += declarationsConverter.generateIrEnumEntry(declaration, defaultConstructor)
                     }
                 }
             }

@@ -237,7 +237,10 @@ val IrClass.constructors: Sequence<IrConstructor>
     get() = declarations.asSequence().filterIsInstance<IrConstructor>()
 
 val IrClass.defaultConstructor: IrConstructor?
-    get() = constructors.firstOrNull { ctor -> ctor.valueParameters.all { it.defaultValue != null } }
+    get() = constructors.firstOrNull { it.isDefaultConstructor}
+
+val IrConstructor.isDefaultConstructor: Boolean
+    get() = valueParameters.all { it.defaultValue != null }
 
 val IrClassSymbol.constructors: Sequence<IrConstructorSymbol>
     get() = owner.constructors.map { it.symbol }

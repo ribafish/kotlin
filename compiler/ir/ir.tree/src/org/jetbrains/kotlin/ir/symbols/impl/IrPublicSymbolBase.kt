@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.render
+import kotlin.math.sign
 
 /**
  * The base class for all public (wrt linkage) symbols.
@@ -64,6 +65,9 @@ abstract class IrBindablePublicSymbolBase<out Descriptor, Owner>(
             ?: error("Symbol for \"$signature\" is unbound")
 
     override fun bind(owner: Owner) {
+        if (signature.toString() == "/SomeEnum.<init>|<init>(){}[0]") {
+            Unit
+        }
         if (_owner == null) {
             _owner = owner
         } else {

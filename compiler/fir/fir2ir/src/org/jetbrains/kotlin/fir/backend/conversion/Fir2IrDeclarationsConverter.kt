@@ -305,7 +305,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return propertyOrigin
     }
 
-    fun generateIrEnumEntry(enumEntry: FirEnumEntry, ): IrEnumEntry {
+    fun generateIrEnumEntry(enumEntry: FirEnumEntry, precomputedDefaultConstructor: IrConstructor? = null): IrEnumEntry {
         val irParentEnumClass = conversionScope.lastClass()!!
         val irEnumEntry = classifierGenerator.createIrEnumEntry(enumEntry, irParentEnumClass)
 
@@ -350,7 +350,8 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
 
                 else -> {
                     // a default-ish enum entry whose initializer would be a delegating constructor call
-                    val constructor = irParentEnumClass.defaultConstructor
+                    val constructor = precomputedDefaultConstructor
+                        ?: irParentEnumClass.defaultConstructor
                         ?: error("Assuming that default constructor should exist and be converted at this point")
                     enumEntry.convertWithOffsets { startOffset, endOffset ->
                         irEnumEntry.initializerExpression = irFactory.createExpressionBody(
