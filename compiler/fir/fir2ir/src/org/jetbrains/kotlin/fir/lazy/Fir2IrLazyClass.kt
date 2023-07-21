@@ -158,7 +158,7 @@ class Fir2IrLazyClass(
             scope.processDeclaredConstructors {
                 val constructor = it.fir
                 if (shouldBuildStub(constructor)) {
-                    result += declarationsConverter.generateIrConstructor(constructor)
+                    result += declarationsConverter.generateIrConstructor(constructor, predefinedOrigin = this@Fir2IrLazyClass.origin)
                 }
             }
 

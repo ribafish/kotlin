@@ -110,11 +110,15 @@ open class IrMangleComputer(
 
     final override fun getIndexOfTypeParameter(typeParameter: IrTypeParameterSymbol, container: IrDeclaration) = typeParameter.owner.index
 
+    protected open fun IrClassSymbol.extractOwner(): IrClass {
+        return owner
+    }
+
     final override fun mangleType(tBuilder: StringBuilder, type: IrType, declarationSiteSession: Nothing?) {
         when (type) {
             is IrSimpleType -> {
                 when (val classifier = type.classifier) {
-                    is IrClassSymbol -> with(copy(MangleMode.FQNAME)) { classifier.owner.visit() }
+                    is IrClassSymbol -> with(copy(MangleMode.FQNAME)) { classifier.extractOwner().visit() }
                     is IrTypeParameterSymbol -> tBuilder.mangleTypeParameterReference(classifier)
                     is IrScriptSymbol -> {}
                 }

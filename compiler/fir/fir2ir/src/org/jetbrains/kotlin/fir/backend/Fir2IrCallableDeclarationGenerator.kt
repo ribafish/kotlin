@@ -144,7 +144,8 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                         createIrValueParameter(
                             valueParameter,
                             index = index + irFunction.contextReceiverParametersCount,
-                            typeOrigin
+                            typeOrigin,
+                            useStubForDefaultValueStub = function !is FirConstructor || containingClass?.name != Name.identifier("Enum")
                         ).apply {
                             this.parent = irFunction
                         }

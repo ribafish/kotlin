@@ -179,7 +179,6 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
     fun generateIrFunction(function: FirFunction, ): IrSimpleFunction {
         val irFunction = callablesGenerator.createIrFunction(function, conversionScope.parent())
         conversionScope.withScopeAndParent(irFunction) {
-            classifierGenerator.processTypeParameters(function, irFunction)
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
             // TODO: process default values of value parameters
             // TODO: process body
@@ -192,9 +191,9 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irFunction
     }
 
-    fun generateIrConstructor(constructor: FirConstructor): IrConstructor {
+    fun generateIrConstructor(constructor: FirConstructor, predefinedOrigin: IrDeclarationOrigin? = null): IrConstructor {
         val containingIrClass = conversionScope.lastClass()!!
-        val irConstructor = callablesGenerator.createIrConstructor(constructor, containingIrClass)
+        val irConstructor = callablesGenerator.createIrConstructor(constructor, containingIrClass, predefinedOrigin)
         conversionScope.withParent(irConstructor) {
             // parameters of primary constructor should be declared in scope of class,
             //   because they can be references in property initializers and init blocks

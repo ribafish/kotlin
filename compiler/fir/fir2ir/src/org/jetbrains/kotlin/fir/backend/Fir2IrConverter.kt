@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
+import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
@@ -78,22 +79,6 @@ class Fir2IrConverter(
         val irClass = registerClassAndNestedClasses(klass, parent)
         processClassAndNestedClassHeaders(klass)
         return irClass
-    }
-
-    fun processLocalClassAndNestedClasses(klass: FirClass, parent: IrDeclarationParent): IrClass {
-        val irClass = registerClassAndNestedClasses(klass, parent)
-        processClassAndNestedClassHeaders(klass)
-        processClassMembers(klass, irClass)
-        bindFakeOverridesInClass(irClass)
-        return irClass
-    }
-
-    fun processAnonymousObjectHeaders(
-        anonymousObject: FirAnonymousObject,
-        irClass: IrClass,
-    ) {
-        registerNestedClasses(anonymousObject, irClass)
-        processNestedClassHeaders(anonymousObject)
     }
 
     internal fun processClassMembers(klass: FirClass, irClass: IrClass): IrClass {
@@ -338,6 +323,36 @@ class Fir2IrConverter(
             commonMemberStorage: Fir2IrCommonMemberStorage,
             initializedIrBuiltIns: IrBuiltInsOverFir?
         ): Fir2IrResult {
+            return createModuleFragmentWithSignaturesIfNeeded(
+                session,
+                scopeSession,
+                firFiles,
+                fir2IrExtensions,
+                fir2IrConfiguration,
+                { irMangler },
+                irFactory,
+                visibilityConverter,
+                specialSymbolProvider,
+                kotlinBuiltIns,
+                commonMemberStorage,
+                initializedIrBuiltIns
+            )
+        }
+
+        fun createModuleFragmentWithSignaturesIfNeeded(
+            session: FirSession,
+            scopeSession: ScopeSession,
+            firFiles: List<FirFile>,
+            fir2IrExtensions: Fir2IrExtensions,
+            fir2IrConfiguration: Fir2IrConfiguration,
+            irManglerProvider: (List<IrProvider>) -> KotlinMangler.IrMangler,
+            irFactory: IrFactory,
+            visibilityConverter: Fir2IrVisibilityConverter,
+            specialSymbolProvider: Fir2IrSpecialSymbolProvider,
+            kotlinBuiltIns: KotlinBuiltIns,
+            commonMemberStorage: Fir2IrCommonMemberStorage,
+            initializedIrBuiltIns: IrBuiltInsOverFir?
+        ): Fir2IrResult {
             val moduleDescriptor = FirModuleDescriptor(session, kotlinBuiltIns)
             val fir2IrSymbolTableExtension = Fir2IrSymbolTableExtension(commonMemberStorage.symbolTable, commonMemberStorage.firSignatureComposer)
             val components = Fir2IrComponentsStorage(
@@ -351,7 +366,7 @@ class Fir2IrConverter(
                 moduleDescriptor,
                 commonMemberStorage,
                 initializedIrBuiltIns,
-                irMangler,
+                irManglerProvider,
                 specialSymbolProvider
             )
             fir2IrExtensions.registerDeclarations(commonMemberStorage.symbolTable)

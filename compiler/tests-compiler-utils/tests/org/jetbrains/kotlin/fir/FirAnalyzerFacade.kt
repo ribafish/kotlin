@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirProviderImpl
 import org.jetbrains.kotlin.fir.resolve.transformers.FirTotalResolveProcessor
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrManglerWithIrProviders
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.sourceFiles.LightTreeFile
@@ -116,7 +117,7 @@ class FirAnalyzerFacade(
             session, _scopeSession!!, firFiles!!,
             fir2IrExtensions,
             fir2IrConfiguration,
-            JvmIrMangler, IrFactoryImpl,
+            { JvmIrManglerWithIrProviders(it) }, IrFactoryImpl,
             FirJvmVisibilityConverter,
             Fir2IrJvmSpecialAnnotationSymbolProvider(),
             kotlinBuiltIns = DefaultBuiltIns.Instance, // TODO: consider passing externally,

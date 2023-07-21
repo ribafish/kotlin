@@ -17,8 +17,11 @@ import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrExportCheck
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrMangleComputer
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.MainFunctionDetector
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
@@ -28,12 +31,14 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.UnwrappedType
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
 
-object JvmIrMangler : IrBasedKotlinManglerImpl() {
+sealed class JvmIrManglerBase : IrBasedKotlinManglerImpl() {
+    protected abstract fun getOwnerOfClassSymbol(symbol: IrClassSymbol): IrClass
+
     private class JvmIrExportChecker(compatibleMode: Boolean) : IrExportCheckerVisitor(compatibleMode) {
         override fun IrDeclaration.isPlatformSpecificExported() = false
     }
 
-    private class JvmIrManglerComputer(builder: StringBuilder, mode: MangleMode, compatibleMode: Boolean) : IrMangleComputer(builder, mode, compatibleMode) {
+    private inner class JvmIrManglerComputer(builder: StringBuilder, mode: MangleMode, compatibleMode: Boolean) : IrMangleComputer(builder, mode, compatibleMode) {
         override fun copy(newMode: MangleMode): IrMangleComputer =
             JvmIrManglerComputer(builder, newMode, compatibleMode)
 
@@ -44,12 +49,29 @@ object JvmIrMangler : IrBasedKotlinManglerImpl() {
                 tBuilder.append(MangleConstant.ENHANCED_NULLABILITY_MARK)
             }
         }
+
+        override fun IrClassSymbol.extractOwner(): IrClass {
+            return getOwnerOfClassSymbol(this)
+        }
     }
 
     override fun getExportChecker(compatibleMode: Boolean): KotlinExportChecker<IrDeclaration> = JvmIrExportChecker(compatibleMode)
 
     override fun getMangleComputer(mode: MangleMode, compatibleMode: Boolean): KotlinMangleComputer<IrDeclaration> =
         JvmIrManglerComputer(StringBuilder(256), mode, compatibleMode)
+}
+
+object JvmIrMangler : JvmIrManglerBase() {
+    override fun getOwnerOfClassSymbol(symbol: IrClassSymbol): IrClass {
+        return symbol.owner
+    }
+}
+
+class JvmIrManglerWithIrProviders(private val irProviders: List<IrProvider>) : JvmIrManglerBase() {
+    override fun getOwnerOfClassSymbol(symbol: IrClassSymbol): IrClass {
+        return irProviders.firstNotNullOfOrNull { it.getDeclaration(symbol) } as IrClass?
+            ?: error("Symbol is unbound: \"${symbol.signature}\"")
+    }
 }
 
 class JvmDescriptorMangler(private val mainDetector: MainFunctionDetector?) : DescriptorBasedKotlinManglerImpl() {

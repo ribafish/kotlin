@@ -39,7 +39,7 @@ class Fir2IrComponentsStorage(
     moduleDescriptor: FirModuleDescriptor,
     commonMemberStorage: Fir2IrCommonMemberStorage,
     initializedIrBuiltIns: IrBuiltInsOverFir?,
-    override val irMangler: KotlinMangler.IrMangler,
+    irManglerProvider:(List<IrProvider>) -> KotlinMangler.IrMangler,
     specialSymbolProvider: Fir2IrSpecialSymbolProvider
 ) : Fir2IrComponents {
     override val conversionScope: Fir2IrConversionScope = Fir2IrConversionScope()
@@ -56,11 +56,12 @@ class Fir2IrComponentsStorage(
     override val classifierGenerator: Fir2IrClassifierGenerator = Fir2IrClassifierGenerator(this)
     override val externalDeclarationsGenerator: Fir2IrExternalDeclarationsGenerator = Fir2IrExternalDeclarationsGenerator(this, moduleDescriptor)
 
+    override val irProviders: List<IrProvider> = listOf(FirIrProvider(this))
+    override val irMangler: KotlinMangler.IrMangler = irManglerProvider(irProviders)
     override val irBuiltIns: IrBuiltInsOverFir = initializedIrBuiltIns ?: IrBuiltInsOverFir(
         this, configuration.languageVersionSettings, moduleDescriptor, irMangler
     )
     override val builtIns: Fir2IrBuiltIns = Fir2IrBuiltIns(this, specialSymbolProvider)
-    override val irProviders: List<IrProvider> = listOf(FirIrProvider(this))
 
     override val typeConverter: Fir2IrTypeConverter = Fir2IrTypeConverter(this)
 
