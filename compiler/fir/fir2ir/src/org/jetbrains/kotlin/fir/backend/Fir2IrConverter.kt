@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.backend
 import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageSupportForLinker
 import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideBuilder
 import org.jetbrains.kotlin.backend.common.overrides.FileLocalAwareLinker
+import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.fir.extensions.generatedMembers
 import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
 import org.jetbrains.kotlin.fir.isEnumEntries
 import org.jetbrains.kotlin.fir.languageVersionSettings
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
 import org.jetbrains.kotlin.ir.declarations.*
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
 import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
@@ -61,7 +64,21 @@ class Fir2IrConverter(
         for (firFile in allFirFiles) {
             irModuleFragment.files += declarationsConverter.generateFile(firFile, irModuleFragment)
         }
-        generateUnboundSymbolsAsDependencies(irProviders, symbolTable, symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols)
+        generateUnboundSymbolsAsDependencies(
+            irProviders,
+            symbolTable,
+            symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols,
+            onSymbol = {
+                if (it is IrClassSymbol) {
+                    val irClass = it.owner
+//                    if (irClass is Fir2IrLazyClass) {
+//                        // Trigger computation of declarations to reference other external classes
+//                        irClass.declarations
+//                    }
+//                    fakeOverrideBuilder.enqueueClass(irClass, it.signature!!, CompatibilityMode.CURRENT)
+                }
+            }
+        )
         fakeOverrideBuilder.provideFakeOverrides()
         evaluateConstants(irModuleFragment, configuration)
     }

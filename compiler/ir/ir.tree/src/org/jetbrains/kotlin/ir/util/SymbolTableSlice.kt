@@ -152,7 +152,9 @@ abstract class SymbolTableSlice<Key, SymbolOwner, Symbol>(val lock: IrLock)
         @OptIn(PrivateForInline::class)
         fun leaveScope(owner: IrSymbol) {
             currentScope?.owner.let {
-                require(it == owner) { "Unexpected leaveScope: owner=$owner, currentScope.owner=$it" }
+                require(it == owner) {
+                    "Unexpected leaveScope: owner=$owner, currentScope.owner=$it"
+                }
             }
 
             currentScope = currentScope?.parent

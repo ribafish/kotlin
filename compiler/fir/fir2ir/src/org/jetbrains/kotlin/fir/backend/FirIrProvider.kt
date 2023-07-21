@@ -41,7 +41,7 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
             return findFieldViaProperty(symbol)
         }
         val signature = symbol.signature ?: return null
-        return getDeclarationForSignature(signature, symbol.kind())
+        return getDeclarationForSignature(signature, symbol.kind(), fullSignature = null)
     }
 
     private fun findFieldViaProperty(fieldSymbol: IrFieldSymbol): IrField? {
@@ -52,15 +52,15 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
         return field
     }
 
-    private fun getDeclarationForSignature(signature: IdSignature, kind: SymbolKind): IrDeclaration? = when (signature) {
+    private fun getDeclarationForSignature(signature: IdSignature, kind: SymbolKind, fullSignature: IdSignature?): IrDeclaration? = when (signature) {
         is IdSignature.AccessorSignature -> getDeclarationForAccessorSignature(signature)
         is IdSignature.CompositeSignature -> getDeclarationForCompositeSignature(signature, kind)
-        is IdSignature.CommonSignature -> getDeclarationForCommonSignature(signature, kind)
+        is IdSignature.CommonSignature -> getDeclarationForCommonSignature(signature, kind, fullSignature)
         else -> error("Unexpected signature kind: $signature")
     }
 
     private fun getDeclarationForAccessorSignature(signature: IdSignature.AccessorSignature): IrDeclaration? {
-        val property = getDeclarationForSignature(signature.propertySignature, PROPERTY_SYMBOL) as? IrProperty ?: return null
+        val property = getDeclarationForSignature(signature.propertySignature, PROPERTY_SYMBOL, fullSignature = null) as? IrProperty ?: return null
         return when (signature.accessorSignature.shortName) {
             property.getter?.name?.asString() -> property.getter
             property.setter?.name?.asString() -> property.setter
@@ -70,35 +70,37 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
 
     private fun getDeclarationForCompositeSignature(signature: IdSignature.CompositeSignature, kind: SymbolKind): IrDeclaration? {
         if (kind == TYPE_PARAMETER_SYMBOL) {
-            val container = (getDeclarationForSignature(signature.container, CLASS_SYMBOL)
-                ?: getDeclarationForSignature(signature.container, FUNCTION_SYMBOL)
-                ?: getDeclarationForSignature(signature.container, PROPERTY_SYMBOL)
+            val container = (getDeclarationForSignature(signature.container, CLASS_SYMBOL, fullSignature = null)
+                ?: getDeclarationForSignature(signature.container, FUNCTION_SYMBOL, fullSignature = null)
+                ?: getDeclarationForSignature(signature.container, PROPERTY_SYMBOL, fullSignature = null)
                     ) as IrTypeParametersContainer
             val localSignature = signature.inner as IdSignature.LocalSignature
             return container.typeParameters[localSignature.index()]
         }
-        return getDeclarationForSignature(signature.nearestPublicSig(), kind)
+        return getDeclarationForSignature(signature.nearestPublicSig(), kind, signature)
     }
 
-    private fun getDeclarationForCommonSignature(signature: IdSignature.CommonSignature, kind: SymbolKind): IrDeclaration? {
+    private fun getDeclarationForCommonSignature(signature: IdSignature.CommonSignature, kind: SymbolKind, fullSignature: IdSignature?): IrDeclaration? {
         val packageFqName = FqName(signature.packageFqName)
         val nameSegments = signature.nameSegments
         val topName = Name.identifier(nameSegments[0])
 
+        val signatureForSymbol = fullSignature ?: signature
         return if (nameSegments.size == 1) {
             val packageFragment = components.externalDeclarationsGenerator.getIrExternalPackageFragment(packageFqName)
             val candidates = when (kind) {
                 CLASS_SYMBOL, TYPEALIAS_SYMBOL -> listOfNotNull(symbolProvider.getClassLikeSymbolByClassId(ClassId(packageFqName, topName)))
                 else -> symbolProvider.getTopLevelCallableSymbols(packageFqName, topName)
             }
+
             val symbol = findDeclarationByHash(candidates, signature.id) ?: return null
             val irSymbol = when {
                 kind == CLASS_SYMBOL && symbol is FirRegularClassSymbol ->
-                    externalDeclarationsGenerator.getOrCreateLazyClass(symbol, signature, packageFragment)
+                    externalDeclarationsGenerator.getOrCreateLazyClass(symbol, signatureForSymbol, packageFragment)
                 kind == FUNCTION_SYMBOL && symbol is FirNamedFunctionSymbol ->
-                    externalDeclarationsGenerator.getOrCreateLazySimpleFunction(symbol, signature, packageFragment)
+                    externalDeclarationsGenerator.getOrCreateLazySimpleFunction(symbol, signatureForSymbol, packageFragment)
                 kind == PROPERTY_SYMBOL && symbol is FirPropertySymbol ->
-                    externalDeclarationsGenerator.getOrCreateLazyProperty(symbol, signature, packageFragment)
+                    externalDeclarationsGenerator.getOrCreateLazyProperty(symbol, signatureForSymbol, packageFragment)
                 else -> error("Unsupported pair of kind and symbol for top-level declaration: $kind, $symbol")
             }
             irSymbol.owner
@@ -107,7 +109,8 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
             // TODO: replace with getOrCreateLazyClass?
 //            val topLevelClass = symbolProvider.getRegularClassSymbolByClassId(classId)?.fir ?: return null
             val irClass = externalDeclarationsGenerator.findDependencyClassByClassId(classId)?.owner ?: return null
-            irClass.declarations.first { it.symbol.signature == signature }
+            irClass.declarations.firstOrNull { it.symbol.signature == signatureForSymbol }
+                ?: error("Declaration for signature \"$signature\" not found")
         }
     }
 
@@ -127,7 +130,10 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
                 candidate is FirClass || candidate is FirEnumEntry || candidate is FirTypeAlias
             } else {
                 // The next line should have singleOrNull, but in some cases we get multiple references to the same FIR declaration.
-                with(components.signatureComposer.mangler) { candidate.signatureMangle(compatibleMode = false) == hash }
+                with(components.signatureComposer.mangler) {
+                    val declarationHash = candidate.signatureMangle(compatibleMode = false)
+                    declarationHash == hash
+                }
             }
         }
 }

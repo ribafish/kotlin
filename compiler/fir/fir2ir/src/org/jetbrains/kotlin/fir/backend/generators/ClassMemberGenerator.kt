@@ -46,15 +46,8 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
     fun <T : IrFunction> convertFunctionContent(irFunction: T, firFunction: FirFunction?, containingClass: FirClass?) {
         if (firFunction == null) return
 
-        conversionScope.withParent(irFunction) {
+        with(irFunction) {
             if (irFunction !is IrConstructor || !irFunction.isPrimary) {
-                // Scope for primary constructor should be entered before class declaration processing
-                with(declarationStorage) {
-                    // TODO: drop it
-                    enterScope(irFunction)
-                    irFunction.putParametersInScope(firFunction)
-                }
-
                 val irParameters = valueParameters.drop(firFunction.contextReceivers.size)
                 val annotationMode = containingClass?.classKind == ClassKind.ANNOTATION_CLASS && irFunction is IrConstructor
                 for ((valueParameter, firValueParameter) in irParameters.zip(firFunction.valueParameters)) {
@@ -136,10 +129,6 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
                         irFunction.body = firFunction.body?.let { visitor.convertToIrBlockBody(it) }
                     }
                 }
-            }
-            if (irFunction !is IrConstructor || !irFunction.isPrimary) {
-                // Scope for primary constructor should be left after class declaration
-                declarationStorage.leaveScope(irFunction)
             }
             if (irFunction is IrSimpleFunction && firFunction is FirSimpleFunction && containingClass != null) {
                 irFunction.overriddenSymbols = firFunction.generateOverriddenFunctionSymbols(containingClass)

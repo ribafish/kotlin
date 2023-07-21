@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
+import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
 import org.jetbrains.kotlin.fir.backend.declareThisReceiverParameter
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
@@ -108,9 +109,8 @@ abstract class AbstractFir2IrLazyFunction<F : FirCallableDeclaration>(
     }
 
     protected fun createThisReceiverParameter(thisType: IrType, explicitReceiver: FirReceiverParameter? = null): IrValueParameter {
-        declarationStorage.enterScope(this)
-        return declareThisReceiverParameter(thisType, origin, explicitReceiver = explicitReceiver).apply {
-            declarationStorage.leaveScope(this@AbstractFir2IrLazyFunction)
+        return conversionScope.withScopeAndParent(this) {
+            declareThisReceiverParameter(thisType, origin, explicitReceiver = explicitReceiver)
         }
     }
 

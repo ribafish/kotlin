@@ -5,9 +5,11 @@
 
 package org.jetbrains.kotlin.fir.lazy
 
+import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
+import org.jetbrains.kotlin.fir.containingClassForStaticMemberAttr
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
+import kotlin.properties.ReadWriteProperty
 
 class Fir2IrLazyClass(
     components: Fir2IrComponents,
@@ -146,7 +149,10 @@ class Fir2IrLazyClass(
             .also(converter::bindFakeOverridesOrPostpone)
     }
 
-    override val declarations: MutableList<IrDeclaration> by lazyVar(lock) {
+    @Volatile
+    private var fakeOverridesAreInitialized = false
+
+    private val _declarations by lazyVar(lock) {
         val result = mutableListOf<IrDeclaration>()
         conversionScope.withScopeAndParent(this) {
             // NB: it's necessary to take all callables from scope,
@@ -170,7 +176,7 @@ class Fir2IrLazyClass(
             }
 
             if (fir.classKind == ClassKind.ENUM_CLASS) {
-                val defaultConstructor = result.firstOrNull() { it is IrConstructor && it.isDefaultConstructor } as IrConstructor?
+                val defaultConstructor = result.firstOrNull { it is IrConstructor && it.isDefaultConstructor } as IrConstructor?
                 for (declaration in fir.declarations) {
                     if (declaration is FirEnumEntry && shouldBuildStub(declaration)) {
                         // TODO: consider this
@@ -187,6 +193,7 @@ class Fir2IrLazyClass(
                     scope.processFunctionsByName(name) {
                         if (it.isSubstitutionOrIntersectionOverride) return@processFunctionsByName
                         if (!shouldBuildStub(it.fir)) return@processFunctionsByName
+                        if (it.isStatic && it.fir.containingClassForStaticMemberAttr != ownerLookupTag) return@processFunctionsByName
                         if (it.isStatic || it.dispatchReceiverClassLookupTagOrNull() == ownerLookupTag) {
                             if (it.isAbstractMethodOfAny()) {
                                 return@processFunctionsByName
@@ -212,7 +219,7 @@ class Fir2IrLazyClass(
 //            with(classifierStorage) {
 //                result.addAll(this@Fir2IrLazyClass.createContextReceiverFields(fir))
 //            }
-
+//
             for (name in scope.getCallableNames()) {
                 result += getFakeOverridesByName(name)
             }
@@ -220,6 +227,23 @@ class Fir2IrLazyClass(
         }
         result
     }
+
+    override val declarations: MutableList<IrDeclaration>
+        get() {
+            if (fakeOverridesAreInitialized) return _declarations
+            synchronized(lock) {
+                if (fakeOverridesAreInitialized) return _declarations
+                fakeOverridesAreInitialized = true
+                generateUnboundSymbolsAsDependencies(
+                    irProviders,
+                    symbolTable,
+                    symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols
+                )
+
+                fakeOverrideBuilder.provideFakeOverrides(this, CompatibilityMode.CURRENT)
+                return _declarations
+            }
+        }
 
     private fun shouldBuildStub(fir: FirDeclaration): Boolean =
         fir !is FirMemberDeclaration ||

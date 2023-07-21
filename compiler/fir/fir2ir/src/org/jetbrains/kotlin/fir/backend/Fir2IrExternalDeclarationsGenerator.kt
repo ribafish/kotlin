@@ -85,7 +85,7 @@ class Fir2IrExternalDeclarationsGenerator(
 
     fun findDependencyClassByClassId(classId: ClassId): IrClassSymbol? {
         val firSymbol = session.symbolProvider.getClassLikeSymbolByClassId(classId) ?: return null
-        require(firSymbol.origin == FirDeclarationOrigin.Library || firSymbol.origin == FirDeclarationOrigin.BuiltIns || firSymbol.origin is FirDeclarationOrigin.Java) {
+        require(firSymbol.origin.isExternal) {
             "Bruh: ${firSymbol.origin}, ${firSymbol.fir.render()}"
         }
 
@@ -223,3 +223,6 @@ class Fir2IrExternalDeclarationsGenerator(
     }
 
 }
+
+val FirDeclarationOrigin.isExternal: Boolean
+    get() = this == FirDeclarationOrigin.Library || this == FirDeclarationOrigin.BuiltIns || this is FirDeclarationOrigin.Java

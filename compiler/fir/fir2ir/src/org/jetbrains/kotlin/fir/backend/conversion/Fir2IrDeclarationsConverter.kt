@@ -182,11 +182,13 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
             // TODO: process default values of value parameters
             // TODO: process body
-            memberGenerator.convertFunctionContent(
-                irFunction,
-                function,
-                (function.dispatchReceiverType?.toSymbol(session) as? FirClassSymbol<*>)?.fir
-            )
+            if (!function.origin.isExternal) {
+                memberGenerator.convertFunctionContent(
+                    irFunction,
+                    function,
+                    (function.dispatchReceiverType?.toSymbol(session) as? FirClassSymbol<*>)?.fir
+                )
+            }
         }
         return irFunction
     }

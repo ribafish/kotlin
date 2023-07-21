@@ -34,6 +34,7 @@ fun <T : StarSymbolTableExtension> generateUnboundSymbolsAsDependencies(
     symbolTableExtension: T,
     symbolExtractor: T.() -> Set<IrSymbol> = StarSymbolTableExtension::allUnboundSymbols,
     initialSymbols: Set<IrSymbol> = emptySet(),
+    onSymbol: (IrSymbol) -> Unit = {}
 ) {
     // There should be at most one DeclarationStubGenerator (none in closed world?)
     irProviders.filterIsInstance<DeclarationStubGenerator>().singleOrNull()?.run { unboundSymbolGeneration = true }
@@ -47,6 +48,7 @@ fun <T : StarSymbolTableExtension> generateUnboundSymbolsAsDependencies(
             // Symbol could get bound as a side effect of deserializing other symbols.
             if (!symbol.isBound) {
                 irProviders.firstNotNullOfOrNull { provider -> provider.getDeclaration(symbol) }
+                onSymbol(symbol)
             }
         }
         // We wait for the unbound to stabilize on fake overrides.
