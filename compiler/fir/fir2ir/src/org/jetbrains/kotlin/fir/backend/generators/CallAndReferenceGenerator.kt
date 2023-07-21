@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.backend.conversion.getterOrDefault
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.isMethodOfAny
+import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
+import org.jetbrains.kotlin.fir.unwrapFakeOverrides
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
@@ -446,7 +448,7 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                     }
 
                     is IrPropertySymbol -> {
-                        val propertySymbol = firSymbol as FirPropertySymbol
+                        val propertySymbol = firSymbol!!.unwrapCallSiteSubstitutionOverride() as FirPropertySymbol
                         when {
                             propertySymbol.hasBackingField -> {
                                 val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
@@ -688,7 +690,6 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                 )
             }
 
-            val irClass = symbol.owner
             val firConstructorSymbol = annotation.toResolvedCallableSymbol() as? FirConstructorSymbol
                 ?: run {
                     // Fallback for FirReferencePlaceholderForResolvedAnnotations from jar
@@ -706,7 +707,7 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                     }
                     constructorSymbol
                 } ?: return@convertWithOffsets IrErrorCallExpressionImpl(
-                    startOffset, endOffset, type, "No annotation constructor found: ${irClass.name}"
+                    startOffset, endOffset, type, "No annotation constructor found: $symbol"
                 )
 
             val irConstructor = declarationStorage.getIrConstructorSymbol(firConstructorSymbol)
@@ -1227,8 +1228,7 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
             }
 
             is IrFieldAccessExpression -> {
-                val ownerField = symbol.owner
-                if (!ownerField.isStatic) {
+                if (qualifiedAccess.toResolvedCallableSymbol()?.isStatic != true) {
                     receiver = qualifiedAccess.findIrDispatchReceiver(explicitReceiverExpression)
                 }
             }

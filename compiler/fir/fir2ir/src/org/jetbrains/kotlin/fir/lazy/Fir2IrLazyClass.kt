@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.lazy
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
@@ -149,20 +150,15 @@ class Fir2IrLazyClass(
     }
 
     override val declarations: MutableList<IrDeclaration> by lazyVar(lock) {
-        symbolTable.withScope(this) {
-            val result = mutableListOf<IrDeclaration>()
+        val result = mutableListOf<IrDeclaration>()
+        conversionScope.withScopeAndParent(this) {
             // NB: it's necessary to take all callables from scope,
             // e.g. to avoid accessing un-enhanced Java declarations with FirJavaTypeRef etc. inside
             val scope = fir.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
             scope.processDeclaredConstructors {
                 val constructor = it.fir
                 if (shouldBuildStub(constructor)) {
-                    val irConstructor = callablesGenerator.createIrConstructor(constructor, this)
-                    symbolTable.withScope(this) {
-                        callablesGenerator.processValueParameters(constructor, irConstructor, this)
-                        classifierGenerator.processTypeParameters(constructor, irConstructor)
-                    }
-                    result += irConstructor
+                    result += declarationsConverter.generateIrConstructor(constructor)
                 }
             }
 
@@ -180,7 +176,7 @@ class Fir2IrLazyClass(
                 for (declaration in fir.declarations) {
                     if (declaration is FirEnumEntry && shouldBuildStub(declaration)) {
                         // TODO: consider this
-                        result += declarationStorage.getIrValueSymbol(declaration.symbol).owner as IrDeclaration
+                        result += declarationsConverter.generateIrEnumEntry(declaration)
                     }
                 }
             }
@@ -197,7 +193,7 @@ class Fir2IrLazyClass(
                             if (it.isAbstractMethodOfAny()) {
                                 return@processFunctionsByName
                             }
-                            result += callablesGenerator.createIrFunction(it.fir, this)
+                            result += declarationsConverter.generateIrFunction(it.fir)
                         }
                     }
                     scope.processPropertiesByName(name) {
@@ -205,7 +201,7 @@ class Fir2IrLazyClass(
                         if (!shouldBuildStub(it.fir)) return@processPropertiesByName
                         if (it is FirPropertySymbol && (it.isStatic || it.dispatchReceiverClassLookupTagOrNull() == ownerLookupTag)) {
                             result.addIfNotNull(
-                                callablesGenerator.createIrProperty(it.fir, this)
+                                declarationsConverter.generateIrProperty(it.fir)
                             )
                         }
                     }
@@ -215,16 +211,16 @@ class Fir2IrLazyClass(
             addDeclarationsFromScope(scope)
             addDeclarationsFromScope(fir.staticScope(session, scopeSession))
 
-            with(classifierStorage) {
-                result.addAll(this@Fir2IrLazyClass.createContextReceiverFields(fir))
-            }
+//            with(classifierStorage) {
+//                result.addAll(this@Fir2IrLazyClass.createContextReceiverFields(fir))
+//            }
 
             for (name in scope.getCallableNames()) {
                 result += getFakeOverridesByName(name)
             }
 
-            result
         }
+        result
     }
 
     private fun shouldBuildStub(fir: FirDeclaration): Boolean =

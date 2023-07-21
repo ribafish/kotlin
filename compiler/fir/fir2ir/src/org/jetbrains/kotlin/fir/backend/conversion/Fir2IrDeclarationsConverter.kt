@@ -99,18 +99,24 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
             is FirRegularClass -> classifierGenerator.createIrClass(klass, parent)
             is FirAnonymousObject -> classifierGenerator.createIrAnonymousObject(klass, irParent = parent)
         }
-        processClassDeclarations(klass, irClass)
+        processClassDeclarations(klass, irClass, irClass.declarations)
         return irClass
     }
 
-    private fun processClassDeclarations(klass: FirClass, irClass: IrClass) {
+    fun processClassDeclarations(klass: FirClass, irClass: IrClass, destination: MutableList<IrDeclaration>) {
         conversionScope.withScopeAndParent(irClass) {
             conversionScope.withClass(irClass) {
                 conversionScope.withContainingFirClass(klass) {
-                    classifierGenerator.processTypeParameters(klass, irClass)
                     val classMembers = collectAllClassMembers(klass)
+                    val primaryConstructor = classMembers.firstOrNull { it is FirConstructor && it.isPrimary } as FirConstructor?
+                    // primary constructor should be converted first, to declare its value parameters
+                    //   which may be referenced in property initializers and init blocks
+                    if (primaryConstructor != null) {
+                        destination += generateIrConstructor(primaryConstructor)
+                    }
                     for (declaration in classMembers) {
-                        irClass.declarations += generateIrDeclaration(declaration)
+                        if (declaration === primaryConstructor) continue
+                        destination += generateIrDeclaration(declaration)
                     }
                 }
             }
@@ -184,15 +190,22 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irFunction
     }
 
-    fun generateIrConstructor(constructor: FirConstructor, ): IrConstructor {
+    fun generateIrConstructor(constructor: FirConstructor): IrConstructor {
         val containingIrClass = conversionScope.lastClass()!!
         val irConstructor = callablesGenerator.createIrConstructor(constructor, containingIrClass)
-        conversionScope.withScopeAndParent(irConstructor) {
-            classifierGenerator.processTypeParameters(constructor, irConstructor)
+        conversionScope.withParent(irConstructor) {
+            // parameters of primary constructor should be declared in scope of class,
+            //   because they can be references in property initializers and init blocks
+            if (!constructor.isPrimary) {
+                symbolTable.enterScope(irConstructor)
+            }
             callablesGenerator.processValueParameters(constructor, irConstructor, containingIrClass)
+            if (constructor.isPrimary) {
+                symbolTable.enterScope(irConstructor)
+            }
+            classifierGenerator.processTypeParameters(constructor, irConstructor)
             memberGenerator.convertFunctionContent(irConstructor, constructor, conversionScope.containerFirClass())
-            // TODO: process default values of value parameters
-            // TODO: process body
+            symbolTable.leaveScope(irConstructor)
         }
         return irConstructor
     }
@@ -244,7 +257,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         val getter = property.getterOrDefault
         processPropertyAccessor(property, irProperty, getter, isSetter = false)
         if (property.isVar) {
-            val setter = property.getterOrDefault
+            val setter = property.setterOrDefault
             processPropertyAccessor(property, irProperty, setter, isSetter = true)
         }
     }

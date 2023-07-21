@@ -164,6 +164,13 @@ private fun FirBasedSymbol<*>.toSymbolForCall(
     else -> error("Unknown symbol: $this")
 }
 
+fun FirBasedSymbol<*>.unwrapCallSiteSubstitutionOverride(): FirBasedSymbol<*> {
+    if (this is FirCallableSymbol<*> && origin == FirDeclarationOrigin.SubstitutionOverride.CallSite) {
+        return fir.unwrapUseSiteSubstitutionOverrides<FirCallableDeclaration>().symbol
+    }
+    return this
+}
+
 context(Fir2IrComponents)
 fun FirReference.toSymbolForCall(
     dispatchReceiver: FirExpression,
@@ -175,11 +182,7 @@ fun FirReference.toSymbolForCall(
 ): IrSymbol? {
     return when (this) {
         is FirResolvedNamedReference -> {
-            var symbol = resolvedSymbol
-
-            if (symbol is FirCallableSymbol<*> && symbol.origin == FirDeclarationOrigin.SubstitutionOverride.CallSite) {
-                symbol = symbol.fir.unwrapUseSiteSubstitutionOverrides<FirCallableDeclaration>().symbol
-            }
+            val symbol = resolvedSymbol.unwrapCallSiteSubstitutionOverride()
 
             symbol.toSymbolForCall(
                 dispatchReceiver,

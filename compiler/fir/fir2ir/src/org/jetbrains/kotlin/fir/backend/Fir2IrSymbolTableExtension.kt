@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirProperty
+import org.jetbrains.kotlin.fir.propertyIfBackingField
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -21,12 +21,23 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import org.jetbrains.kotlin.utils.threadLocal
+import java.util.concurrent.ConcurrentHashMap
 
 class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirBasedSignatureComposer) : SymbolTableExtension<
         FirBasedSymbol<*>, FirClassSymbol<*>, FirTypeAliasSymbol, FirScriptSymbol, FirFunctionSymbol<*>,
         FirConstructorSymbol, FirPropertySymbol, FirVariableSymbol<*>, FirEnumEntrySymbol, FirValueParameterSymbol, FirTypeParameterSymbol
         >(table) {
 
+    private sealed class NullableValue<out T : Any> {
+        abstract val value: T?
+
+        class Value<out T : Any>(override val value: T) : NullableValue<T>()
+        object Null : NullableValue<Nothing>() {
+            override val value: Nothing? get() = null
+        }
+    }
+
+    private val fieldSymbolForPropertySymbolMap: ConcurrentHashMap<IrFieldSymbol, NullableValue<IrPropertySymbol>> = ConcurrentHashMap()
 
     private val valueParameterSlice: SymbolTableSlice.Scoped<FirValueParameterSymbol, IrValueParameter, IrValueParameterSymbol> by threadLocal {
         SymbolTableSlice.Scoped(lock)
@@ -39,6 +50,12 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
     override fun MutableList<SymbolTableSlice.Scoped<*, *, *>>.initializeScopedSlices() {
         add(valueParameterSlice)
         add(variableSlice)
+    }
+
+    // ------------------------------------ property parts ------------------------------------
+
+    fun getPropertySymbolForField(fieldSymbol: IrFieldSymbol): IrPropertySymbol? {
+        return fieldSymbolForPropertySymbolMap[fieldSymbol]?.value
     }
 
     // ------------------------------------ signature ------------------------------------
@@ -213,7 +230,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
 
     @OptIn(SymbolTableInternals::class)
     fun referenceField(declaration: FirVariableSymbol<*>, signature: IdSignature?): IrFieldSymbol {
-        return reference(
+        val irFieldSymbol = reference(
             declaration,
             fieldSlice,
             SymbolTable::referenceFieldImpl,
@@ -222,6 +239,17 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
             ::createPrivateFieldSymbol,
             specificCalculateSignature = { signature }
         )
+        if (!irFieldSymbol.isBound) {
+            // Fields are accessible only via properties, so we should create mapping from field to property,
+            // so we can properly generate external property if only field was referenced
+            fieldSymbolForPropertySymbolMap.computeIfAbsent(irFieldSymbol) l@{
+                val firProperty = declaration.fir.propertyIfBackingField as? FirProperty ?: return@l NullableValue.Null
+                val propertySignature = signatureComposer.composeSignature(firProperty)
+                val irPropertySymbol = referenceProperty(firProperty.symbol, propertySignature)
+                NullableValue.Value(irPropertySymbol)
+            }
+        }
+        return irFieldSymbol
     }
 
     // ------------------------------------ property ------------------------------------

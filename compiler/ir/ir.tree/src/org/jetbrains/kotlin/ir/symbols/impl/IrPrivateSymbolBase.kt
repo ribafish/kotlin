@@ -111,7 +111,11 @@ class IrEnumEntrySymbolImpl(descriptor: ClassDescriptor? = null) :
 
 class IrFieldSymbolImpl(descriptor: PropertyDescriptor? = null) :
     IrBindableSymbolBase<PropertyDescriptor, IrField>(descriptor),
-    IrFieldSymbol
+    IrFieldSymbol {
+        init {
+            Unit
+        }
+    }
 
 class IrTypeParameterSymbolImpl(descriptor: TypeParameterDescriptor? = null) :
     IrBindableSymbolBase<TypeParameterDescriptor, IrTypeParameter>(descriptor),

@@ -18,9 +18,11 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.ClassId
@@ -35,8 +37,19 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
 
     override fun getDeclaration(symbol: IrSymbol): IrDeclaration? {
         if (symbol.isBound) return symbol.owner as IrDeclaration
+        if (symbol is IrFieldSymbol) {
+            return findFieldViaProperty(symbol)
+        }
         val signature = symbol.signature ?: return null
         return getDeclarationForSignature(signature, symbol.kind())
+    }
+
+    private fun findFieldViaProperty(fieldSymbol: IrFieldSymbol): IrField? {
+        val propertySymbol = symbolTable.getPropertySymbolForField(fieldSymbol) ?: return null
+        val property = getDeclaration(propertySymbol) as IrProperty? ?: return null
+        val field = property.backingField
+        require(field?.symbol == fieldSymbol)
+        return field
     }
 
     private fun getDeclarationForSignature(signature: IdSignature, kind: SymbolKind): IrDeclaration? = when (signature) {
