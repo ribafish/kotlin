@@ -659,9 +659,6 @@ abstract class SymbolTableExtension<
     @OptIn(DelicateSymbolTableApi::class)
     val allUnboundSymbols: Set<IrSymbol>
         get() = buildSet {
-            fun addUnbound(slice: SymbolTableSlice<*, *, *>) {
-                slice.unboundSymbols.filterTo(this) { !it.isBound }
-            }
             addAll(table.allUnboundSymbols)
 
             addUnbound(scriptSlice)
@@ -674,6 +671,18 @@ abstract class SymbolTableExtension<
             addUnbound(typeAliasSlice)
             addUnbound(globalTypeParameterSlice)
         }
+
+    @OptIn(DelicateSymbolTableApi::class)
+    val unboundClassifiersSymbols: Set<IrSymbol>
+        get() = buildSet {
+            addAll(table.unboundClassifiersSymbols)
+            addUnbound(classSlice)
+            addUnbound(typeAliasSlice)
+        }
+
+    private fun MutableSet<IrSymbol>.addUnbound(slice: SymbolTableSlice<*, *, *>) {
+        slice.unboundSymbols.filterTo(this) { !it.isBound }
+    }
 
     protected inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
         declaration: D,

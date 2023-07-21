@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.backend.conversion
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtPsiSourceFileLinesMapping
 import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
+import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
@@ -100,6 +101,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
             is FirAnonymousObject -> classifierGenerator.createIrAnonymousObject(klass, irParent = parent)
         }
         processClassDeclarations(klass, irClass, irClass.declarations)
+        fakeOverrideBuilder.enqueueClass(irClass, irClass.symbol.signature!!, CompatibilityMode.CURRENT)
         return irClass
     }
 

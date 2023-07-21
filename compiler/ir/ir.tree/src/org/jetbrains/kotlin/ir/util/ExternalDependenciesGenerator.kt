@@ -29,19 +29,20 @@ class ExternalDependenciesGenerator(
     }
 }
 
-fun generateUnboundSymbolsAsDependencies(
+fun <T : StarSymbolTableExtension> generateUnboundSymbolsAsDependencies(
     irProviders: List<IrProvider>,
-    symbolTableExtension: StarSymbolTableExtension,
+    symbolTableExtension: T,
+    symbolExtractor: T.() -> Set<IrSymbol> = StarSymbolTableExtension::allUnboundSymbols,
     initialSymbols: Set<IrSymbol> = emptySet(),
 ) {
     // There should be at most one DeclarationStubGenerator (none in closed world?)
     irProviders.filterIsInstance<DeclarationStubGenerator>().singleOrNull()?.run { unboundSymbolGeneration = true }
 
     // Deserializing a reference may lead to new unbound references, so we loop until none are left.
-    var unbound = emptySet<IrSymbol>()
+    var unbound = initialSymbols
     do {
         val prevUnbound = unbound
-        unbound = symbolTableExtension.allUnboundSymbols
+        unbound = symbolTableExtension.symbolExtractor()
         for (symbol in unbound) {
             // Symbol could get bound as a side effect of deserializing other symbols.
             if (!symbol.isBound) {

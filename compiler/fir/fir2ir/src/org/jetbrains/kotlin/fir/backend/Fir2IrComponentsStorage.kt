@@ -5,6 +5,9 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageSupportForLinker
+import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideBuilder
+import org.jetbrains.kotlin.backend.common.overrides.FileLocalAwareLinker
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.conversion.Fir2IrDeclarationsConverter
 import org.jetbrains.kotlin.fir.backend.generators.AnnotationGenerator
@@ -15,8 +18,13 @@ import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.ir.IrLock
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
+import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
 
@@ -31,7 +39,7 @@ class Fir2IrComponentsStorage(
     moduleDescriptor: FirModuleDescriptor,
     commonMemberStorage: Fir2IrCommonMemberStorage,
     initializedIrBuiltIns: IrBuiltInsOverFir?,
-    irMangler: KotlinMangler.IrMangler,
+    override val irMangler: KotlinMangler.IrMangler,
     specialSymbolProvider: Fir2IrSpecialSymbolProvider
 ) : Fir2IrComponents {
     override val conversionScope: Fir2IrConversionScope = Fir2IrConversionScope()
@@ -66,7 +74,30 @@ class Fir2IrComponentsStorage(
     override val lock: IrLock
         get() = symbolTable.table.lock
 
+
     init {
         irBuiltIns.initialize()
+    }
+
+    override val fakeOverrideBuilder = FakeOverrideBuilder(
+        LinkerStub,
+        symbolTable.table,
+        irMangler,
+        IrTypeSystemContextImpl(irBuiltIns),
+        friendModules = emptyMap(),
+        PartialLinkageSupportForLinker.DISABLED
+    )
+
+    private object LinkerStub : FileLocalAwareLinker {
+        override fun tryReferencingSimpleFunctionByLocalSignature(
+            parent: IrDeclaration,
+            idSignature: IdSignature,
+        ): IrSimpleFunctionSymbol? {
+            return null
+        }
+
+        override fun tryReferencingPropertyByLocalSignature(parent: IrDeclaration, idSignature: IdSignature): IrPropertySymbol? {
+            return null
+        }
     }
 }

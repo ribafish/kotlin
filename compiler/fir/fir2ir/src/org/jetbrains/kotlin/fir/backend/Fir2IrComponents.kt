@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
@@ -21,11 +22,15 @@ import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
 
 interface Fir2IrComponents {
     val session: FirSession
     val scopeSession: ScopeSession
+
+    val irMangler: KotlinMangler.IrMangler
+    val fakeOverrideBuilder: FakeOverrideBuilder
 
     val converter: Fir2IrConverter // TODO: to remove
     val declarationsConverter: Fir2IrDeclarationsConverter
@@ -52,7 +57,7 @@ interface Fir2IrComponents {
 
     val annotationGenerator: AnnotationGenerator
     val callGenerator: CallAndReferenceGenerator
-    val fakeOverrideGenerator: FakeOverrideGenerator
+    val fakeOverrideGenerator: FakeOverrideGenerator // TODO: to remove
     val delegatedMemberGenerator: DelegatedMemberGenerator
 
     val extensions: Fir2IrExtensions

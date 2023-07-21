@@ -53,6 +53,7 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
                     isFun = regularClass.isFun
                 ).apply {
                     metadata = FirMetadataSource.Class(regularClass)
+                    superTypes = regularClass.superTypeRefs.map { it.toIrType() }
                 }
             }
         }
@@ -94,6 +95,7 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
                     modality = Modality.FINAL,
                 ).apply {
                     metadata = FirMetadataSource.Class(anonymousObject)
+                    superTypes = anonymousObject.superTypeRefs.map { it.toIrType() }
                 }
 
             }

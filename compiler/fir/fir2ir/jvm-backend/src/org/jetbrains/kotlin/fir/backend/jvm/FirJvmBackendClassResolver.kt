@@ -24,7 +24,7 @@ class FirJvmBackendClassResolver(val components: Fir2IrComponents) : JvmBackendC
         require(symbol is FirClassSymbol<*>)
         val irSymbol = components.symbolTable.referenceClass(symbol)
         if (!irSymbol.isBound) {
-            generateUnboundSymbolsAsDependencies(components.irProviders, components.symbolTable, setOf(irSymbol))
+            generateUnboundSymbolsAsDependencies(components.irProviders, components.symbolTable, initialSymbols = setOf(irSymbol))
         }
         return listOf(irSymbol.descriptor)
     }

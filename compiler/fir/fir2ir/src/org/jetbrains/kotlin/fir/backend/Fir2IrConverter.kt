@@ -5,6 +5,9 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageSupportForLinker
+import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideBuilder
+import org.jetbrains.kotlin.backend.common.overrides.FileLocalAwareLinker
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -31,7 +34,11 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
+import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
+import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
 
@@ -53,7 +60,8 @@ class Fir2IrConverter(
         for (firFile in allFirFiles) {
             irModuleFragment.files += declarationsConverter.generateFile(firFile, irModuleFragment)
         }
-        generateUnboundSymbolsAsDependencies(irProviders, symbolTable)
+        generateUnboundSymbolsAsDependencies(irProviders, symbolTable, symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols)
+        fakeOverrideBuilder.provideFakeOverrides()
         evaluateConstants(irModuleFragment, configuration)
     }
 

@@ -501,10 +501,6 @@ open class SymbolTable(
     @DelicateSymbolTableApi
     val allUnboundSymbols: Set<IrSymbol>
         get() = buildSet {
-            fun addUnbound(slice: SymbolTableSlice<IdSignature, *, *>) {
-                slice.unboundSymbols.filterTo(this) { !it.isBound }
-            }
-
             addUnbound(classSlice)
             addUnbound(constructorSlice)
             addUnbound(functionSlice)
@@ -513,6 +509,17 @@ open class SymbolTable(
             addUnbound(typeAliasSlice)
             addUnbound(fieldSlice)
         }
+
+    @DelicateSymbolTableApi
+    val unboundClassifiersSymbols: Set<IrSymbol>
+        get() = buildSet {
+            addUnbound(classSlice)
+            addUnbound(typeAliasSlice)
+        }
+
+    private fun MutableSet<IrSymbol>.addUnbound(slice: SymbolTableSlice<*, *, *>) {
+        slice.unboundSymbols.filterTo(this) { !it.isBound }
+    }
 }
 
 /*
