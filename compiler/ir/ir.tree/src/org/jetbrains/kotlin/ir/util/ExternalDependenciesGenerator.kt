@@ -25,21 +25,29 @@ class ExternalDependenciesGenerator(
 ) {
     @OptIn(ObsoleteDescriptorBasedAPI::class)
     fun generateUnboundSymbolsAsDependencies() {
-        // There should be at most one DeclarationStubGenerator (none in closed world?)
-        irProviders.filterIsInstance<DeclarationStubGenerator>().singleOrNull()?.run { unboundSymbolGeneration = true }
-
-        // Deserializing a reference may lead to new unbound references, so we loop until none are left.
-        var unbound = emptySet<IrSymbol>()
-        do {
-            val prevUnbound = unbound
-            unbound = symbolTable.descriptorExtension.allUnboundSymbols
-            for (symbol in unbound) {
-                // Symbol could get bound as a side effect of deserializing other symbols.
-                if (!symbol.isBound) {
-                    irProviders.firstNotNullOfOrNull { provider -> provider.getDeclaration(symbol) }
-                }
-            }
-            // We wait for the unbound to stabilize on fake overrides.
-        } while (unbound != prevUnbound)
+        generateUnboundSymbolsAsDependencies(irProviders, symbolTable.descriptorExtension)
     }
+}
+
+fun generateUnboundSymbolsAsDependencies(
+    irProviders: List<IrProvider>,
+    symbolTableExtension: StarSymbolTableExtension,
+    initialSymbols: Set<IrSymbol> = emptySet(),
+) {
+    // There should be at most one DeclarationStubGenerator (none in closed world?)
+    irProviders.filterIsInstance<DeclarationStubGenerator>().singleOrNull()?.run { unboundSymbolGeneration = true }
+
+    // Deserializing a reference may lead to new unbound references, so we loop until none are left.
+    var unbound = emptySet<IrSymbol>()
+    do {
+        val prevUnbound = unbound
+        unbound = symbolTableExtension.allUnboundSymbols
+        for (symbol in unbound) {
+            // Symbol could get bound as a side effect of deserializing other symbols.
+            if (!symbol.isBound) {
+                irProviders.firstNotNullOfOrNull { provider -> provider.getDeclaration(symbol) }
+            }
+        }
+        // We wait for the unbound to stabilize on fake overrides.
+    } while (unbound != prevUnbound)
 }

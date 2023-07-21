@@ -13,10 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.initialSignatureAttr
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -33,10 +30,12 @@ class Fir2IrLazySimpleFunction(
     override val fir: FirSimpleFunction,
     firParent: FirRegularClass?,
     symbol: IrSimpleFunctionSymbol,
-    isFakeOverride: Boolean
+    isFakeOverride: Boolean,
+    parent: IrDeclarationParent
 ) : AbstractFir2IrLazyFunction<FirSimpleFunction>(components, startOffset, endOffset, origin, symbol, isFakeOverride) {
     init {
         symbol.bind(this)
+        this.parent = parent
     }
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
@@ -45,18 +44,18 @@ class Fir2IrLazySimpleFunction(
         get() = fir.name
         set(_) = mutationNotSupported()
 
-    override var returnType: IrType by lazyVar(lock) {
+    override var returnType: IrType = run {
         fir.returnTypeRef.toIrType(typeConverter)
     }
 
-    override var dispatchReceiverParameter: IrValueParameter? by lazyVar(lock) {
+    override var dispatchReceiverParameter: IrValueParameter? = run {
         val containingClass = parent as? IrClass
         if (containingClass != null && shouldHaveDispatchReceiver(containingClass)) {
             createThisReceiverParameter(thisType = containingClass.thisReceiver?.type ?: error("No this receiver for containing class"))
         } else null
     }
 
-    override var extensionReceiverParameter: IrValueParameter? by lazyVar(lock) {
+    override var extensionReceiverParameter: IrValueParameter? = run {
         fir.receiverParameter?.let {
             createThisReceiverParameter(it.typeRef.toIrType(typeConverter), it)
         }
@@ -64,7 +63,7 @@ class Fir2IrLazySimpleFunction(
 
     override var contextReceiverParametersCount: Int = fir.contextReceiversForFunctionOrContainingProperty().size
 
-    override var valueParameters: List<IrValueParameter> by lazyVar(lock) {
+    override var valueParameters: List<IrValueParameter> = run {
         symbolTable.withScope(this) {
             buildList {
                 callablesGenerator.addContextReceiverParametersTo(
@@ -86,7 +85,7 @@ class Fir2IrLazySimpleFunction(
         }
     }
 
-    override var overriddenSymbols: List<IrSimpleFunctionSymbol> by lazyVar(lock) {
+    override var overriddenSymbols: List<IrSimpleFunctionSymbol> = run lazyVar@{
         if (firParent == null) return@lazyVar emptyList()
         val parent = parent
         if (isFakeOverride && parent is Fir2IrLazyClass) {

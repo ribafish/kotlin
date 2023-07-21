@@ -31,6 +31,7 @@ abstract class ReferenceSymbolTableExtension<Class, TypeAlias, Script, Function,
 
 typealias SymbolFactory<Declaration, Symbol> = (Declaration, IdSignature?) -> Symbol
 typealias OwnerFactory<Symbol, SymbolOwner> = (Symbol) -> SymbolOwner
+typealias StarSymbolTableExtension = SymbolTableExtension<*, *, *, *, *, *, *, *, *, *, *>
 
 @OptIn(SymbolTableInternals::class)
 abstract class SymbolTableExtension<

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirComponentCall
+import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
@@ -23,9 +24,11 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.arrayElementType
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isSuspendOrKSuspendFunctionType
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
+import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.IdSignature
@@ -207,10 +210,8 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                 val isFakeOverride = fir.isSubstitutionOrIntersectionOverride
                 Fir2IrLazySimpleFunction(
                     components, startOffset, endOffset, declarationOrigin,
-                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride
-                ).apply {
-                    this.parent = lazyParent
-                }
+                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride, lazyParent
+                )
             }
         }
         // NB: this is needed to prevent recursions in case of self bounds
@@ -230,6 +231,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         valueParameter: FirValueParameter,
         index: Int = UNDEFINED_PARAMETER_INDEX,
         typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT,
+        useStubForDefaultValueStub: Boolean = true
     ): IrValueParameter = convertCatching(valueParameter) {
         val origin = valueParameter.computeIrOrigin()
         val type = valueParameter.returnTypeRef.toIrType(typeOrigin)
@@ -252,6 +254,16 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                     isHidden = false,
                 )
             }
+        }.apply {
+            if (valueParameter.defaultValue.let { it != null && (useStubForDefaultValueStub || it !is FirExpressionStub) }) {
+                this.defaultValue = factory.createExpressionBody(
+                    IrErrorExpressionImpl(
+                        UNDEFINED_OFFSET, UNDEFINED_OFFSET, type,
+                        "Stub expression for default value of ${valueParameter.name}"
+                    )
+                )
+            }
+            annotationGenerator.generate(this, valueParameter)
         }
         return irParameter
     }

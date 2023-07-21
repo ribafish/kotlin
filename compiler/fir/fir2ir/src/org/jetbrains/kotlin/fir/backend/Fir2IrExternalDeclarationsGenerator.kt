@@ -85,7 +85,9 @@ class Fir2IrExternalDeclarationsGenerator(
 
     fun findDependencyClassByClassId(classId: ClassId): IrClassSymbol? {
         val firSymbol = session.symbolProvider.getClassLikeSymbolByClassId(classId) ?: return null
-        require(firSymbol.origin == FirDeclarationOrigin.Library || firSymbol.origin == FirDeclarationOrigin.BuiltIns)
+        require(firSymbol.origin == FirDeclarationOrigin.Library || firSymbol.origin == FirDeclarationOrigin.BuiltIns || firSymbol.origin == FirDeclarationOrigin.Java.Library) {
+            "Bruh"
+        }
 
         val firClassSymbol = firSymbol as? FirRegularClassSymbol ?: return null
         val signature = signatureComposer.composeSignature(firClassSymbol.fir)
@@ -159,9 +161,9 @@ class Fir2IrExternalDeclarationsGenerator(
                 function,
                 (irParent as? Fir2IrLazyClass)?.fir,
                 symbol,
-                isFakeOverride
+                isFakeOverride,
+                irParent
             ).apply {
-                parent = irParent
                 processTypeParameters()
             }
         }

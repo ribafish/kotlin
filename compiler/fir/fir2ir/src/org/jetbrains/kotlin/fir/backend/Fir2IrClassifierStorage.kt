@@ -504,10 +504,7 @@ class Fir2IrClassifierStorage(
                     isReified = typeParameter.isReified,
                 )
             }
-            when (parentSymbol) {
-                is IrClassifierSymbol -> symbolTable.declareGlobalTypeParameter(typeParameter.symbol, signature, typeParameterFactory)
-                else -> symbolTable.declareScopedTypeParameter(typeParameter.symbol, signature, typeParameterFactory)
-            }
+            symbolTable.declareGlobalTypeParameter(typeParameter.symbol, signature, typeParameterFactory)
         }
         irTypeParameter.superTypes = typeParameter.bounds.map { it.toIrType() }
         irTypeParameter.parent = parentSymbol.owner as IrDeclarationParent

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -395,23 +396,15 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         )
     }
 
-    fun declareScopedTypeParameter(
-        declaration: FirTypeParameterSymbol,
-        signature: IdSignature?,
-        typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter,
-    ): IrTypeParameter {
-        return declareScopedTypeParameter(declaration, typeParameterFactory, specificCalculateSignature = { signature })
-    }
-
     override fun referenceTypeParameter(declaration: FirTypeParameterSymbol): IrTypeParameterSymbol {
-        return when (val container = declaration.containingDeclarationSymbol) {
-            is FirClassLikeSymbol<*> -> {
-                val containerSignature = signatureComposer.composeSignature(container.fir)
-                val signature = signatureComposer.composeTypeParameterSignature(container.typeParameterSymbols.indexOf(declaration), containerSignature)
-                referenceGlobalTypeParameter(declaration, signature)
-            }
-            else -> referenceScopedTypeParameter(declaration)
+        val container = declaration.containingDeclarationSymbol
+        val (containerSignature, typeParameters) = when (container) {
+            is FirClassLikeSymbol<*> -> signatureComposer.composeSignature(container.fir) to container.typeParameterSymbols
+            is FirCallableSymbol<*> -> signatureComposer.composeSignature(container.fir) to container.typeParameterSymbols
+            else -> error("Unexpected declaration: ${container::class.simpleName}")
         }
+        val signature = signatureComposer.composeTypeParameterSignature(typeParameters.indexOf(declaration), containerSignature)
+        return referenceGlobalTypeParameter(declaration, signature)
     }
 
     override fun defaultTypeParameterFactory(

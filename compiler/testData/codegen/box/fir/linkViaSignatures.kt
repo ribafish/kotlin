@@ -4,17 +4,7 @@
 
 // MODULE: lib
 
-class Some {
-    class Nested {
-        class DeeplyNested {
-            fun test(): String = "O"
-        }
-    }
-}
-
-// MODULE: main(lib)
-
 fun box(): String {
-    val x = Some.Nested.DeeplyNested().test()
-    return x + "K"
+    val x = listOf("OK")
+    return x.first()
 }

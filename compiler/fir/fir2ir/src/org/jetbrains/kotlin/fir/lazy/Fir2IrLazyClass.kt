@@ -110,11 +110,11 @@ class Fir2IrLazyClass(
         get() = fir.isFun
         set(_) = mutationNotSupported()
 
-    override var superTypes: List<IrType> by lazyVar(lock) {
+    override var superTypes: List<IrType> = run {
         fir.superTypeRefs.map { it.toIrType(typeConverter) }
     }
 
-    override var sealedSubclasses: List<IrClassSymbol> by lazyVar(lock) {
+    override var sealedSubclasses: List<IrClassSymbol> = run {
         if (fir.isSealed) {
             fir.getIrSymbolsForSealedSubclasses()
         } else {
@@ -122,8 +122,7 @@ class Fir2IrLazyClass(
         }
     }
 
-    override var thisReceiver: IrValueParameter? by lazyVar(lock) {
-        symbolTable.enterScope(this)
+    override var thisReceiver: IrValueParameter? = run {
         val typeArguments = fir.typeParameters.mapIndexed { index, parameter ->
             val signature = components.signatureComposer.composeTypeParameterSignature(index, this@Fir2IrLazyClass.symbol.signature)
             IrSimpleTypeImpl(
@@ -135,7 +134,6 @@ class Fir2IrLazyClass(
             thisType = IrSimpleTypeImpl(symbol, hasQuestionMark = false, arguments = typeArguments, annotations = emptyList()),
             thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
         )
-        symbolTable.leaveScope(this)
         receiver
     }
 

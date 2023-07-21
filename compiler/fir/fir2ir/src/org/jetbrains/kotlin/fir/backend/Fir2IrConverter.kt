@@ -31,7 +31,9 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
+import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.KotlinMangler
+import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
 
 class Fir2IrConverter(
     private val moduleDescriptor: FirModuleDescriptor,
@@ -48,10 +50,10 @@ class Fir2IrConverter(
         irModuleFragment: IrModuleFragmentImpl
     ) {
         session.lazyDeclarationResolver.disableLazyResolveContractChecks()
-        val converter = Fir2IrDeclarationsConverter(components)
         for (firFile in allFirFiles) {
-            irModuleFragment.files += converter.generateFile(firFile)
+            irModuleFragment.files += declarationsConverter.generateFile(firFile, irModuleFragment)
         }
+        generateUnboundSymbolsAsDependencies(irProviders, symbolTable)
         evaluateConstants(irModuleFragment, configuration)
     }
 

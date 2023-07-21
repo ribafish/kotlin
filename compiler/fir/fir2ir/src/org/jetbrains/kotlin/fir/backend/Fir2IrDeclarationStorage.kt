@@ -1759,10 +1759,8 @@ class Fir2IrDeclarationStorage(
                 val isFakeOverride = fir.isSubstitutionOrIntersectionOverride
                 Fir2IrLazySimpleFunction(
                     components, startOffset, endOffset, declarationOrigin,
-                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride
-                ).apply {
-                    this.parent = lazyParent
-                }
+                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride, lazyParent
+                )
             }
         }
         // NB: this is needed to prevent recursions in case of self bounds

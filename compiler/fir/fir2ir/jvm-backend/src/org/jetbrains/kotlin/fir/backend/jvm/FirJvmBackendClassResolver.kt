@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
 import org.jetbrains.org.objectweb.asm.Type
 
 class FirJvmBackendClassResolver(val components: Fir2IrComponents) : JvmBackendClassResolver {
@@ -21,6 +22,10 @@ class FirJvmBackendClassResolver(val components: Fir2IrComponents) : JvmBackendC
 
         val symbol = components.session.symbolProvider.getClassLikeSymbolByClassId(type.classId) ?: return emptyList()
         require(symbol is FirClassSymbol<*>)
-        return listOf(components.symbolTable.referenceClass(symbol).descriptor)
+        val irSymbol = components.symbolTable.referenceClass(symbol)
+        if (!irSymbol.isBound) {
+            generateUnboundSymbolsAsDependencies(components.irProviders, components.symbolTable, setOf(irSymbol))
+        }
+        return listOf(irSymbol.descriptor)
     }
 }

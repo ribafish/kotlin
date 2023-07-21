@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.processAllCallables
@@ -36,11 +37,11 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
-class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComponents by components {
+class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDescriptor: FirModuleDescriptor) : Fir2IrComponents by components {
     private val memberGenerator = ClassMemberGenerator(components)
     // -------------------------------------------- Main --------------------------------------------
 
-    fun generateFile(file: FirFile): IrFile {
+    fun generateFile(file: FirFile, irModuleFragment: IrModuleFragment): IrFile {
         val fileEntry = when (file.origin) {
             FirDeclarationOrigin.Source ->
                 file.psi?.let { PsiIrFileEntry(it as KtFile) }
@@ -60,9 +61,11 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         }
         val irFile = IrFileImpl(
             fileEntry,
-            IrFileSymbolImpl(),
-            file.packageFqName
-        )
+            moduleDescriptor.getPackage(file.packageFqName).fragments.first(),
+            irModuleFragment
+        ).apply {
+            metadata = FirMetadataSource.File(listOf(file))
+        }
 
         processDeclarationsInFile(file, irFile)
 
@@ -194,7 +197,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         return irConstructor
     }
 
-    fun generateIrProperty(property: FirProperty, ): IrProperty {
+    fun generateIrProperty(property: FirProperty): IrProperty {
         val parent = conversionScope.parentFromStack()
         val irProperty = callablesGenerator.createIrProperty(property, parent)
 
@@ -203,12 +206,14 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
         processBackingField(property, irProperty)
         processPropertyAccessors(property, irProperty)
 
+        memberGenerator.convertPropertyContent(irProperty, property, conversionScope.containerFirClass())
+
         return irProperty
     }
 
     private fun processBackingField(property: FirProperty, irProperty: IrProperty) {
         val delegate = property.delegate
-        when {
+        val irBackingField = when {
             delegate != null -> {
                 callablesGenerator.createBackingField(
                     property,
@@ -218,7 +223,6 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
                     NameUtils.propertyDelegateName(property.name),
                     isFinal = true
                 )
-                // TODO: process delegate expression
             }
 
             property.hasBackingField -> {
@@ -229,9 +233,11 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents) : Fir2IrComp
                     IrDeclarationOrigin.PROPERTY_BACKING_FIELD,
                     property.name
                 )
-                // TODO: process initializer
             }
+
+            else -> return
         }
+        irProperty.backingField = irBackingField
     }
 
     private fun processPropertyAccessors(property: FirProperty, irProperty: IrProperty, ) {

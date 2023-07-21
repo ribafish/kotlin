@@ -220,7 +220,7 @@ private fun FirResolvedQualifier.toLookupTag(session: FirSession): ConeClassLike
     }
 
 context(Fir2IrComponents)
-private fun FirCallableSymbol<*>.toSymbolForCall(
+fun FirCallableSymbol<*>.toSymbolForCall(
     dispatchReceiver: FirExpression,
     preferGetter: Boolean,
     // Note: in fact LHS for callable references and explicit receiver for normal qualified accesses

@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.conversion.getterOrDefault
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.isMethodOfAny
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCall
@@ -444,26 +446,36 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                     }
 
                     is IrPropertySymbol -> {
-                        val getter = symbol.owner.getter
-                        val backingField = symbol.owner.backingField
+                        val propertySymbol = firSymbol as FirPropertySymbol
                         when {
-                            getter != null -> IrCallImpl(
-                                startOffset, endOffset, type, getter.symbol,
-                                typeArgumentsCount = getter.typeParameters.size,
-                                valueArgumentsCount = getter.valueParameters.size,
-                                origin = IrStatementOrigin.GET_PROPERTY,
-                                superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
-                            )
+                            propertySymbol.hasBackingField -> {
+                                val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
+                                val irBackingFieldSymbol = symbolTable.referenceField(backingFieldSymbol, signature = null)
+                                IrGetFieldImpl(
+                                    startOffset, endOffset, irBackingFieldSymbol, type,
+                                    superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                                )
+                            }
+                            else -> {
+                                val getter = propertySymbol.fir.getterOrDefault
+                                // TODO: calculate proper fake-override lookup tag
+                                val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = false, containingClass = null)
+                                val irGetterSymbol = symbolTable.referenceFunction(getter.symbol, signature)
+                                when (irGetterSymbol) {
+                                    is IrSimpleFunctionSymbol -> IrCallImpl(
+                                        startOffset, endOffset, type, irGetterSymbol,
+                                        typeArgumentsCount = getter.typeParameters.size,
+                                        valueArgumentsCount = getter.valueParameters.size,
+                                        origin = IrStatementOrigin.GET_PROPERTY,
+                                        superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                                    )
 
-                            backingField != null -> IrGetFieldImpl(
-                                startOffset, endOffset, backingField.symbol, type,
-                                superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
-                            )
-
-                            else -> IrErrorCallExpressionImpl(
-                                startOffset, endOffset, type,
-                                description = "No getter or backing field found for ${calleeReference.render()}"
-                            )
+                                    else -> IrErrorCallExpressionImpl(
+                                        startOffset, endOffset, type,
+                                        description = "No getter or backing field found for ${calleeReference.render()}"
+                                    )
+                                }
+                            }
                         }
                     }
 

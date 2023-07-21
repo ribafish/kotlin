@@ -74,7 +74,10 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
 
         return if (nameSegments.size == 1) {
             val packageFragment = components.externalDeclarationsGenerator.getIrExternalPackageFragment(packageFqName)
-            val candidates = symbolProvider.getTopLevelCallableSymbols(packageFqName, topName)
+            val candidates = when (kind) {
+                CLASS_SYMBOL, TYPEALIAS_SYMBOL -> listOfNotNull(symbolProvider.getClassLikeSymbolByClassId(ClassId(packageFqName, topName)))
+                else -> symbolProvider.getTopLevelCallableSymbols(packageFqName, topName)
+            }
             val symbol = findDeclarationByHash(candidates, signature.id) ?: return null
             val irSymbol = when {
                 kind == CLASS_SYMBOL && symbol is FirRegularClassSymbol ->
