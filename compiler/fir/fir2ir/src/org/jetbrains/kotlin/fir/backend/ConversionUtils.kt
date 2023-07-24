@@ -236,6 +236,10 @@ fun FirCallableSymbol<*>.toSymbolForCall(
         isStatic -> {
             (dispatchReceiver as? FirResolvedQualifier)?.toLookupTag(session)
         }
+
+        // non-static fields don't have fake overrides
+        this is FirFieldSymbol -> null
+
         // Member fake override or bound callable reference
         dispatchReceiver !is FirNoReceiverExpression -> {
             val callSiteDispatchReceiverType = dispatchReceiver.typeRef.coneType
