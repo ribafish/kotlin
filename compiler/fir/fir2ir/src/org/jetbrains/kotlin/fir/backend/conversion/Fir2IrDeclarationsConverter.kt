@@ -179,6 +179,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         val irFunction = callablesGenerator.createIrFunction(function, conversionScope.parent())
         conversionScope.withScopeAndParent(irFunction) {
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
+            classifierGenerator.processTypeParameters(function, irFunction)
             // TODO: process default values of value parameters
             // TODO: process body
             if (!function.origin.isExternal) {

@@ -216,9 +216,6 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                 )
             }
         }
-        // NB: this is needed to prevent recursions in case of self bounds
-        // TODO: extract method to here, use scoped/global type paremeters for members/classes
-        (irFunction as Fir2IrLazySimpleFunction).prepareTypeParameters()
         return irFunction
     }
 
