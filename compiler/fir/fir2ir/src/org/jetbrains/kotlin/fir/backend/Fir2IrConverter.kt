@@ -80,6 +80,7 @@ class Fir2IrConverter(
             }
         )
         fakeOverrideBuilder.provideFakeOverrides()
+        generateUnboundSymbolsAsDependencies(irProviders, symbolTable)
         evaluateConstants(irModuleFragment, configuration)
     }
 

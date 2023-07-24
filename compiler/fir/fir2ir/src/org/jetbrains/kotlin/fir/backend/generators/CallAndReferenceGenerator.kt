@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
+import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
     private val visitor = Fir2IrVisitor(components)
@@ -448,36 +450,42 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
 
                     is IrPropertySymbol -> {
                         val propertySymbol = firSymbol!!.unwrapCallSiteSubstitutionOverride() as FirPropertySymbol
-                        when {
-                            propertySymbol.hasBackingField -> {
-                                val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
-                                val irBackingFieldSymbol = symbolTable.referenceField(backingFieldSymbol, signature = null)
-                                IrGetFieldImpl(
-                                    startOffset, endOffset, irBackingFieldSymbol, type,
-                                    superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
-                                )
-                            }
-                            else -> {
-                                val getter = propertySymbol.fir.getterOrDefault
-                                // TODO: calculate proper fake-override lookup tag
-                                val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = false, containingClass = null)
-                                val irGetterSymbol = symbolTable.referenceFunction(getter.symbol, signature)
-                                when (irGetterSymbol) {
-                                    is IrSimpleFunctionSymbol -> IrCallImpl(
-                                        startOffset, endOffset, type, irGetterSymbol,
-                                        typeArgumentsCount = getter.typeParameters.size,
-                                        valueArgumentsCount = getter.valueParameters.size,
-                                        origin = IrStatementOrigin.GET_PROPERTY,
-                                        superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
-                                    )
-
-                                    else -> IrErrorCallExpressionImpl(
-                                        startOffset, endOffset, type,
-                                        description = "No getter or backing field found for ${calleeReference.render()}"
-                                    )
-                                }
-                            }
-                        }
+                        val getter = propertySymbol.fir.getterOrDefault
+                        // TODO: calculate proper fake-override lookup tag
+                        val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = false, containingClass = null)
+                        val irGetterSymbol = symbolTable.referenceFunction(getter.symbol, signature)
+                        IrCallImpl(
+                            startOffset, endOffset, type, irGetterSymbol,
+                            typeArgumentsCount = getter.typeParameters.size,
+                            valueArgumentsCount = getter.valueParameters.size,
+                            origin = IrStatementOrigin.GET_PROPERTY,
+                            superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                        )
+//                        seems like we always should generate call to getter
+//                        when {
+//                            // TODO: backing field may be invisible
+//                            propertySymbol.hasBackingField -> {
+//                                val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
+//                                val irBackingFieldSymbol = symbolTable.referenceField(backingFieldSymbol, signature = null)
+//                                IrGetFieldImpl(
+//                                    startOffset, endOffset, irBackingFieldSymbol, type,
+//                                    superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+//                                )
+//                            }
+//                            else -> {
+//                                val getter = propertySymbol.fir.getterOrDefault
+//                                // TODO: calculate proper fake-override lookup tag
+//                                val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = false, containingClass = null)
+//                                val irGetterSymbol = symbolTable.referenceFunction(getter.symbol, signature)
+//                                IrCallImpl(
+//                                    startOffset, endOffset, type, irGetterSymbol,
+//                                    typeArgumentsCount = getter.typeParameters.size,
+//                                    valueArgumentsCount = getter.valueParameters.size,
+//                                    origin = IrStatementOrigin.GET_PROPERTY,
+//                                    superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+//                                )
+//                            }
+//                        }
                     }
 
                     is IrFieldSymbol -> if (visitor.annotationMode) {
@@ -622,38 +630,35 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                         }
                          */
                         when {
-                            propertySymbol.hasBackingField -> {
-                                val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
-                                val irBackingFieldSymbol = symbolTable.referenceField(backingFieldSymbol, signature = null)
-                                IrSetFieldImpl(
-                                    startOffset, endOffset, irBackingFieldSymbol, type,
-                                    origin = null, // NB: to be consistent with PSI2IR, origin should be null here
-                                    superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
-                                ).apply {
-                                    value = assignedValue
-                                }
-                            }
+                            // TODO: seems like we can always generate call to setter
+//                            propertySymbol.hasBackingField -> {
+//                                val backingFieldSymbol = propertySymbol.backingFieldSymbol!!
+//                                val irBackingFieldSymbol = symbolTable.referenceField(backingFieldSymbol, signature = null)
+//                                IrSetFieldImpl(
+//                                    startOffset, endOffset, irBackingFieldSymbol, type,
+//                                    origin = null, // NB: to be consistent with PSI2IR, origin should be null here
+//                                    superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+//                                ).apply {
+//                                    value = assignedValue
+//                                }
+//                            }
                             propertySymbol.isVar -> {
                                 val setter = propertySymbol.fir.setterOrDefault
                                 // TODO: calculate proper fake-override lookup tag
-                                val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = false, containingClass = null)
+                                val signature = signatureComposer.composeAccessorSignature(propertySymbol.fir, isSetter = true, containingClass = null)
                                 val irSetterSymbol = symbolTable.referenceFunction(setter.symbol, signature)
-                                when (irSetterSymbol) {
-                                    is IrSimpleFunctionSymbol -> IrCallImpl(
-                                        startOffset, endOffset, type, irSetterSymbol,
-                                        typeArgumentsCount = setter.typeParameters.size,
-                                        valueArgumentsCount = setter.valueParameters.size,
-                                        origin = origin,
-                                        superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
-                                    ).apply {
-                                        putValueArgument(putContextReceiverArguments(lValue), assignedValue)
-                                    }
-
-                                    else -> null
+                                IrCallImpl(
+                                    startOffset, endOffset, type, irSetterSymbol,
+                                    typeArgumentsCount = setter.typeParameters.size,
+                                    valueArgumentsCount = setter.valueParameters.size,
+                                    origin = origin,
+                                    superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+                                ).apply {
+                                    putValueArgument(putContextReceiverArguments(lValue), assignedValue)
                                 }
                             }
-                            else -> null
-                        } ?: generateErrorCallExpression(startOffset, endOffset, calleeReference)
+                            else -> generateErrorCallExpression(startOffset, endOffset, calleeReference)
+                        }
                     }
 
                     is IrSimpleFunctionSymbol -> {
