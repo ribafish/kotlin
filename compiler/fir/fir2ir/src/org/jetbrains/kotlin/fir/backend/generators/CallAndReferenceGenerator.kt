@@ -97,24 +97,29 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
         //   val x get() = `x$delegate`.getValue(this, ::x)
         // The reference here (like the rest of the accessor) has DefaultAccessor source kind.
         val isForDelegate = callableReferenceAccess.source?.kind == KtFakeSourceElementKind.DelegatedPropertyAccessor
-        val origin = if (isForDelegate) IrStatementOrigin.PROPERTY_REFERENCE_FOR_DELEGATE else null
+        val origin = IrStatementOrigin.PROPERTY_REFERENCE_FOR_DELEGATE.takeIf { isForDelegate }
         return callableReferenceAccess.convertWithOffsets { startOffset, endOffset ->
             when (symbol) {
                 is IrPropertySymbol -> {
-                    val referencedProperty = symbol.owner
-                    val referencedPropertyGetter = referencedProperty.getter
-                    val referencedPropertySetterSymbol =
-                        if (callableReferenceAccess.typeRef.coneType.isKMutableProperty(session)) referencedProperty.setter?.symbol
-                        else null
-                    val backingFieldSymbol = when {
-                        referencedPropertyGetter != null -> null
-                        else -> referencedProperty.backingField?.symbol
+                    // TODO: calculate proper lookup tag for fake overrides here and later
+                    val referencedProperty = (callableSymbol as FirPropertySymbol).fir
+                    val getterSignature = signatureComposer.composeAccessorSignature(referencedProperty, isSetter = false)
+                    val referencedPropertyGetterSymbol = symbolTable.referenceFunction(referencedProperty.getterOrDefault.symbol, getterSignature)
+
+                    val referencedPropertySetterSymbol = runIf(callableReferenceAccess.typeRef.coneType.isKMutableProperty(session)) {
+                        val setterSignature = signatureComposer.composeAccessorSignature(referencedProperty, isSetter = true)
+                        symbolTable.referenceFunction(referencedProperty.setterOrDefault.symbol, setterSignature)
                     }
+                    // TODO: is this really needed?
+//                    val backingFieldSymbol = when {
+//                        referencedPropertyGetter != null -> null
+//                        else -> referencedProperty.backingField?.symbol
+//                    }
                     IrPropertyReferenceImpl(
                         startOffset, endOffset, type, symbol,
-                        typeArgumentsCount = referencedPropertyGetter?.typeParameters?.size ?: 0,
-                        field = backingFieldSymbol,
-                        getter = referencedPropertyGetter?.symbol,
+                        typeArgumentsCount = referencedProperty.typeParameters.size,
+                        field = null, // backingFieldSymbol,
+                        getter = referencedPropertyGetterSymbol,
                         setter = referencedPropertySetterSymbol,
                         origin = origin
                     ).applyTypeArguments(callableReferenceAccess).applyReceivers(callableReferenceAccess, explicitReceiverExpression)
