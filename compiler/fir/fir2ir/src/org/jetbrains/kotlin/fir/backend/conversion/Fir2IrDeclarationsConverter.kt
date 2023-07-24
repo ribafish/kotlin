@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrEnumConstructorCallImpl
-import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtFile
@@ -227,11 +226,20 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irProperty
     }
 
+    fun generateIrField(field: FirField, predefinedOrigin: IrDeclarationOrigin? = null): IrField {
+        val parent = conversionScope.parentFromStack()
+        val irField = callablesGenerator.createIrField(field.symbol, parent, predefinedOrigin)
+
+        memberGenerator.convertFieldContent(irField, field)
+
+        return irField
+    }
+
     private fun processBackingField(property: FirProperty, irProperty: IrProperty) {
         val delegate = property.delegate
         val irBackingField = when {
             delegate != null -> {
-                callablesGenerator.createBackingField(
+                callablesGenerator.createIrBackingField(
                     property,
                     irProperty,
                     property.delegateFieldSymbol!!,
@@ -242,7 +250,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
             }
 
             property.hasBackingField -> {
-                callablesGenerator.createBackingField(
+                callablesGenerator.createIrBackingField(
                     property,
                     irProperty,
                     property.backingField!!.symbol,

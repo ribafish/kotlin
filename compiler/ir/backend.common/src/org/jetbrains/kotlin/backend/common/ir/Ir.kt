@@ -47,9 +47,9 @@ open class BuiltinSymbolsBase(val irBuiltIns: IrBuiltIns, private val symbolTabl
     val charSequence = getClass(Name.identifier("CharSequence"), "kotlin")
     val string = getClass(Name.identifier("String"), "kotlin")
 
-    val primitiveIteratorsByType = PrimitiveType.values().associate { type ->
+    val primitiveIteratorsByType = PrimitiveType.entries.associateWith { type ->
         val iteratorClass = getClass(Name.identifier(type.typeName.asString() + "Iterator"), "kotlin", "collections")
-        type to iteratorClass
+        iteratorClass
     }
 
     val asserts = irBuiltIns.findFunctions(Name.identifier("assert"), "kotlin")
@@ -82,14 +82,17 @@ open class BuiltinSymbolsBase(val irBuiltIns: IrBuiltIns, private val symbolTabl
 
     val closedRange = progression("ClosedRange")
 
-    open val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> =
+    open val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy {
         irBuiltIns.getNonBuiltinFunctionsByReturnType(Name.identifier("getProgressionLastElement"), "kotlin", "internal")
+    }
 
-    open val toUIntByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> =
+    open val toUIntByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy {
         irBuiltIns.getNonBuiltInFunctionsByExtensionReceiver(Name.identifier("toUInt"), "kotlin")
+    }
 
-    open val toULongByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> =
+    open val toULongByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy {
         irBuiltIns.getNonBuiltInFunctionsByExtensionReceiver(Name.identifier("toULong"), "kotlin")
+    }
 
     val any get() = irBuiltIns.anyClass
     val unit get() = irBuiltIns.unitClass

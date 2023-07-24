@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.arrayElementType
 import org.jetbrains.kotlin.fir.types.coneType
@@ -406,36 +407,86 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         }
     }
 
-    internal fun createBackingField(
+    internal fun createIrBackingField(
         property: FirProperty,
         irProperty: IrProperty,
         fieldSymbol: FirVariableSymbol<*>,
         origin: IrDeclarationOrigin,
         name: Name,
         isFinal: Boolean = property.isVal,
+    ): IrField = convertCatching(property) {
+        return createIrField(
+            irProperty.startOffset,
+            irProperty.endOffset,
+            fieldSymbol,
+            origin,
+            name,
+            parent = irProperty.parent,
+            isFinal = isFinal,
+            visibility = property.fieldVisibility,
+            isStatic = property.isStatic || !(irProperty.parent is IrClass || irProperty.parent is IrScript),
+            isExternal = property.isExternal,
+            metadataSource = FirMetadataSource.Property(property)
+        ).apply {
+            correspondingPropertySymbol = irProperty.symbol
+        }
+    }
+
+    internal fun createIrField(
+        fieldSymbol: FirFieldSymbol,
+        parent: IrDeclarationParent,
+        predefinedOrigin: IrDeclarationOrigin? = null
+    ): IrField = convertCatching(fieldSymbol.fir) {
+        fieldSymbol.fir.convertWithOffsets { startOffset, endOffset ->
+            createIrField(
+                startOffset,
+                endOffset,
+                fieldSymbol,
+                origin = fieldSymbol.fir.computeIrOrigin(predefinedOrigin),
+                name = fieldSymbol.name,
+                parent,
+                isFinal = fieldSymbol.isFinal,
+                visibility = fieldSymbol.visibility,
+                isStatic = fieldSymbol.isStatic,
+                isExternal =  fieldSymbol.isExternal,
+                metadataSource = FirMetadataSource.Field(fieldSymbol.fir)
+            )
+        }
+    }
+
+    private fun createIrField(
+        startOffset: Int,
+        endOffset: Int,
+        fieldSymbol: FirVariableSymbol<*>,
+        origin: IrDeclarationOrigin,
+        name: Name,
+        parent: IrDeclarationParent,
+        isFinal: Boolean,
+        visibility: Visibility,
+        isStatic: Boolean,
+        isExternal: Boolean,
+        metadataSource: FirMetadataSource,
         // TODO: maybe can remove?
         // firInitializerExpression: FirExpression?,
         // type: IrType? = null,
-    ): IrField = convertCatching(property) {
+    ): IrField {
         val inferredType = fieldSymbol.resolvedReturnType.toIrType() //type ?: firInitializerExpression!!.typeRef.toIrType()
         val signature = signatureComposer.composeSignature(fieldSymbol.fir)
         return symbolTable.declareField(fieldSymbol, signature) { symbol ->
-            val visibility = property.fieldVisibility.toDescriptorVisibility()
             irFactory.createField(
-                startOffset = irProperty.startOffset,
-                endOffset = irProperty.endOffset,
+                startOffset = startOffset,
+                endOffset = endOffset,
                 origin = origin,
                 name = name,
-                visibility = visibility,
+                visibility = visibility.toDescriptorVisibility(),
                 symbol = symbol,
                 type = inferredType,
                 isFinal = isFinal,
-                isStatic = property.isStatic || !(irProperty.parent is IrClass || irProperty.parent is IrScript),
-                isExternal = property.isExternal,
+                isStatic = isStatic,
+                isExternal = isExternal,
             ).apply {
-                metadata = FirMetadataSource.Property(property)
-                correspondingPropertySymbol = irProperty.symbol
-                parent = irProperty.parent
+                metadata = metadataSource
+                this.parent = parent
                 // TODO: annotations
                 // convertAnnotationsForNonDeclaredMembers(property, origin)
             }

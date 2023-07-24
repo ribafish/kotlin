@@ -375,7 +375,7 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
 
 
     @OptIn(SymbolTableInternals::class)
-    fun referenceFunction(declaration: FirFunctionSymbol<*>, signature: IdSignature?): IrFunctionSymbol {
+    fun referenceFunction(declaration: FirFunctionSymbol<*>, signature: IdSignature?): IrSimpleFunctionSymbol {
         require(declaration !is FirConstructorSymbol)
         return reference(
             declaration,

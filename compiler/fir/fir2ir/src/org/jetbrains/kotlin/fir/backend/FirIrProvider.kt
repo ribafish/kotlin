@@ -38,7 +38,7 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
     override fun getDeclaration(symbol: IrSymbol): IrDeclaration? {
         if (symbol.isBound) return symbol.owner as IrDeclaration
         if (symbol is IrFieldSymbol) {
-            return findFieldViaProperty(symbol)
+            findFieldViaProperty(symbol)?.let { return it }
         }
         val signature = symbol.signature ?: return null
         return getDeclarationForSignature(signature, symbol.kind(), fullSignature = null)

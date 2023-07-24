@@ -77,10 +77,6 @@ class Fir2IrComponentsStorage(
         get() = symbolTable.table.lock
 
 
-    init {
-        irBuiltIns.initialize()
-    }
-
     override val fakeOverrideBuilder = FakeOverrideBuilder(
         LinkerStub,
         symbolTable.table,
@@ -94,6 +90,10 @@ class Fir2IrComponentsStorage(
             symbolTable,
             symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols,
         )
+    }
+
+    init {
+        irBuiltIns.initialize()
     }
 
     private object LinkerStub : FileLocalAwareLinker {

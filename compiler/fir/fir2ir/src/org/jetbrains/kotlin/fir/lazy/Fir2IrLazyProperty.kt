@@ -13,14 +13,11 @@ import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.conversion.getterOrDefault
 import org.jetbrains.kotlin.fir.backend.conversion.setterOrDefault
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
-import org.jetbrains.kotlin.fir.symbols.Fir2IrPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.Fir2IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
@@ -28,7 +25,6 @@ import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
-import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
@@ -113,7 +109,7 @@ class Fir2IrLazyProperty(
         when {
             fir.hasBackingField && origin != IrDeclarationOrigin.FAKE_OVERRIDE -> {
                 requireNotNull(backingField)
-                callablesGenerator.createBackingField(
+                callablesGenerator.createIrBackingField(
                     fir,
                     irProperty = this,
                     backingField.symbol,
@@ -124,7 +120,7 @@ class Fir2IrLazyProperty(
                 }
             }
             fir.delegate != null -> {
-                callablesGenerator.createBackingField(
+                callablesGenerator.createIrBackingField(
                     fir,
                     irProperty = this,
                     fir.delegateFieldSymbol!!,
