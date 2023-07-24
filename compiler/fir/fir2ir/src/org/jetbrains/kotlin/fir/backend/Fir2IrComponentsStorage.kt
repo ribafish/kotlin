@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
 
 class Fir2IrComponentsStorage(
     override val session: FirSession,
@@ -87,7 +88,13 @@ class Fir2IrComponentsStorage(
         IrTypeSystemContextImpl(irBuiltIns),
         friendModules = emptyMap(),
         PartialLinkageSupportForLinker.DISABLED
-    )
+    ) {
+        generateUnboundSymbolsAsDependencies(
+            irProviders,
+            symbolTable,
+            symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols,
+        )
+    }
 
     private object LinkerStub : FileLocalAwareLinker {
         override fun tryReferencingSimpleFunctionByLocalSignature(

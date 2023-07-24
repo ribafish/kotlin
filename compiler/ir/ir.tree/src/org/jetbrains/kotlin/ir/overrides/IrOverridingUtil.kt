@@ -115,7 +115,8 @@ fun buildFakeOverrideMember(
 
 class IrOverridingUtil(
     private val typeSystem: IrTypeSystemContext,
-    private val fakeOverrideBuilder: FakeOverrideBuilderStrategy
+    private val fakeOverrideBuilder: FakeOverrideBuilderStrategy,
+    private val afterTraversingSupertypesCallback: () -> Unit = {}
 ) {
     private val originals = mutableMapOf<IrOverridableMember, IrOverridableMember>()
     private val IrOverridableMember.original get() = originals[this] ?: error("No original for ${this.render()}")
@@ -149,7 +150,8 @@ class IrOverridingUtil(
             }
         }
 
-    fun buildFakeOverridesForClass(clazz: IrClass, oldSignatures: Boolean) {
+    @OptIn(DelicateSymbolTableApi::class)
+    fun buildFakeOverridesForClass(clazz: IrClass, oldSignatures: Boolean, symbolTable: SymbolTable) {
         val superTypes = clazz.superTypes
 
         val fromCurrent = clazz.declarations.filterIsInstance<IrOverridableMember>()
@@ -166,6 +168,7 @@ class IrOverridingUtil(
                     fakeOverride
                 }
         }
+        afterTraversingSupertypesCallback()
 
         val allFromSuperByName = allFromSuper.groupBy { it.name }
 

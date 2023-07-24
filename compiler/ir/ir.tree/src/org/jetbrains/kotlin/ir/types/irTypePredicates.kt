@@ -81,7 +81,9 @@ fun IrClassifierSymbol.isClassWithFqName(fqName: FqNameUnsafe): Boolean =
     this is IrClassSymbol && classFqNameEquals(this, fqName)
 
 private fun classFqNameEquals(symbol: IrClassSymbol, fqName: FqNameUnsafe): Boolean {
-    assert(symbol.isBound)
+    assert(symbol.isBound) {
+        symbol.toString()
+    }
     return classFqNameEquals(symbol.owner, fqName)
 }
 

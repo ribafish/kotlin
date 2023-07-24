@@ -81,7 +81,8 @@ class FakeOverrideBuilder(
     val platformSpecificClassFilter: FakeOverrideClassFilter = DefaultFakeOverrideClassFilter,
     private val fakeOverrideDeclarationTable: DeclarationTable = FakeOverrideDeclarationTable(mangler) { builder, table ->
         IdSignatureSerializer(builder, table)
-    }
+    },
+    private val afterTraversingSupertypesCallback: () -> Unit = {}
 ) : FakeOverrideBuilderStrategy(
     friendModules = friendModules,
     unimplementedOverridesStrategy = if (partialLinkageSupport.isEnabled)
@@ -91,7 +92,7 @@ class FakeOverrideBuilder(
 ) {
     private val haveFakeOverrides = mutableSetOf<IrClass>()
 
-    private val irOverridingUtil = IrOverridingUtil(typeSystem, this)
+    private val irOverridingUtil = IrOverridingUtil(typeSystem, this, afterTraversingSupertypesCallback)
     private val irBuiltIns = typeSystem.irBuiltIns
 
     // TODO: The declaration table is needed for the signaturer.
@@ -122,7 +123,7 @@ class FakeOverrideBuilder(
 
         fakeOverrideDeclarationTable.run {
             inFile(clazz.fileOrNull) {
-                irOverridingUtil.buildFakeOverridesForClass(clazz, compatibilityMode.oldSignatures)
+                irOverridingUtil.buildFakeOverridesForClass(clazz, compatibilityMode.oldSignatures, symbolTable)
             }
         }
         return true
