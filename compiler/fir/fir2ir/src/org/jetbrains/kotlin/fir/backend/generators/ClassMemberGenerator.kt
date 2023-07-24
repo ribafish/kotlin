@@ -213,9 +213,11 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
 
         conversionScope.withFunction(this) {
             applyParentFromStackTo(this)
-            convertFunctionContent(this, propertyAccessor, containingClass = null)
-            if (isDefault) {
-                generateDefaultPropertyAccessorBody(this, correspondingProperty, propertyType)
+            conversionScope.withParent(this) {
+                convertFunctionContent(this, propertyAccessor, containingClass = null)
+                if (isDefault) {
+                    generateDefaultPropertyAccessorBody(this, correspondingProperty, propertyType)
+                }
             }
 //            if (containingClass != null) {
 //                this.overriddenSymbols = property.generateOverriddenAccessorSymbols(containingClass, isGetter)
