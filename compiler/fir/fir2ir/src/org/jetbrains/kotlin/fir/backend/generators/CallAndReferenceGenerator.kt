@@ -156,7 +156,7 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
 //                        "Callable reference whose symbol refers to a function should be of functional type."
 //                    }
                     require(type is IrSimpleType)
-                    val function = symbol.owner
+                    val function = (callableSymbol as FirFunctionSymbol<*>).fir
                     if (adapterGenerator.needToGenerateAdaptedCallableReference(callableReferenceAccess, type, function)) {
                         // Receivers are being applied inside
                         with(adapterGenerator) {
@@ -165,9 +165,9 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                             generateAdaptedCallableReference(callableReferenceAccess, explicitReceiverExpression, symbol, adaptedType)
                         }
                     } else {
-                        val klass = function.parent as? IrClass
+                        val klass = function.dispatchReceiverType?.toRegularClassSymbol(session)
                         val typeArgumentCount = function.typeParameters.size +
-                                if (function is IrConstructor) klass?.typeParameters?.size ?: 0 else 0
+                                if (function is FirConstructor) klass?.fir?.typeParameters?.size ?: 0 else 0
                         IrFunctionReferenceImpl(
                             startOffset, endOffset, type, symbol,
                             typeArgumentsCount = typeArgumentCount,

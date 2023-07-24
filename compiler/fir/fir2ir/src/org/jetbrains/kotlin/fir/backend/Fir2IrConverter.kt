@@ -115,20 +115,6 @@ class Fir2IrConverter(
         allDeclarations += delegatedMembers(irClass)
         // Add synthetic members *before* fake override generations.
         // Otherwise, redundant members, e.g., synthetic toString _and_ fake override toString, will be added.
-        if (klass is FirRegularClass && irConstructor != null && (irClass.isValue || irClass.isData)) {
-            declarationStorage.enterScope(irConstructor)
-            val dataClassMembersGenerator = DataClassMembersGenerator(components)
-            if (irClass.isSingleFieldValueClass) {
-                allDeclarations += dataClassMembersGenerator.generateSingleFieldValueClassMembers(klass, irClass)
-            }
-            if (irClass.isMultiFieldValueClass) {
-                allDeclarations += dataClassMembersGenerator.generateMultiFieldValueClassMembers(klass, irClass)
-            }
-            if (irClass.isData) {
-                allDeclarations += dataClassMembersGenerator.generateDataClassMembers(klass, irClass)
-            }
-            declarationStorage.leaveScope(irConstructor)
-        }
         with(fakeOverrideGenerator) {
             irClass.addFakeOverrides(klass, allDeclarations)
         }
