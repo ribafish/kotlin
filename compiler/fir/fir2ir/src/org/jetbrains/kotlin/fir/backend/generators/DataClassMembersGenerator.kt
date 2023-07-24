@@ -6,27 +6,19 @@
 package org.jetbrains.kotlin.fir.backend.generators
 
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.FirMetadataSource
-import org.jetbrains.kotlin.fir.backend.declareThisReceiverParameter
 import org.jetbrains.kotlin.fir.containingClassLookupTag
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrGeneratorContextBase
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.classifierOrNull
@@ -47,30 +39,31 @@ import org.jetbrains.kotlin.util.OperatorNameConventions.TO_STRING
  */
 class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrComponents by components {
 
-    fun generateSingleFieldValueClassMembers(klass: FirRegularClass, irClass: IrClass): List<FirDeclaration> =
-        MyDataClassMethodsGenerator(irClass, klass.symbol.toLookupTag(), IrDeclarationOrigin.GENERATED_SINGLE_FIELD_VALUE_CLASS_MEMBER)
+    fun generateSingleFieldValueClassMembers(klass: FirRegularClass, irClass: IrClass) {
+        MyDataClassMethodsGenerator(irClass, IrDeclarationOrigin.GENERATED_SINGLE_FIELD_VALUE_CLASS_MEMBER)
             .generate(klass)
+    }
 
-    fun generateMultiFieldValueClassMembers(klass: FirRegularClass, irClass: IrClass): List<FirDeclaration> =
-        MyDataClassMethodsGenerator(irClass, klass.symbol.toLookupTag(), IrDeclarationOrigin.GENERATED_MULTI_FIELD_VALUE_CLASS_MEMBER)
+    fun generateMultiFieldValueClassMembers(klass: FirRegularClass, irClass: IrClass) {
+        MyDataClassMethodsGenerator(irClass, IrDeclarationOrigin.GENERATED_MULTI_FIELD_VALUE_CLASS_MEMBER)
             .generate(klass)
+    }
 
-    fun generateDataClassMembers(klass: FirRegularClass, irClass: IrClass): List<FirDeclaration> =
-        MyDataClassMethodsGenerator(irClass, klass.symbol.toLookupTag(), IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER).generate(klass)
+    fun generateDataClassMembers(klass: FirRegularClass, irClass: IrClass) {
+        MyDataClassMethodsGenerator(irClass, IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER).generate(klass)
+    }
 
-    fun generateDataClassComponentBody(irFunction: IrFunction, lookupTag: ConeClassLikeLookupTag) =
-        MyDataClassMethodsGenerator(irFunction.parentAsClass, lookupTag, IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER)
+    fun generateDataClassComponentBody(irFunction: IrFunction) {
+        MyDataClassMethodsGenerator(irFunction.parentAsClass, IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER)
             .generateComponentBody(irFunction)
+    }
 
-    fun generateDataClassCopyBody(irFunction: IrFunction, lookupTag: ConeClassLikeLookupTag) =
-        MyDataClassMethodsGenerator(irFunction.parentAsClass, lookupTag, IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER)
+    fun generateDataClassCopyBody(irFunction: IrFunction) {
+        MyDataClassMethodsGenerator(irFunction.parentAsClass, IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER)
             .generateCopyBody(irFunction)
+    }
 
-    private inner class MyDataClassMethodsGenerator(
-        val irClass: IrClass,
-        val lookupTag: ConeClassLikeLookupTag,
-        val origin: IrDeclarationOrigin
-    ) {
+    private inner class MyDataClassMethodsGenerator(val irClass: IrClass, val origin: IrDeclarationOrigin) {
         private val irDataClassMembersGenerator = object : IrBasedDataClassMembersGenerator(
             IrGeneratorContextBase(components.irBuiltIns),
             components.symbolTable.table,
@@ -135,19 +128,9 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
             }
         }
 
-        fun generateDispatchReceiverParameter(irFunction: IrFunction) =
-            irFunction.declareThisReceiverParameter(
-                irClass.defaultType,
-                IrDeclarationOrigin.DEFINED,
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET
-            )
-
-        fun generate(klass: FirRegularClass): List<FirDeclaration> {
+        fun generate(klass: FirRegularClass) {
             val propertyParametersCount = irClass.primaryConstructor?.explicitParameters?.size ?: 0
             val properties = irClass.properties.filter { it.backingField != null }.take(propertyParametersCount).toList()
-
-            val result = mutableListOf<FirDeclaration>()
 
             val scope = klass.unsubstitutedScope(
                 components.session,
@@ -173,43 +156,21 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
 
             val toStringContributedFunction = contributedSyntheticFunctions[TO_STRING]
             if (toStringContributedFunction != null) {
-                result.add(toStringContributedFunction)
-                val toStringFunction = createSyntheticIrFunction(
-                    TO_STRING,
-                    toStringContributedFunction,
-                    components.irBuiltIns.stringType,
-                )
+                val toStringFunction = findSyntheticIrFunction(toStringContributedFunction)
                 irDataClassMembersGenerator.generateToStringMethod(toStringFunction, properties)
-                irClass.declarations.add(toStringFunction)
             }
 
             val hashcodeNameContributedFunction = contributedSyntheticFunctions[HASHCODE_NAME]
             if (hashcodeNameContributedFunction != null) {
-                result.add(hashcodeNameContributedFunction)
-                val hashCodeFunction = createSyntheticIrFunction(
-                    HASHCODE_NAME,
-                    hashcodeNameContributedFunction,
-                    components.irBuiltIns.intType,
-                )
+                val hashCodeFunction = findSyntheticIrFunction(hashcodeNameContributedFunction)
                 irDataClassMembersGenerator.generateHashCodeMethod(hashCodeFunction, properties)
-                irClass.declarations.add(hashCodeFunction)
             }
 
             val equalsContributedFunction = contributedSyntheticFunctions[EQUALS]
             if (equalsContributedFunction != null) {
-                result.add(equalsContributedFunction)
-                val equalsFunction = createSyntheticIrFunction(
-                    EQUALS,
-                    equalsContributedFunction,
-                    components.irBuiltIns.booleanType,
-                    otherParameterNeeded = true,
-                    isOperator = true
-                )
+                val equalsFunction = findSyntheticIrFunction(equalsContributedFunction)
                 irDataClassMembersGenerator.generateEqualsMethod(equalsFunction, properties)
-                irClass.declarations.add(equalsFunction)
             }
-
-            return result
         }
 
         fun generateComponentBody(irFunction: IrFunction) {
@@ -225,69 +186,11 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
             irDataClassMembersGenerator.generateCopyFunction(irFunction, irClass.primaryConstructor!!.symbol)
         }
 
-        private fun createSyntheticIrFunction(
-            name: Name,
-            syntheticCounterpart: FirSimpleFunction,
-            returnType: IrType,
-            otherParameterNeeded: Boolean = false,
-            isOperator: Boolean = false,
-        ): IrFunction {
-            val signature = if (lookupTag.classId.isLocal) null else components.signatureComposer.composeSignature(syntheticCounterpart)
-            return components.declarationStorage.declareIrSimpleFunction(signature) { symbol ->
-                components.irFactory.createSimpleFunction(
-                    startOffset = UNDEFINED_OFFSET,
-                    endOffset = UNDEFINED_OFFSET,
-                    origin = origin,
-                    name = name,
-                    visibility = DescriptorVisibilities.PUBLIC,
-                    isInline = false,
-                    isExpect = false,
-                    returnType = returnType,
-                    modality = Modality.OPEN,
-                    symbol = symbol,
-                    isTailrec = false,
-                    isSuspend = false,
-                    isOperator = isOperator,
-                    isInfix = false,
-                    isExternal = false,
-                    isFakeOverride = false,
-                ).apply {
-                    if (otherParameterNeeded) {
-                        val irValueParameter = createSyntheticIrParameter(
-                            this, syntheticCounterpart.valueParameters.first().name, components.irBuiltIns.anyNType
-                        )
-                        this.valueParameters = listOf(irValueParameter)
-                    }
-                    metadata = FirMetadataSource.Function(syntheticCounterpart)
-                }
-            }.apply {
-                parent = irClass
-                dispatchReceiverParameter = generateDispatchReceiverParameter(this)
-                components.irBuiltIns.findBuiltInClassMemberFunctions(
-                    components.irBuiltIns.anyClass,
-                    this.name
-                ).singleOrNull()?.let {
-                    overriddenSymbols = listOf(it)
-                }
-            }
+        private fun findSyntheticIrFunction(syntheticCounterpart: FirSimpleFunction): IrFunction {
+            val signature = components.signatureComposer.composeSignature(syntheticCounterpart)
+            val irFunctionSymbol = components.symbolTable.referenceFunction(syntheticCounterpart.symbol, signature)
+            // Function should be created at this moment, so it's safe to take the owner from the symbol
+            return irFunctionSymbol.owner
         }
-
-        private fun createSyntheticIrParameter(irFunction: IrFunction, name: Name, type: IrType, index: Int = 0): IrValueParameter =
-            components.irFactory.createValueParameter(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                origin = IrDeclarationOrigin.DEFINED,
-                name = name,
-                type = type,
-                isAssignable = false,
-                symbol = IrValueParameterSymbolImpl(),
-                index = index,
-                varargElementType = null,
-                isCrossinline = false,
-                isNoinline = false,
-                isHidden = false
-            ).apply {
-                parent = irFunction
-            }
     }
 }

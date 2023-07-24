@@ -6,21 +6,15 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
-import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
@@ -60,7 +54,14 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
         irClass.parent = parent
         processTypeParameters(regularClass, irClass)
         setThisReceiver(irClass, regularClass.typeParameters)
+        declareValueClassRepresentation(irClass, regularClass)
         return irClass
+    }
+
+    private fun declareValueClassRepresentation(irClass: IrClass, klass: FirRegularClass) {
+        if (irClass !is Fir2IrLazyClass) {
+            irClass.valueClassRepresentation = computeValueClassRepresentation(klass)
+        }
     }
 
     private fun setThisReceiver(irClass: IrClass, typeParameters: List<FirTypeParameterRef>) {

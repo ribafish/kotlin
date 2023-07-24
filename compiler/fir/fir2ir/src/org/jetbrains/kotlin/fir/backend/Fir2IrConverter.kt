@@ -68,16 +68,6 @@ class Fir2IrConverter(
             irProviders,
             symbolTable,
             symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols,
-            onSymbol = {
-                if (it is IrClassSymbol) {
-                    val irClass = it.owner
-//                    if (irClass is Fir2IrLazyClass) {
-//                        // Trigger computation of declarations to reference other external classes
-//                        irClass.declarations
-//                    }
-//                    fakeOverrideBuilder.enqueueClass(irClass, it.signature!!, CompatibilityMode.CURRENT)
-                }
-            }
         )
         fakeOverrideBuilder.provideFakeOverrides()
         generateUnboundSymbolsAsDependencies(irProviders, symbolTable)

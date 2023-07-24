@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
+import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.comparators.FirMemberDeclarationComparator
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
 import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.processAllCallables
 import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
@@ -110,14 +112,29 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
                 conversionScope.withContainingFirClass(klass) {
                     val classMembers = collectAllClassMembers(klass)
                     val primaryConstructor = classMembers.firstOrNull { it is FirConstructor && it.isPrimary } as FirConstructor?
+                    var irPrimaryConstructor: IrConstructor? = null
                     // primary constructor should be converted first, to declare its value parameters
                     //   which may be referenced in property initializers and init blocks
                     if (primaryConstructor != null) {
-                        destination += generateIrConstructor(primaryConstructor)
+                        irPrimaryConstructor = generateIrConstructor(primaryConstructor)
+                        destination += irPrimaryConstructor
                     }
                     for (declaration in classMembers) {
                         if (declaration === primaryConstructor) continue
                         destination += generateIrDeclaration(declaration)
+                    }
+
+                    if (klass is FirRegularClass && irPrimaryConstructor != null && (irClass.isValue || irClass.isData)) {
+                        val dataClassMembersGenerator = DataClassMembersGenerator(components)
+                        if (irClass.isSingleFieldValueClass) {
+                            dataClassMembersGenerator.generateSingleFieldValueClassMembers(klass, irClass)
+                        }
+                        if (irClass.isMultiFieldValueClass) {
+                            dataClassMembersGenerator.generateMultiFieldValueClassMembers(klass, irClass)
+                        }
+                        if (irClass.isData) {
+                            dataClassMembersGenerator.generateDataClassMembers(klass, irClass)
+                        }
                     }
                 }
             }

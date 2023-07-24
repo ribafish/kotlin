@@ -117,10 +117,10 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
                         when {
                             DataClassResolver.isComponentLike(irFunction.name) ->
                                 firFunction.body?.let { irFunction.body = visitor.convertToIrBlockBody(it) }
-                                    ?: DataClassMembersGenerator(components).generateDataClassComponentBody(irFunction, lookupTag!!)
+                                    ?: DataClassMembersGenerator(components).generateDataClassComponentBody(irFunction)
                             DataClassResolver.isCopy(irFunction.name) ->
                                 firFunction.body?.let { irFunction.body = visitor.convertToIrBlockBody(it) }
-                                    ?: DataClassMembersGenerator(components).generateDataClassCopyBody(irFunction, lookupTag!!)
+                                    ?: DataClassMembersGenerator(components).generateDataClassCopyBody(irFunction)
                             else ->
                                 irFunction.body = firFunction.body?.let { visitor.convertToIrBlockBody(it) }
                         }
