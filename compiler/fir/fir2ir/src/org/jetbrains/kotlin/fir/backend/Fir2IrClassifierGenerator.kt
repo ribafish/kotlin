@@ -64,7 +64,6 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
     }
 
     private fun setThisReceiver(irClass: IrClass, typeParameters: List<FirTypeParameterRef>) {
-        symbolTable.enterScope(irClass)
         val typeArguments = typeParameters.map {
             val irTypeParameterSymbol = symbolTable.referenceTypeParameter(it.symbol)
             IrSimpleTypeImpl(irTypeParameterSymbol, false, emptyList(), emptyList())
@@ -73,36 +72,33 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
             thisType = IrSimpleTypeImpl(irClass.symbol, false, typeArguments, emptyList()),
             thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
         )
-        symbolTable.leaveScope(irClass)
     }
 
     fun createIrAnonymousObject(
         anonymousObject: FirAnonymousObject,
         visibility: Visibility = Visibilities.Local,
         name: Name = SpecialNames.NO_NAME_PROVIDED,
-        irParent: IrDeclarationParent? = null
+        irParent: IrDeclarationParent
     ): IrClass {
         val irAnonymousObject = anonymousObject.convertWithOffsets { startOffset, endOffset ->
-            symbolTable.declareClass(anonymousObject.symbol, signature = null) {
+            symbolTable.declareClass(anonymousObject.symbol, signature = null) { symbol ->
                 irFactory.createClass(
                     startOffset = startOffset,
                     endOffset = endOffset,
                     origin = IrDeclarationOrigin.DEFINED,
                     name = name,
                     visibility = components.visibilityConverter.convertToDescriptorVisibility(visibility),
-                    symbol = IrClassSymbolImpl(),
+                    symbol = symbol,
                     kind = anonymousObject.classKind,
                     modality = Modality.FINAL,
                 ).apply {
                     metadata = FirMetadataSource.Class(anonymousObject)
                     superTypes = anonymousObject.superTypeRefs.map { it.toIrType() }
+                    parent = irParent
                 }
-
             }
         }
-        if (irParent != null) {
-            irAnonymousObject.parent = irParent
-        }
+        setThisReceiver(irAnonymousObject, anonymousObject.typeParameters)
         return irAnonymousObject
     }
 

@@ -274,7 +274,7 @@ open class IncrementalFirJvmCompilerRunner(
             val extensions = JvmFir2IrExtensions(configuration, JvmIrDeserializerImpl(), JvmIrMangler)
             val fir2IrConfiguration = Fir2IrConfiguration(
                 languageVersionSettings = configuration.languageVersionSettings,
-                linkViaSignatures = false,
+                qqq = false,
                 evaluatedConstTracker = configuration
                     .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
                 inlineConstTracker = configuration[CommonConfigurationKeys.INLINE_CONST_TRACKER],
