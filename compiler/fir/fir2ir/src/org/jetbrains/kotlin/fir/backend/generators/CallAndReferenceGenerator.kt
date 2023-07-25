@@ -410,18 +410,15 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                 }
                 when (irSymbol) {
                     is IrConstructorSymbol -> {
-                        val firConstructorSymbol = (callableSymbol as FirConstructorSymbol)
-                        val constructedClass = firConstructorSymbol.getConstructedClass(session)!!
+                        val firConstructorSymbol = callableSymbol as FirConstructorSymbol
                         val constructorTypeParametersCount = firConstructorSymbol.fir.typeParameters.size
-                        val classTypeParametersCount = constructedClass.fir.typeParameters.size
-                        val totalTypeParametersCount = classTypeParametersCount + constructorTypeParametersCount
                         IrConstructorCallImpl(
                             startOffset,
                             endOffset,
                             type,
                             irSymbol,
-                            totalTypeParametersCount,
-                            constructorTypeParametersCount,
+                            typeArgumentsCount = constructorTypeParametersCount,
+                            constructorTypeArgumentsCount = 0,
                             firConstructorSymbol.fir.valueParameters.size
                         )
                     }
