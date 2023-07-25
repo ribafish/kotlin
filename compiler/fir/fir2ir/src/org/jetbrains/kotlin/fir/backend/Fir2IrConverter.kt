@@ -6,14 +6,21 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
+import org.jetbrains.kotlin.ir.interpreter.IrInterpreter
+import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
+import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
+import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
+import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
 import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
@@ -41,20 +48,20 @@ class Fir2IrConverter(private val components: Fir2IrComponents) {
 
     companion object {
         private fun evaluateConstants(irModuleFragment: IrModuleFragment, fir2IrConfiguration: Fir2IrConfiguration) {
-//            val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
-//            val targetPlatform = firModuleDescriptor?.platform
-//            val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings
-//            val intrinsicConstEvaluation = languageVersionSettings?.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
-//
-//            val configuration = IrInterpreterConfiguration(
-//                platform = targetPlatform,
-//                printOnlyExceptionMessage = true,
-//            )
-//            val interpreter = IrInterpreter(IrInterpreterEnvironment(irModuleFragment.irBuiltins, configuration))
-//            val mode = if (intrinsicConstEvaluation) EvaluationMode.ONLY_INTRINSIC_CONST else EvaluationMode.ONLY_BUILTINS
-//            irModuleFragment.files.forEach {
-//                it.transformConst(interpreter, mode, fir2IrConfiguration.evaluatedConstTracker, fir2IrConfiguration.inlineConstTracker)
-//            }
+            val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
+            val targetPlatform = firModuleDescriptor?.platform
+            val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings
+            val intrinsicConstEvaluation = languageVersionSettings?.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
+
+            val configuration = IrInterpreterConfiguration(
+                platform = targetPlatform,
+                printOnlyExceptionMessage = true,
+            )
+            val interpreter = IrInterpreter(IrInterpreterEnvironment(irModuleFragment.irBuiltins, configuration))
+            val mode = if (intrinsicConstEvaluation) EvaluationMode.ONLY_INTRINSIC_CONST else EvaluationMode.ONLY_BUILTINS
+            irModuleFragment.files.forEach {
+                it.transformConst(interpreter, mode, fir2IrConfiguration.evaluatedConstTracker, fir2IrConfiguration.inlineConstTracker)
+            }
         }
 
         fun createModuleFragmentWithSignaturesIfNeeded(
