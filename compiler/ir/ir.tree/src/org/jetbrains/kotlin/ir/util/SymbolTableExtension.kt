@@ -154,7 +154,7 @@ abstract class SymbolTableExtension<
         return signature?.let { createPublicClassSymbol(declaration, signature) } ?: createPrivateClassSymbol(declaration)
     }
 
-    protected open fun createPublicClassSymbol(declaration: Class, signature: IdSignature): IrClassSymbol {
+    protected open fun createPublicClassSymbol(declaration: Class?, signature: IdSignature): IrClassSymbol {
         return IrClassPublicSymbolImpl(signature)
     }
 

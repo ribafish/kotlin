@@ -109,6 +109,14 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         )
     }
 
+    fun declareClassIfNotExists(signature: IdSignature, classFactory: (IrClassSymbol) -> IrClass): IrClass {
+        return table.declareClassIfNotExists(
+            signature,
+            { createPublicClassSymbol(null, signature) },
+            classFactory
+        )
+    }
+
     @OptIn(SymbolTableInternals::class)
     fun referenceClass(declaration: FirClassSymbol<*>, signature: IdSignature?): IrClassSymbol {
         return reference(

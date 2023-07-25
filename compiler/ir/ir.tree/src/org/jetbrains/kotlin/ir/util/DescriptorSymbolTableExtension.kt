@@ -106,7 +106,7 @@ open class DescriptorSymbolTableExtension(table: SymbolTable) : SymbolTableExten
         )
     }
 
-    override fun createPublicClassSymbol(declaration: ClassDescriptor, signature: IdSignature): IrClassSymbol {
+    override fun createPublicClassSymbol(declaration: ClassDescriptor?, signature: IdSignature): IrClassSymbol {
         return IrClassPublicSymbolImpl(signature, declaration)
     }
 
