@@ -456,7 +456,7 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                         val irGetterSymbol = symbolTable.referenceFunction(getter.symbol, signature)
                         IrCallImpl(
                             startOffset, endOffset, type, irGetterSymbol,
-                            typeArgumentsCount = getter.typeParameters.size,
+                            typeArgumentsCount = propertySymbol.fir.typeParameters.size,
                             valueArgumentsCount = getter.valueParameters.size,
                             origin = IrStatementOrigin.GET_PROPERTY,
                             superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
@@ -1163,7 +1163,7 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
             }
             return this
         } else {
-            val name = if (this is IrCallImpl) symbol.owner.name else "???"
+            val name = if (this is IrCallImpl) symbol.signature.toString() else "???"
             return IrErrorExpressionImpl(
                 startOffset, endOffset, type,
                 "Cannot bind $argumentsCount type arguments to $name call with $typeArgumentsCount type parameters"
