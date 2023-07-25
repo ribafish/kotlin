@@ -9,11 +9,14 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.SimpleTypeNullability
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
@@ -92,6 +95,24 @@ class Fir2IrBuiltIns(
             val signature = signatureComposer.composeSignature(firConstructorSymbol.fir)
             symbolTable.referenceConstructor(firConstructorSymbol, signature)
         }
-        return IrConstructorCallImpl.fromSymbolOwner(defaultType, constructorSymbol)
+        return IrConstructorCallImpl(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            type = this.defaultTypeWithoutOwner,
+            symbol = constructorSymbol,
+            typeArgumentsCount = 0,
+            constructorTypeArgumentsCount = 0,
+            valueArgumentsCount = 0
+        )
     }
+
+    // Here we rely on the fact that all classes for which this method is used have no type parameters
+    private val IrClassSymbol.defaultTypeWithoutOwner: IrSimpleType
+        get() = IrSimpleTypeImpl(
+            kotlinType = null,
+            classifier = this,
+            nullability = SimpleTypeNullability.DEFINITELY_NOT_NULL,
+            arguments = emptyList(),
+            annotations = emptyList()
+        )
 }

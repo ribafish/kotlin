@@ -289,7 +289,7 @@ open class DescriptorSymbolTableExtension(table: SymbolTable) : SymbolTableExten
         )
     }
 
-    override fun createPublicFunctionSymbol(declaration: FunctionDescriptor, signature: IdSignature): IrSimpleFunctionSymbol {
+    override fun createPublicFunctionSymbol(declaration: FunctionDescriptor?, signature: IdSignature): IrSimpleFunctionSymbol {
         return IrSimpleFunctionPublicSymbolImpl(signature, declaration)
     }
 

@@ -515,7 +515,7 @@ abstract class SymbolTableExtension<
         return signature?.let { createPublicFunctionSymbol(declaration, signature) } ?: createPrivateFunctionSymbol(declaration)
     }
 
-    protected open fun createPublicFunctionSymbol(declaration: Function, signature: IdSignature): IrSimpleFunctionSymbol {
+    protected open fun createPublicFunctionSymbol(declaration: Function?, signature: IdSignature): IrSimpleFunctionSymbol {
         return IrSimpleFunctionPublicSymbolImpl(signature)
     }
 

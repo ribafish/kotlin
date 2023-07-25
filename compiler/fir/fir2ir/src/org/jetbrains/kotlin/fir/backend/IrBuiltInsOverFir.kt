@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionPublicSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrTypeParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
@@ -83,53 +82,53 @@ class IrBuiltInsOverFir(
         loadClass(StandardClassIds.Any)
     }
 
-    override val anyType: IrType get() = anyClass.defaultType
+    override val anyType: IrType get() = anyClass.defaultTypeWithoutOwner
     override val anyNType by lazy { anyType.makeNullable() }
 
     override val numberClass: IrClassSymbol = loadClass(StandardClassIds.Number)
-    override val numberType: IrType get() = numberClass.defaultType
+    override val numberType: IrType get() = numberClass.defaultTypeWithoutOwner
 
     override val nothingClass: IrClassSymbol = loadClass(StandardClassIds.Nothing)
-    override val nothingType: IrType get() = nothingClass.defaultType
+    override val nothingType: IrType get() = nothingClass.defaultTypeWithoutOwner
     override val nothingNType: IrType by lazy { nothingType.makeNullable() }
 
     override val unitClass: IrClassSymbol = loadClass(StandardClassIds.Unit)
-    override val unitType: IrType get() = unitClass.defaultType
+    override val unitType: IrType get() = unitClass.defaultTypeWithoutOwner
 
     override val booleanClass: IrClassSymbol = loadClass(StandardClassIds.Boolean)
-    override val booleanType: IrType get() = booleanClass.defaultType
+    override val booleanType: IrType get() = booleanClass.defaultTypeWithoutOwner
 
     override val charClass: IrClassSymbol = loadClass(StandardClassIds.Char)
-    override val charType: IrType get() = charClass.defaultType
+    override val charType: IrType get() = charClass.defaultTypeWithoutOwner
 
     override val byteClass: IrClassSymbol = loadClass(StandardClassIds.Byte)
-    override val byteType: IrType get() = byteClass.defaultType
+    override val byteType: IrType get() = byteClass.defaultTypeWithoutOwner
 
     override val shortClass: IrClassSymbol = loadClass(StandardClassIds.Short)
-    override val shortType: IrType get() = shortClass.defaultType
+    override val shortType: IrType get() = shortClass.defaultTypeWithoutOwner
 
     override val intClass: IrClassSymbol = loadClass(StandardClassIds.Int)
-    override val intType: IrType get() = intClass.defaultType
+    override val intType: IrType get() = intClass.defaultTypeWithoutOwner
 
     override val longClass: IrClassSymbol = loadClass(StandardClassIds.Long)
-    override val longType: IrType get() = longClass.defaultType
+    override val longType: IrType get() = longClass.defaultTypeWithoutOwner
 
     override val floatClass: IrClassSymbol = loadClass(StandardClassIds.Float)
-    override val floatType: IrType get() = floatClass.defaultType
+    override val floatType: IrType get() = floatClass.defaultTypeWithoutOwner
 
     override val doubleClass: IrClassSymbol = loadClass(StandardClassIds.Double)
-    override val doubleType: IrType get() = doubleClass.defaultType
+    override val doubleType: IrType get() = doubleClass.defaultTypeWithoutOwner
 
     override val charSequenceClass: IrClassSymbol = loadClass(StandardClassIds.CharSequence)
 
     override val stringClass: IrClassSymbol = loadClass(StandardClassIds.String)
-    override val stringType: IrType get() = stringClass.defaultType
+    override val stringType: IrType get() = stringClass.defaultTypeWithoutOwner
 
     override val iteratorClass: IrClassSymbol = loadClass(StandardClassIds.Iterator)
     override val arrayClass: IrClassSymbol = loadClass(StandardClassIds.Array)
 
     override val annotationClass: IrClassSymbol = loadClass(StandardClassIds.Annotation)
-    override val annotationType: IrType get() = annotationClass.defaultType
+    override val annotationType: IrType get() = annotationClass.defaultTypeWithoutOwner
 
     override val collectionClass: IrClassSymbol = loadClass(StandardClassIds.Collection)
     override val setClass: IrClassSymbol = loadClass(StandardClassIds.Set)
@@ -149,7 +148,7 @@ class IrBuiltInsOverFir(
     override val mutableIteratorClass: IrClassSymbol = loadClass(StandardClassIds.MutableIterator)
     override val mutableListIteratorClass: IrClassSymbol = loadClass(StandardClassIds.MutableListIterator)
     override val comparableClass: IrClassSymbol = loadClass(StandardClassIds.Comparable)
-    override val throwableType: IrType by lazy { throwableClass.defaultType }
+    override val throwableType: IrType by lazy { throwableClass.defaultTypeWithoutOwner }
     override val throwableClass: IrClassSymbol = loadClass(StandardClassIds.Throwable)
 
     override val kCallableClass: IrClassSymbol = loadClass(StandardClassIds.KCallable)
@@ -588,7 +587,7 @@ class IrBuiltInsOverFir(
 
         val irFun4SignatureCalculation = makeWithSymbol(IrSimpleFunctionSymbolImpl())
         val signature = irSignatureBuilder.computeSignature(irFun4SignatureCalculation)
-        return components.symbolTable.table.declareSimpleFunction(signature, { IrSimpleFunctionPublicSymbolImpl(signature, null) }, ::makeWithSymbol)
+        return components.symbolTable.declareFunctionIfNotExists(signature, ::makeWithSymbol)
     }
 
     private fun findFunctions(packageName: FqName, name: Name): List<IrSimpleFunctionSymbol> {
@@ -607,7 +606,7 @@ class IrBuiltInsOverFir(
         }
     }
 
-    private val IrClassSymbol.defaultType: IrSimpleType
+    private val IrClassSymbol.defaultTypeWithoutOwner: IrSimpleType
         get() = IrSimpleTypeImpl(
             kotlinType = null,
             classifier = this,

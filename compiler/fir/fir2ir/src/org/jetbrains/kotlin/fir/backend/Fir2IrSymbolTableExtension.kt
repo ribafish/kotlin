@@ -381,6 +381,16 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         )
     }
 
+    fun declareFunctionIfNotExists(
+        signature: IdSignature,
+        functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction,
+    ): IrSimpleFunction {
+        return table.declareSimpleFunctionIfNotExists(
+            signature,
+            { createPublicFunctionSymbol(declaration = null, signature) },
+            functionFactory
+        )
+    }
 
     @OptIn(SymbolTableInternals::class)
     fun referenceFunction(declaration: FirFunctionSymbol<*>, signature: IdSignature?): IrSimpleFunctionSymbol {
