@@ -362,6 +362,12 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
             val dispatchReceiver = qualifiedAccess.dispatchReceiver
             val calleeReference = qualifiedAccess.calleeReference
 
+            if (calleeReference is FirSuperReference) {
+                if (dispatchReceiver !is FirNoReceiverExpression) {
+                    return visitor.convertToIrExpression(dispatchReceiver)
+                }
+            }
+
             val originalFirSymbol = calleeReference.toResolvedBaseSymbol()
             val isDynamicAccess = originalFirSymbol?.origin == FirDeclarationOrigin.DynamicScope
 
@@ -403,11 +409,6 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
             }
 
             return qualifiedAccess.convertWithOffsets { startOffset, endOffset ->
-                if (calleeReference is FirSuperReference) {
-                    if (dispatchReceiver !is FirNoReceiverExpression) {
-                        return@convertWithOffsets visitor.convertToIrExpression(dispatchReceiver)
-                    }
-                }
                 when (irSymbol) {
                     is IrConstructorSymbol -> {
                         val firConstructorSymbol = callableSymbol as FirConstructorSymbol

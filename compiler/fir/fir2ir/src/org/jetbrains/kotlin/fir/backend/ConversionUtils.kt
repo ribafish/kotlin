@@ -215,7 +215,7 @@ fun FirReference.toSymbolForCall(
             SymbolForCall(firSymbol, irSymbol, fakeOverrideOwnerLookupTag = null)
         }
 
-        else -> shouldNotBeCalled()
+        else -> error("Unsupported reference type: ${this::class}")
     }
 }
 

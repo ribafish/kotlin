@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.processAllCallables
 import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
@@ -306,15 +305,21 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
                 accessor.computeIrOrigin(irProperty.origin, property.delegate != null)
             )
         }
-        // TODO: pass IR type origin
-        conversionScope.withScopeAndParent(irAccessor) {
-            classifierGenerator.processTypeParameters(accessor, irAccessor)
-            callablesGenerator.processValueParameters(accessor, irAccessor, conversionScope.lastClass())
-            // TODO: process body
-        }
         when (isSetter) {
             true -> irProperty.setter = irAccessor
             false -> irProperty.getter = irAccessor
+        }
+        // TODO: pass IR type origin
+        conversionScope.applyParentFromStackTo(irAccessor)
+        conversionScope.withScopeAndParent(irAccessor) {
+            classifierGenerator.processTypeParameters(accessor, irAccessor)
+            callablesGenerator.processValueParameters(accessor, irAccessor, conversionScope.lastClass())
+            memberGenerator.setPropertyAccessorContent(
+                accessor,
+                irAccessor,
+                property,
+                irProperty,
+            )
         }
     }
 

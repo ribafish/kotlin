@@ -10,8 +10,7 @@ import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
+import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isFromEnumClass
 import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
@@ -141,32 +140,11 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
         val delegate = property.delegate
         val propertyType = property.returnTypeRef.toIrType()
         irProperty.initializeBackingField(property, initializerExpression = initializer ?: delegate)
-//        if (containingClass != null) {
-//            irProperty.overriddenSymbols = property.generateOverriddenPropertySymbols(containingClass)
-//        }
-        val needGenerateDefaultGetter =
-            property.getter is FirDefaultPropertyGetter ||
-                    (property.getter == null && irProperty.parent is IrScript && property.destructuringDeclarationContainerVariable != null)
 
-        irProperty.getter?.setPropertyAccessorContent(
-            property, property.getter, irProperty, propertyType,
-            isDefault = needGenerateDefaultGetter,
-            isGetter = true,
-            containingClass = containingClass
-        )
         // Create fake body for Enum.entries
         if (irProperty.origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER) {
             val kind = Fir2IrDeclarationStorage.ENUM_SYNTHETIC_NAMES.getValue(irProperty.name)
             irProperty.getter!!.body = IrSyntheticBodyImpl(irProperty.startOffset, irProperty.endOffset, kind)
-        }
-
-        if (property.isVar) {
-            irProperty.setter?.setPropertyAccessorContent(
-                property, property.setter, irProperty, propertyType,
-                property.setter is FirDefaultPropertySetter,
-                isGetter = false,
-                containingClass = containingClass
-            )
         }
         annotationGenerator.generate(irProperty, property)
         return irProperty
@@ -201,48 +179,45 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
         property.backingField?.let { annotationGenerator.generate(irField, it) }
     }
 
-    private fun IrSimpleFunction.setPropertyAccessorContent(
+    fun setPropertyAccessorContent(
+        accessor: FirPropertyAccessor,
+        irAccessor: IrSimpleFunction,
         property: FirProperty,
-        propertyAccessor: FirPropertyAccessor?,
         correspondingProperty: IrProperty,
-        propertyType: IrType,
-        isDefault: Boolean,
-        isGetter: Boolean,
-        containingClass: FirClass?
     ) {
 
-        conversionScope.withFunction(this) {
-            applyParentFromStackTo(this)
-            conversionScope.withParent(this) {
-                convertFunctionContent(this, propertyAccessor, containingClass = null)
-                if (isDefault) {
-                    generateDefaultPropertyAccessorBody(this, correspondingProperty, propertyType)
+        conversionScope.withFunction(irAccessor) {
+            conversionScope.withParent(irAccessor) {
+                convertFunctionContent(irAccessor, accessor, containingClass = null)
+                if (accessor is FirDefaultPropertyAccessor) {
+                    generateDefaultPropertyAccessorBody(irAccessor, correspondingProperty, property.returnTypeRef.toIrType())
                 }
             }
-//            if (containingClass != null) {
-//                this.overriddenSymbols = property.generateOverriddenAccessorSymbols(containingClass, isGetter)
-//            }
         }
     }
 
-    private fun generateDefaultPropertyAccessorBody(accessor: IrSimpleFunction, correspondingProperty: IrProperty, propertyType: IrType) {
+    private fun generateDefaultPropertyAccessorBody(
+        irAccessor: IrSimpleFunction,
+        correspondingProperty: IrProperty,
+        propertyType: IrType,
+    ) {
         val backingField = correspondingProperty.backingField
         val fieldSymbol = backingField?.symbol ?: return
-        conversionScope.withScopeAndParent(accessor) {
-            val expressionBody = if (accessor.isSetter) {
-                IrSetFieldImpl(accessor.startOffset, accessor.endOffset, fieldSymbol, irBuiltIns.unitType).apply {
-                    setReceiver(accessor)
-                    value = IrGetValueImpl(startOffset, endOffset, propertyType, accessor.valueParameters.first().symbol)
+        conversionScope.withScopeAndParent(irAccessor) {
+            val expressionBody = if (irAccessor.isSetter) {
+                IrSetFieldImpl(irAccessor.startOffset, irAccessor.endOffset, fieldSymbol, irBuiltIns.unitType).apply {
+                    setReceiver(irAccessor)
+                    value = IrGetValueImpl(startOffset, endOffset, propertyType, irAccessor.valueParameters.first().symbol)
                 }
             } else {
                 IrReturnImpl(
-                    accessor.startOffset, accessor.endOffset, irBuiltIns.nothingType, accessor.symbol,
-                    IrGetFieldImpl(accessor.startOffset, accessor.endOffset, fieldSymbol, propertyType).apply {
-                        setReceiver(accessor)
+                    irAccessor.startOffset, irAccessor.endOffset, irBuiltIns.nothingType, irAccessor.symbol,
+                    IrGetFieldImpl(irAccessor.startOffset, irAccessor.endOffset, fieldSymbol, propertyType).apply {
+                        setReceiver(irAccessor)
                     }
                 )
             }
-            accessor.body = accessor.factory.createBlockBody(accessor.startOffset, accessor.endOffset, listOf(expressionBody))
+            irAccessor.body = irAccessor.factory.createBlockBody(irAccessor.startOffset, irAccessor.endOffset, listOf(expressionBody))
         }
     }
 
