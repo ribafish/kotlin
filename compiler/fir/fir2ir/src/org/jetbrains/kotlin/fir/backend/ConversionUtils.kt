@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.builder.buildPackageDirective
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildFile
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
+import org.jetbrains.kotlin.fir.declarations.utils.isAbstract
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.isJava
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
+import org.jetbrains.kotlin.fir.scopes.processAllCallables
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -629,12 +631,19 @@ fun FirClass.irOrigin(firProvider: FirProvider): IrDeclarationOrigin = when {
     }
 }
 
-val IrType.isSamType: Boolean
+context(Fir2IrComponents)
+val ConeKotlinType.isSamType: Boolean
     get() {
-        val irClass = classOrNull ?: return false
-        if (irClass.owner.kind != ClassKind.INTERFACE) return false
-        val am = irClass.functions.singleOrNull { it.owner.modality == Modality.ABSTRACT }
-        return am != null
+        val scope = this.toRegularClassSymbol(session)
+            ?.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
+            ?: return false
+        var abstractNumber = 0
+        scope.processAllCallables {
+            if (it.isAbstract) {
+                abstractNumber++
+            }
+        }
+        return abstractNumber == 1
     }
 
 fun Fir2IrComponents.createSafeCallConstruction(

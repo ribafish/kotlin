@@ -446,8 +446,7 @@ internal class AdapterGenerator(
         val samFirType = substitutedParameterType.removeExternalProjections() ?: substitutedParameterType
         val samType = samFirType.toIrType(ConversionTypeOrigin.DEFAULT)
         // Make sure the converted IrType owner indeed has a single abstract method, since FunctionReferenceLowering relies on it.
-// TODO: impossible to check with unbound symbols. Maybe it's fine to replace with FIR check or remove completely?
-//        if (!samType.isSamType) return this
+        if (!samFirType.isSamType) return this
         return IrTypeOperatorCallImpl(
             this.startOffset, this.endOffset, samType, IrTypeOperator.SAM_CONVERSION, samType,
             castArgumentToFunctionalInterfaceForSamType(this, argument.typeRef.coneType, samFirType)
