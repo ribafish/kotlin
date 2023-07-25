@@ -1039,8 +1039,12 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
 
         if (parameter == null || !parameter.isMarkedWithImplicitIntegerCoercion) return this
 
-        fun IrExpression.applyToElement(argument: FirExpression, conversionFunction: IrSimpleFunctionSymbol): IrExpression =
-            if (argument is FirConstExpression<*> ||
+        fun IrExpression.applyToElement(
+            argument: FirExpression,
+            firConversionFunction: FirNamedFunctionSymbol,
+            irConversionFunction: IrSimpleFunctionSymbol,
+        ): IrExpression {
+            return if (argument is FirConstExpression<*> ||
                 argument is FirNamedArgumentExpression ||
                 argument.calleeReference?.toResolvedCallableSymbol()?.let {
                     it.resolvedStatus.isConst && it.isMarkedWithImplicitIntegerCoercion
@@ -1048,48 +1052,52 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
             ) {
                 IrCallImpl(
                     startOffset, endOffset,
-                    conversionFunction.owner.returnType,
-                    conversionFunction,
+                    firConversionFunction.fir.returnTypeRef.toIrType(),
+                    irConversionFunction,
                     typeArgumentsCount = 0,
                     valueArgumentsCount = 0
                 ).apply {
                     extensionReceiver = this@applyToElement
                 }
-            } else this@applyToElement
-
-        if (parameter.isMarkedWithImplicitIntegerCoercion) {
-            if (this is IrVarargImpl && argument is FirVarargArgumentsExpression) {
-
-                val targetTypeFqName = varargElementType.classFqName ?: return this
-                val conversionFunctions = irBuiltIns.getNonBuiltInFunctionsByExtensionReceiver(
-                    Name.identifier("to" + targetTypeFqName.shortName().asString()),
-                    StandardNames.BUILT_INS_PACKAGE_NAME.asString()
-                )
-                if (conversionFunctions.isNotEmpty()) {
-                    elements.forEachIndexed { i, irVarargElement ->
-                        val targetFun = argument.arguments[i].typeRef.toIrType().classifierOrNull?.let { conversionFunctions[it] }
-                        if (targetFun != null && irVarargElement is IrExpression) {
-                            elements[i] =
-                                irVarargElement.applyToElement(argument.arguments[i], targetFun)
-                        }
-                    }
-                }
-                return this
             } else {
-                val targetIrType = parameter.returnTypeRef.toIrType()
-                val targetTypeFqName = targetIrType.classFqName ?: return this
-                val conversionFunctions = irBuiltIns.getNonBuiltInFunctionsByExtensionReceiver(
-                    Name.identifier("to" + targetTypeFqName.shortName().asString()),
-                    StandardNames.BUILT_INS_PACKAGE_NAME.asString()
-                )
-                val sourceTypeClassifier = argument.typeRef.toIrType().classifierOrNull ?: return this
-
-                val conversionFunction = conversionFunctions[sourceTypeClassifier] ?: return this
-
-                return this.applyToElement(argument, conversionFunction)
+                this@applyToElement
             }
         }
-        return this
+
+        return when {
+            parameter.isMarkedWithImplicitIntegerCoercion -> when {
+                this is IrVarargImpl && argument is FirVarargArgumentsExpression -> {
+                    val targetTypeFqName = varargElementType.classFqName ?: return this
+                    val conversionFunctions = irBuiltIns.getNonBuiltInFunctionsWithFirCounterpartByExtensionReceiver(
+                        Name.identifier("to" + targetTypeFqName.shortName().asString()),
+                        StandardNames.BUILT_INS_PACKAGE_NAME.asString()
+                    )
+                    if (conversionFunctions.isNotEmpty()) {
+                        elements.forEachIndexed { i, irVarargElement ->
+                            if (irVarargElement !is IrExpression) return@forEachIndexed
+                            val argumentClassifier = argument.arguments[i].typeRef.toIrType().classifierOrNull ?: return@forEachIndexed
+                            val (targetFirFun, targetIrFun) = conversionFunctions[argumentClassifier] ?: return@forEachIndexed
+                            elements[i] = irVarargElement.applyToElement(argument.arguments[i], targetFirFun, targetIrFun)
+                        }
+                    }
+                    this
+                }
+                else -> {
+                    val targetIrType = parameter.returnTypeRef.toIrType()
+                    val targetTypeFqName = targetIrType.classFqName ?: return this
+                    val conversionFunctions = irBuiltIns.getNonBuiltInFunctionsWithFirCounterpartByExtensionReceiver(
+                        Name.identifier("to" + targetTypeFqName.shortName().asString()),
+                        StandardNames.BUILT_INS_PACKAGE_NAME.asString()
+                    )
+                    val sourceTypeClassifier = argument.typeRef.toIrType().classifierOrNull ?: return this
+
+                    val (firConversionFunction, irConversionFunction) = conversionFunctions[sourceTypeClassifier] ?: return this
+
+                    this.applyToElement(argument, firConversionFunction, irConversionFunction)
+                }
+            }
+            else -> this
+        }
     }
 
     internal fun IrExpression.applyTypeArguments(access: FirQualifiedAccessExpression): IrExpression {

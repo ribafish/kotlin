@@ -420,33 +420,45 @@ class IrBuiltInsOverFir(
         findFunctions(kotlinPackage, Name.identifier("arrayOf")).distinct().single()
     }
 
-    private fun <T : Any> getFunctionsByKey(
+    override fun getNonBuiltInFunctionsByExtensionReceiver(
         name: Name,
         vararg packageNameSegments: String,
-        makeKey: (IrSimpleFunctionSymbol) -> T?,
-    ): Map<T, IrSimpleFunctionSymbol> {
-        val result = mutableMapOf<T, IrSimpleFunctionSymbol>()
-        for (fn in findFunctions(name, *packageNameSegments)) {
-            makeKey(fn)?.let { key ->
-                result[key] = fn
-            }
-        }
-        return result
+    ): Map<IrClassifierSymbol, IrSimpleFunctionSymbol> {
+        return getFunctionsByKey(
+            name,
+            *packageNameSegments,
+            mapKey = { symbol ->
+                with(components) { symbol.fir.receiverParameter?.typeRef?.toIrType()?.classifierOrNull }
+            },
+            mapValue = { _, irSymbol -> irSymbol }
+        )
     }
 
-    override fun getNonBuiltInFunctionsByExtensionReceiver(
-        name: Name, vararg packageNameSegments: String,
-    ): Map<IrClassifierSymbol, IrSimpleFunctionSymbol> =
-        getFunctionsByKey(name, *packageNameSegments) { fn ->
-            fn.owner.extensionReceiverParameter?.type?.classifierOrNull
-        }
+    fun getNonBuiltInFunctionsWithFirCounterpartByExtensionReceiver(
+        name: Name,
+        vararg packageNameSegments: String,
+    ): Map<IrClassifierSymbol, Pair<FirNamedFunctionSymbol, IrSimpleFunctionSymbol>> {
+        return getFunctionsByKey(
+            name,
+            *packageNameSegments,
+            mapKey = { symbol ->
+                with(components) { symbol.fir.receiverParameter?.typeRef?.toIrType()?.classifierOrNull }
+            },
+            mapValue = { firSymbol, irSymbol -> firSymbol to irSymbol }
+        )
+    }
 
     override fun getNonBuiltinFunctionsByReturnType(
-        name: Name, vararg packageNameSegments: String,
-    ): Map<IrClassifierSymbol, IrSimpleFunctionSymbol> =
-        getFunctionsByKey(name, *packageNameSegments) { fn ->
-            fn.owner.returnType.classOrNull
-        }
+        name: Name,
+        vararg packageNameSegments: String,
+    ): Map<IrClassifierSymbol, IrSimpleFunctionSymbol> {
+        return getFunctionsByKey(
+            name,
+            *packageNameSegments,
+            mapKey = { with(components) { it.fir.returnTypeRef.toIrType().classifierOrNull } },
+            mapValue = { _, irSymbol -> irSymbol }
+        )
+    }
 
     private val functionNMap = mutableMapOf<Int, IrClass>()
     private val kFunctionNMap = mutableMapOf<Int, IrClass>()
@@ -592,6 +604,22 @@ class IrBuiltInsOverFir(
 
     private fun findFunctions(packageName: FqName, name: Name): List<IrSimpleFunctionSymbol> {
         return symbolProvider.getTopLevelFunctionSymbols(packageName, name).map { findFunction(it) }
+    }
+
+    private inline fun <K : Any, T> getFunctionsByKey(
+        name: Name,
+        vararg packageNameSegments: String,
+        mapKey: (FirNamedFunctionSymbol) -> K?,
+        mapValue: (FirNamedFunctionSymbol, IrSimpleFunctionSymbol) -> T
+    ): Map<K, T> {
+        val packageName = FqName.fromSegments(packageNameSegments.asList())
+        val result = mutableMapOf<K, T>()
+        for (functionSymbol in symbolProvider.getTopLevelFunctionSymbols(packageName, name)) {
+            val key = mapKey(functionSymbol) ?: continue
+            val irFunctionSymbol = findFunction(functionSymbol)
+            result[key] = mapValue(functionSymbol, irFunctionSymbol)
+        }
+        return result
     }
 
     private fun findFunction(functionSymbol: FirNamedFunctionSymbol): IrSimpleFunctionSymbol {
