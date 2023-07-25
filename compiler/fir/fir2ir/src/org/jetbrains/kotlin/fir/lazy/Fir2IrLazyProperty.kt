@@ -89,7 +89,7 @@ class Fir2IrLazyProperty(
         // Annotations need full initializer information to instantiate them correctly
         return when {
             containingClass?.classKind?.isAnnotationClass == true -> {
-                when (val elem = initializer?.accept(Fir2IrVisitor(components, Fir2IrConversionScope()), null)) {
+                when (val elem = initializer?.accept(Fir2IrVisitor(components, Fir2IrConversionScope(components)), null)) {
                     is IrExpressionBody -> elem
                     is IrExpression -> factory.createExpressionBody(elem)
                     else -> null

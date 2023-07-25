@@ -717,8 +717,8 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                 } ?: return@convertWithOffsets IrErrorCallExpressionImpl(
                     startOffset, endOffset, type, "No annotation constructor found: $symbol"
                 )
-
-            val irConstructor = declarationStorage.getIrConstructorSymbol(firConstructorSymbol)
+            val signature = signatureComposer.composeSignature(firConstructorSymbol.fir)
+            val irConstructor = symbolTable.referenceConstructor(firConstructorSymbol, signature)
 
             IrConstructorCallImpl(
                 startOffset, endOffset, type, irConstructor,

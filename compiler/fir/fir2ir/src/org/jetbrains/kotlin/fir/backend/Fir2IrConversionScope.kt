@@ -5,10 +5,7 @@
 
 package org.jetbrains.kotlin.fir.backend
 
-import org.jetbrains.kotlin.fir.declarations.FirClass
-import org.jetbrains.kotlin.fir.declarations.FirConstructor
-import org.jetbrains.kotlin.fir.declarations.FirProperty
-import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -17,7 +14,7 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.util.PrivateForInline
 
 @OptIn(PrivateForInline::class)
-class Fir2IrConversionScope {
+class Fir2IrConversionScope(val components: Fir2IrComponents) {
     @PublishedApi
     @PrivateForInline
     internal val parentStack = mutableListOf<IrDeclarationParent>()
@@ -146,9 +143,12 @@ class Fir2IrConversionScope {
         }
     }
 
-    fun returnTarget(expression: FirReturnExpression, declarationStorage: Fir2IrDeclarationStorage): IrFunction {
+    fun returnTarget(expression: FirReturnExpression): IrFunction {
         val irTarget = when (val firTarget = expression.target.labeledElement) {
-            is FirConstructor -> declarationStorage.getCachedIrConstructor(firTarget)
+            is FirConstructor -> {
+                val signature = components.signatureComposer.composeSignature(firTarget)
+                components.symbolTable.referenceConstructor(firTarget.symbol, signature).owner
+            }
             is FirPropertyAccessor -> {
                 var answer: IrFunction? = null
                 for ((property, firProperty) in propertyStack.asReversed()) {
@@ -160,7 +160,10 @@ class Fir2IrConversionScope {
                 }
                 answer
             }
-            else -> declarationStorage.getCachedIrFunction(firTarget)
+            else -> {
+                val signature = components.signatureComposer.composeSignature(firTarget)
+                components.symbolTable.referenceFunction(firTarget.symbol, signature).owner
+            }
         }
         for (potentialTarget in functionStack.asReversed()) {
             if (potentialTarget == irTarget) {

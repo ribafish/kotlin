@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.KotlinMangler
-import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
 
 class Fir2IrComponentsStorage(
@@ -43,11 +42,11 @@ class Fir2IrComponentsStorage(
     irManglerProvider:(List<IrProvider>) -> KotlinMangler.IrMangler,
     specialSymbolProvider: Fir2IrSpecialSymbolProvider
 ) : Fir2IrComponents {
-    override val conversionScope: Fir2IrConversionScope = Fir2IrConversionScope()
+    override val conversionScope: Fir2IrConversionScope = Fir2IrConversionScope(this)
 
     override val signatureComposer: FirBasedSignatureComposer = commonMemberStorage.firSignatureComposer
 
-    override val converter: Fir2IrConverter = Fir2IrConverter(moduleDescriptor, this)
+    override val converter: Fir2IrConverter = Fir2IrConverter(this)
     override val declarationsConverter: Fir2IrDeclarationsConverter = Fir2IrDeclarationsConverter(this, moduleDescriptor)
 
     override val classifierStorage: Fir2IrClassifierStorage = Fir2IrClassifierStorage(this, commonMemberStorage)

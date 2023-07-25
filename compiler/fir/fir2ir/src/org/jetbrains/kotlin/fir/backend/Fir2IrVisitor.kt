@@ -313,7 +313,7 @@ class Fir2IrVisitor(
     // ==================================================================================
 
     override fun visitReturnExpression(returnExpression: FirReturnExpression, data: Any?): IrElement {
-        val irTarget = conversionScope.returnTarget(returnExpression, declarationStorage)
+        val irTarget = conversionScope.returnTarget(returnExpression)
         return returnExpression.convertWithOffsets { startOffset, endOffset ->
             val result = returnExpression.result
             // For implicit returns, use the expression endOffset to generate the expected line number for debugging.
@@ -484,8 +484,7 @@ class Fir2IrVisitor(
         data: Any?
     ): IrElement = whileAnalysing(session, thisReceiverExpression) {
         val calleeReference = thisReceiverExpression.calleeReference
-        val boundSymbol = calleeReference.boundSymbol
-        when (boundSymbol) {
+        when (val boundSymbol = calleeReference.boundSymbol) {
             is FirClassSymbol<*> -> {
                 // Object case
                 val firClass = boundSymbol.fir
@@ -509,7 +508,8 @@ class Fir2IrVisitor(
             }
             is FirScriptSymbol -> {
                 val firScript = boundSymbol.fir
-                val irScript = declarationStorage.getCachedIrScript(firScript) ?: error("IrScript for ${firScript.name} not found")
+                // TODO: what if script was not processed yet?
+                val irScript = symbolTable.referenceScript(firScript.symbol).owner ?: error("IrScript for ${firScript.name} not found")
                 val receiverParameter =
                     irScript.implicitReceiversParameters.find { it.index == calleeReference.contextReceiverNumber } ?: irScript.thisReceiver
                 if (receiverParameter != null) {
@@ -520,12 +520,13 @@ class Fir2IrVisitor(
                     error("No script receiver found") // TODO: check if any valid situations possible here
                 }
             }
-            is FirCallableSymbol -> {
+            is FirCallableSymbol<*> -> {
+                val signature = signatureComposer.composeSignature(boundSymbol.fir)
                 val irFunction = when (boundSymbol) {
-                    is FirFunctionSymbol -> declarationStorage.getIrFunctionSymbol(boundSymbol).owner
+                    is FirFunctionSymbol -> symbolTable.referenceFunction(boundSymbol, signature).owner
                     is FirPropertySymbol -> {
-                        val property = declarationStorage.getIrPropertySymbol(boundSymbol).owner as? IrProperty
-                        property?.let { conversionScope.parentAccessorOfPropertyFromStack(it) }
+                        val property = symbolTable.referenceProperty(boundSymbol, signature).owner
+                        conversionScope.parentAccessorOfPropertyFromStack(property)
                     }
                     else -> null
                 }
