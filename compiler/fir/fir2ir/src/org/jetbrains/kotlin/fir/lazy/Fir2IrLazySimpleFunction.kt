@@ -86,18 +86,21 @@ class Fir2IrLazySimpleFunction(
     }
 
     override var overriddenSymbols: List<IrSimpleFunctionSymbol> = run lazyVar@{
-        if (firParent == null) return@lazyVar emptyList()
-        val parent = parent
-        if (isFakeOverride && parent is Fir2IrLazyClass) {
-            fakeOverrideGenerator.calcBaseSymbolsForFakeOverrideFunction(
-                firParent, this, fir.symbol
-            )
-            fakeOverrideGenerator.getOverriddenSymbolsForFakeOverride(this)?.let {
-                assert(!it.contains(symbol)) { "Cannot add function $symbol to its own overriddenSymbols" }
-                return@lazyVar it
-            }
-        }
-        fir.generateOverriddenFunctionSymbols(firParent)
+        // TODO: seems like it's not needed, because overridden symbols are set
+        //    during creating of declarations list of the parent class
+    //        if (firParent == null) return@lazyVar emptyList()
+//        val parent = parent
+//        if (isFakeOverride && parent is Fir2IrLazyClass) {
+//            fakeOverrideGenerator.calcBaseSymbolsForFakeOverrideFunction(
+//                firParent, this, fir.symbol
+//            )
+//            fakeOverrideGenerator.getOverriddenSymbolsForFakeOverride(this)?.let {
+//                assert(!it.contains(symbol)) { "Cannot add function $symbol to its own overriddenSymbols" }
+//                return@lazyVar it
+//            }
+//        }
+//        fir.generateOverriddenFunctionSymbols(firParent)
+        emptyList()
     }
 
     override val initialSignatureFunction: IrFunction? by lazy {

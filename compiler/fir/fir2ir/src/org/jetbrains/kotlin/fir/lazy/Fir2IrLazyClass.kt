@@ -143,13 +143,6 @@ class Fir2IrLazyClass(
         get() = computeValueClassRepresentation(fir)
         set(_) = mutationNotSupported()
 
-    private val fakeOverridesByName = mutableMapOf<Name, Collection<IrDeclaration>>()
-
-    fun getFakeOverridesByName(name: Name): Collection<IrDeclaration> = fakeOverridesByName.getOrPut(name) {
-        fakeOverrideGenerator.generateFakeOverridesForName(this@Fir2IrLazyClass, name, fir)
-            .also(converter::bindFakeOverridesOrPostpone)
-    }
-
     @Volatile
     private var fakeOverridesAreInitialized = false
 
@@ -222,10 +215,6 @@ class Fir2IrLazyClass(
 //            with(classifierStorage) {
 //                result.addAll(this@Fir2IrLazyClass.createContextReceiverFields(fir))
 //            }
-//
-            for (name in scope.getCallableNames()) {
-                result += getFakeOverridesByName(name)
-            }
 
         }
         result

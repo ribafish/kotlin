@@ -78,7 +78,8 @@ class Fir2IrPluginContext(
 
     override fun referenceClass(classId: ClassId): IrClassSymbol? {
         val firSymbol = symbolProvider.getClassLikeSymbolByClassId(classId) as? FirClassSymbol<*> ?: return null
-        return components.classifierStorage.getIrClassSymbol(firSymbol)
+        TODO() // create external class if needed
+//        return components.classifierStorage.getIrClassSymbol(firSymbol)
     }
 
     override fun referenceTypeAlias(classId: ClassId): IrTypeAliasSymbol? {
@@ -96,30 +97,33 @@ class Fir2IrPluginContext(
     }
 
     override fun referenceConstructors(classId: ClassId): Collection<IrConstructorSymbol> {
-        return referenceCallableSymbols(
-            classId,
-            getCallablesFromScope = { getDeclaredConstructors() },
-            getCallablesFromProvider = { shouldNotBeCalled() },
-            Fir2IrDeclarationStorage::getIrConstructorSymbol
-        )
+        TODO()
+//        return referenceCallableSymbols(
+//            classId,
+//            getCallablesFromScope = { getDeclaredConstructors() },
+//            getCallablesFromProvider = { shouldNotBeCalled() },
+//            Fir2IrDeclarationStorage::getIrConstructorSymbol
+//        )
     }
 
     override fun referenceFunctions(callableId: CallableId): Collection<IrSimpleFunctionSymbol> {
-        return referenceCallableSymbols(
-            callableId.classId,
-            getCallablesFromScope = { getFunctions(callableId.callableName) },
-            getCallablesFromProvider = { getTopLevelFunctionSymbols(callableId.packageName, callableId.callableName) },
-            Fir2IrDeclarationStorage::getIrFunctionSymbol
-        )
+        TODO()
+//        return referenceCallableSymbols(
+//            callableId.classId,
+//            getCallablesFromScope = { getFunctions(callableId.callableName) },
+//            getCallablesFromProvider = { getTopLevelFunctionSymbols(callableId.packageName, callableId.callableName) },
+//            Fir2IrDeclarationStorage::getIrFunctionSymbol
+//        )
     }
 
     override fun referenceProperties(callableId: CallableId): Collection<IrPropertySymbol> {
-        return referenceCallableSymbols(
-            callableId.classId,
-            getCallablesFromScope = { getProperties(callableId.callableName).filterIsInstance<FirPropertySymbol>() },
-            getCallablesFromProvider = { getTopLevelPropertySymbols(callableId.packageName, callableId.callableName) },
-            Fir2IrDeclarationStorage::getIrPropertySymbol
-        )
+        TODO()
+//        return referenceCallableSymbols(
+//            callableId.classId,
+//            getCallablesFromScope = { getProperties(callableId.callableName).filterIsInstance<FirPropertySymbol>() },
+//            getCallablesFromProvider = { getTopLevelPropertySymbols(callableId.packageName, callableId.callableName) },
+//            Fir2IrDeclarationStorage::getIrPropertySymbol
+//        )
     }
 
     private inline fun <F : FirCallableSymbol<*>, S : IrSymbol, reified R : S> referenceCallableSymbols(

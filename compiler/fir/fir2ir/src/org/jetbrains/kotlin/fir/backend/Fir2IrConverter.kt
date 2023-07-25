@@ -6,259 +6,36 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
-import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
-import org.jetbrains.kotlin.fir.extensions.declarationGenerators
-import org.jetbrains.kotlin.fir.extensions.extensionService
-import org.jetbrains.kotlin.fir.extensions.generatedMembers
-import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
-import org.jetbrains.kotlin.fir.isEnumEntries
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrFactory
+import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
 
-class Fir2IrConverter(private val components: Fir2IrComponents) : Fir2IrComponents by components {
-
-    private val generatorExtensions = session.extensionService.declarationGenerators
-
-    private var wereSourcesFakeOverridesBound = false
-    private val postponedDeclarationsForFakeOverridesBinding = mutableListOf<IrDeclaration>()
-
+class Fir2IrConverter(private val components: Fir2IrComponents) {
     private fun runSourcesConversion(
         allFirFiles: List<FirFile>,
         irModuleFragment: IrModuleFragmentImpl
     ) {
-        session.lazyDeclarationResolver.disableLazyResolveContractChecks()
-        for (firFile in allFirFiles) {
-            irModuleFragment.files += declarationsConverter.generateFile(firFile, irModuleFragment)
-        }
-        generateUnboundSymbolsAsDependencies(
-            irProviders,
-            symbolTable,
-            symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols,
-        )
-        fakeOverrideBuilder.provideFakeOverrides()
-        generateUnboundSymbolsAsDependencies(irProviders, symbolTable)
-        evaluateConstants(irModuleFragment, configuration)
-    }
-
-    fun bindFakeOverridesOrPostpone(declarations: List<IrDeclaration>) {
-        // Do not run binding for lazy classes until all sources declarations are processed
-        if (wereSourcesFakeOverridesBound) {
-            fakeOverrideGenerator.bindOverriddenSymbols(declarations)
-        } else {
-            postponedDeclarationsForFakeOverridesBinding += declarations
-        }
-    }
-
-    fun processLocalClassAndNestedClassesOnTheFly(klass: FirClass, parent: IrDeclarationParent): IrClass {
-        val irClass = registerClassAndNestedClasses(klass, parent)
-        processClassAndNestedClassHeaders(klass)
-        return irClass
-    }
-
-    internal fun processClassMembers(klass: FirClass, irClass: IrClass): IrClass {
-        val allDeclarations = mutableListOf<FirDeclaration>().apply {
-            addAll(klass.declarations)
-            if (klass is FirRegularClass && generatorExtensions.isNotEmpty()) {
-                addAll(klass.generatedMembers(session))
-                addAll(klass.generatedNestedClassifiers(session))
+        with(components) {
+            session.lazyDeclarationResolver.disableLazyResolveContractChecks()
+            for (firFile in allFirFiles) {
+                irModuleFragment.files += declarationsConverter.generateFile(firFile, irModuleFragment)
             }
-        }
-        val irConstructor = klass.primaryConstructorIfAny(session)?.let {
-            declarationStorage.getOrCreateIrConstructor(
-                it.fir, irClass, isLocal = klass.isLocal
+            generateUnboundSymbolsAsDependencies(
+                irProviders,
+                symbolTable,
+                symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols,
             )
-        }
-        if (irConstructor != null) {
-            irClass.declarations += irConstructor
-        }
-        // At least on enum entry creation we may need a default constructor, so ctors should be converted first
-        for (declaration in syntheticPropertiesLast(allDeclarations)) {
-            val irDeclaration = processMemberDeclaration(declaration, klass, irClass) ?: continue
-            irClass.declarations += irDeclaration
-        }
-        // Add delegated members *before* fake override generations.
-        // Otherwise, fake overrides for delegated members, which are redundant, will be added.
-        allDeclarations += delegatedMembers(irClass)
-        // Add synthetic members *before* fake override generations.
-        // Otherwise, redundant members, e.g., synthetic toString _and_ fake override toString, will be added.
-        with(fakeOverrideGenerator) {
-            irClass.addFakeOverrides(klass, allDeclarations)
-        }
-
-        return irClass
-    }
-
-    fun bindFakeOverridesInClass(klass: IrClass) {
-        fakeOverrideGenerator.bindOverriddenSymbols(klass.declarations)
-        delegatedMemberGenerator.bindDelegatedMembersOverriddenSymbols(klass)
-        for (irDeclaration in klass.declarations) {
-            if (irDeclaration is IrClass) {
-                bindFakeOverridesInClass(irDeclaration)
-            }
-        }
-    }
-
-    private fun delegatedMembers(irClass: IrClass): List<FirDeclaration> {
-        return irClass.declarations.filter {
-            it.origin == IrDeclarationOrigin.DELEGATED_MEMBER
-        }.mapNotNull {
-            components.declarationStorage.originalDeclarationForDelegated(it)
-        }
-    }
-
-    // Sort declarations so that all non-synthetic declarations and `synthetic class delegation fields` are before other synthetic ones.
-    // This is needed because converting synthetic fields for implementation delegation needs to know
-    // existing declarations in the class to avoid adding redundant delegated members.
-    private fun syntheticPropertiesLast(declarations: Iterable<FirDeclaration>): Iterable<FirDeclaration> {
-        return declarations.sortedBy {
-            when {
-                !it.isSynthetic -> false
-                it.source?.kind is KtFakeSourceElementKind.ClassDelegationField -> false
-                else -> true
-            }
-        }
-    }
-
-    private fun registerClassAndNestedClasses(klass: FirClass, parent: IrDeclarationParent): IrClass {
-        // Local classes might be referenced before they declared (see usages of Fir2IrClassifierStorage.createLocalIrClassOnTheFly)
-        // So, we only need to set its parent properly
-        val irClass =
-            classifierStorage.getCachedIrClass(klass)?.apply {
-                this.parent = parent
-            } ?: when (klass) {
-                is FirRegularClass -> classifierStorage.registerIrClass(klass, parent)
-                is FirAnonymousObject -> classifierStorage.registerIrAnonymousObject(klass, irParent = parent)
-            }
-        registerNestedClasses(klass, irClass)
-        return irClass
-    }
-
-    private fun registerNestedClasses(klass: FirClass, irClass: IrClass) {
-        klass.declarations.forEach {
-            if (it is FirRegularClass) {
-                registerClassAndNestedClasses(it, irClass)
-            }
-        }
-        if (klass is FirRegularClass && generatorExtensions.isNotEmpty()) {
-            klass.generatedNestedClassifiers(session).forEach {
-                if (it is FirRegularClass) {
-                    registerClassAndNestedClasses(it, irClass)
-                }
-            }
-        }
-    }
-
-    private fun processClassAndNestedClassHeaders(klass: FirClass) {
-        classifierStorage.processClassHeader(klass)
-        processNestedClassHeaders(klass)
-    }
-
-    private fun processNestedClassHeaders(klass: FirClass) {
-        klass.declarations.forEach {
-            if (it is FirRegularClass) {
-                processClassAndNestedClassHeaders(it)
-            }
-        }
-        if (klass is FirRegularClass && generatorExtensions.isNotEmpty()) {
-            klass.generatedNestedClassifiers(session).forEach {
-                if (it is FirRegularClass) {
-                    processClassAndNestedClassHeaders(it)
-                }
-            }
-        }
-    }
-
-    private fun processMemberDeclaration(
-        declaration: FirDeclaration,
-        containingClass: FirClass?,
-        parent: IrDeclarationParent
-    ): IrDeclaration? {
-        val isLocal = containingClass != null &&
-                (containingClass !is FirRegularClass || containingClass.isLocal)
-        return when (declaration) {
-            is FirRegularClass -> {
-                processClassMembers(declaration, classifierStorage.getCachedIrClass(declaration)!!)
-            }
-            is FirScript -> {
-                parent as IrFile
-                declarationStorage.getOrCreateIrScript(declaration).also { irScript ->
-                    declarationStorage.enterScope(irScript)
-                    irScript.parent = parent
-                    for (scriptStatement in declaration.statements) {
-                        when (scriptStatement) {
-                            is FirRegularClass -> {
-                                registerClassAndNestedClasses(scriptStatement, irScript)
-                                processClassAndNestedClassHeaders(scriptStatement)
-                            }
-                            is FirTypeAlias -> classifierStorage.registerTypeAlias(scriptStatement, irScript)
-                            else -> {}
-                        }
-                    }
-                    for (scriptStatement in declaration.statements) {
-                        if (scriptStatement is FirDeclaration) {
-                            processMemberDeclaration(scriptStatement, null, irScript)
-                        }
-                    }
-                    declarationStorage.leaveScope(irScript)
-                }
-            }
-            is FirSimpleFunction -> {
-                declarationStorage.getOrCreateIrFunction(
-                    declaration, parent, isLocal = isLocal
-                )
-            }
-            is FirProperty -> {
-                if (containingClass != null &&
-                    declaration.isEnumEntries(containingClass) &&
-                    !session.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
-                ) {
-                    // Note: we have to do it, because backend without the feature
-                    // cannot process Enum.entries properly
-                    null
-                } else {
-                    declarationStorage.getOrCreateIrProperty(
-                        declaration, parent, isLocal = isLocal
-                    )
-                }
-            }
-            is FirField -> {
-                if (declaration.isSynthetic) {
-                    declarationStorage.createIrFieldAndDelegatedMembers(declaration, containingClass!!, parent as IrClass)
-                } else {
-                    throw AssertionError("Unexpected non-synthetic field: ${declaration::class}")
-                }
-            }
-            is FirConstructor -> if (!declaration.isPrimary) {
-                declarationStorage.getOrCreateIrConstructor(
-                    declaration, parent as IrClass, isLocal = isLocal
-                )
-            } else {
-                null
-            }
-            is FirEnumEntry -> {
-                classifierStorage.getIrEnumEntry(declaration, parent as IrClass)
-            }
-            is FirAnonymousInitializer -> {
-                declarationStorage.createIrAnonymousInitializer(declaration, parent as IrClass)
-            }
-            is FirTypeAlias -> {
-                // DO NOTHING
-                null
-            }
-            else -> {
-                error("Unexpected member: ${declaration::class}")
-            }
+            fakeOverrideBuilder.provideFakeOverrides()
+            generateUnboundSymbolsAsDependencies(irProviders, symbolTable)
+            evaluateConstants(irModuleFragment, configuration)
         }
     }
 

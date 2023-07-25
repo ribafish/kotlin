@@ -638,7 +638,9 @@ internal class AdapterGenerator(
                 session, scopeSession, expectedFunctionalType, shouldCalculateReturnTypesOfFakeOverrides = true
             )
         }?.let {
-            declarationStorage.getIrFunctionSymbol(it) as? IrSimpleFunctionSymbol
+            // TODO: is fake override owner needed here?
+            val signature = signatureComposer.composeSignature(it.fir)
+            symbolTable.referenceFunction(it, signature)
         }
     }
 

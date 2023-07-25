@@ -181,7 +181,8 @@ class Fir2IrVisitor(
                             }
                             statement is FirClass -> {
                                 (statement.accept(this@Fir2IrVisitor, null) as IrClass).also {
-                                    converter.bindFakeOverridesInClass(it)
+                                    // TODO
+//                                    converter.bindFakeOverridesInClass(it)
                                 }
                             }
                             else -> {

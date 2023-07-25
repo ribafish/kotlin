@@ -157,11 +157,7 @@ class Fir2IrLazyProperty(
         }.apply {
             parent = this@Fir2IrLazyProperty.parent
             correspondingPropertySymbol = this@Fir2IrLazyProperty.symbol
-            with(classifierStorage) {
-                setTypeParameters(
-                    this@Fir2IrLazyProperty.fir, ConversionTypeOrigin.DEFAULT
-                )
-            }
+            classifierGenerator.processTypeParameters(fir, this)
         }
     }
 

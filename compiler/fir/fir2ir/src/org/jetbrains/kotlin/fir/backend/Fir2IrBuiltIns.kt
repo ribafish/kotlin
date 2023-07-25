@@ -89,8 +89,8 @@ class Fir2IrBuiltIns(
                 withForcedTypeCalculator = true,
                 memberRequiredPhase = null,
             ).getDeclaredConstructors().singleOrNull() ?: return null
-
-            declarationStorage.getIrConstructorSymbol(firConstructorSymbol)
+            val signature = signatureComposer.composeSignature(firConstructorSymbol.fir)
+            symbolTable.referenceConstructor(firConstructorSymbol, signature)
         }
         return IrConstructorCallImpl.fromSymbolOwner(defaultType, constructorSymbol)
     }

@@ -49,8 +49,8 @@ class Fir2IrComponentsStorage(
     override val converter: Fir2IrConverter = Fir2IrConverter(this)
     override val declarationsConverter: Fir2IrDeclarationsConverter = Fir2IrDeclarationsConverter(this, moduleDescriptor)
 
-    override val classifierStorage: Fir2IrClassifierStorage = Fir2IrClassifierStorage(this, commonMemberStorage)
-    override val declarationStorage: Fir2IrDeclarationStorage = Fir2IrDeclarationStorage(this, moduleDescriptor, commonMemberStorage)
+    override val classifierStorage: Fir2IrClassifierStorage = Fir2IrClassifierStorage(this)
+    override val declarationStorage: Fir2IrDeclarationStorage = Fir2IrDeclarationStorage(this, commonMemberStorage)
 
     override val callablesGenerator: Fir2IrCallableDeclarationGenerator = Fir2IrCallableDeclarationGenerator(this)
     override val classifierGenerator: Fir2IrClassifierGenerator = Fir2IrClassifierGenerator(this)

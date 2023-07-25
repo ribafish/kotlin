@@ -113,7 +113,10 @@ class Fir2IrLazyPropertyAccessor(
     }
 
     override val initialSignatureFunction: IrFunction? by lazy {
-        (fir as? FirSyntheticPropertyAccessor)?.delegate?.let { declarationStorage.getIrFunctionSymbol(it.symbol).owner }
+        val delegatedFunction = (fir as? FirSyntheticPropertyAccessor)?.delegate ?: return@lazy null
+        // TODO: owner?
+        val signature = components.signatureComposer.composeSignature(delegatedFunction)
+        symbolTable.referenceFunction(delegatedFunction.symbol, signature).owner
     }
 
     override val containerSource: DeserializedContainerSource?

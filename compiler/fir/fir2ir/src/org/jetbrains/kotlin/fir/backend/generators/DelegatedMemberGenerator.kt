@@ -56,18 +56,17 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
     fun generateBodies() {
         for ((declaration, irField, delegateToSymbol, delegateToLookupTag) in bodiesInfo) {
             val callTypeCanBeNullable = Fir2IrImplicitCastInserter.typeCanBeEnhancedOrFlexibleNullable(delegateToSymbol.fir.returnTypeRef.coneType.fullyExpandedType(session))
+            val signature = signatureComposer.composeSignature(delegateToSymbol.fir, delegateToLookupTag)
             when (declaration) {
                 is IrSimpleFunction -> {
-                    val member = declarationStorage.getIrFunctionSymbol(
-                        delegateToSymbol as FirNamedFunctionSymbol, delegateToLookupTag
-                    ).owner as? IrSimpleFunction ?: continue
-                    val body = createDelegateBody(irField, declaration, member, callTypeCanBeNullable)
+                    val member = symbolTable.referenceFunction(delegateToSymbol as FirNamedFunctionSymbol, signature)
+                    // TODO: get rid of owner here
+                    val body = createDelegateBody(irField, declaration, member.owner, callTypeCanBeNullable)
                     declaration.body = body
                 }
                 is IrProperty -> {
-                    val member = declarationStorage.getIrPropertySymbol(
-                        delegateToSymbol as FirPropertySymbol, delegateToLookupTag
-                    ).owner as? IrProperty ?: continue
+                    // TODO: get rid of owner here
+                    val member = symbolTable.referenceProperty(delegateToSymbol as FirPropertySymbol, signature).owner
                     val getter = declaration.getter!!
                     getter.body = createDelegateBody(irField, getter, member.getter!!, callTypeCanBeNullable)
                     if (declaration.isVar) {
