@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.utils.*
@@ -20,11 +21,13 @@ import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.arrayElementType
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isSuspendOrKSuspendFunctionType
+import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
@@ -32,10 +35,7 @@ import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
 import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.IdSignature
-import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
-import org.jetbrains.kotlin.ir.util.isAnonymousObject
-import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.name.SpecialNames
@@ -445,7 +445,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                 isFinal = fieldSymbol.isFinal,
                 visibility = fieldSymbol.visibility,
                 isStatic = fieldSymbol.isStatic,
-                isExternal =  fieldSymbol.isExternal,
+                isExternal = fieldSymbol.isExternal,
                 metadataSource = FirMetadataSource.Field(fieldSymbol.fir)
             )
         }
@@ -468,7 +468,8 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         // type: IrType? = null,
     ): IrField {
         val inferredType = fieldSymbol.resolvedReturnType.toIrType() //type ?: firInitializerExpression!!.typeRef.toIrType()
-        val signature = signatureComposer.composeSignature(fieldSymbol.fir)
+        val fakeOverrideLookupTag = getFieldStaticFakeOverrideKeyIfNeeded(fieldSymbol, parent)
+        val signature = signatureComposer.composeSignature(fieldSymbol.fir, fakeOverrideLookupTag)
         return symbolTable.declareField(fieldSymbol, signature) { symbol ->
             irFactory.createField(
                 startOffset = startOffset,
@@ -488,6 +489,12 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                 // convertAnnotationsForNonDeclaredMembers(property, origin)
             }
         }
+    }
+
+    private fun getFieldStaticFakeOverrideKeyIfNeeded(field: FirVariableSymbol<*>, irParent: IrDeclarationParent?): ConeClassLikeLookupTag? {
+        if (!field.isStatic) return null
+        val ownerLookupTag = (irParent as? IrClass)?.classId?.toLookupTag() ?: return null
+        return ownerLookupTag.takeIf { field.isSubstitutionOrIntersectionOverride || ownerLookupTag != field.containingClassLookupTag() }
     }
 
     internal fun createIrPropertyAccessor(

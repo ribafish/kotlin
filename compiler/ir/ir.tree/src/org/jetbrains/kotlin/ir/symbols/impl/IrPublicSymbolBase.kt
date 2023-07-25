@@ -68,7 +68,7 @@ abstract class IrBindablePublicSymbolBase<out Descriptor, Owner>(
             ?: error("Symbol for \"$signature\" is unbound")
 
     override fun bind(owner: Owner) {
-        if (signature.toString() == "[ java.util/AbstractCollection.toArray|toArray(kotlin.Array<out|0:0?>?){0§<kotlin.Any?>}kotlin.Array<out|0:0?>?[0] <- Local[<TP>,0] ]") {
+        if (signature.toString() == "java.lang.reflect/AccessibleObject.reflectionFactory|[0]") {
             Unit
         }
         if (_owner == null) {
