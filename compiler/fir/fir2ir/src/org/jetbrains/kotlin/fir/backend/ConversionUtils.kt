@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 fun AbstractKtSourceElement?.startOffsetSkippingComments(): Int? {
     return when (this) {
@@ -151,7 +152,7 @@ private fun FirBasedSymbol<*>.toSymbolForCall(
     explicitReceiver: FirExpression? = null,
     isDelegate: Boolean = false,
     isReference: Boolean = false
-): IrSymbol? = when (this) {
+): SymbolForCall = when (this) {
     is FirCallableSymbol<*> -> unwrapCallRepresentative().toSymbolForCall(
         dispatchReceiver,
         preferGetter,
@@ -160,7 +161,7 @@ private fun FirBasedSymbol<*>.toSymbolForCall(
         isReference
     )
 
-    is FirClassifierSymbol<*> -> toSymbol()
+    is FirClassifierSymbol<*> -> SymbolForCall(this, toSymbol(), fakeOverrideOwnerLookupTag = null)
     else -> error("Unknown symbol: $this")
 }
 
@@ -179,11 +180,10 @@ fun FirReference.toSymbolForCall(
     preferGetter: Boolean = true,
     isDelegate: Boolean = false,
     isReference: Boolean = false,
-): IrSymbol? {
+): SymbolForCall {
     return when (this) {
         is FirResolvedNamedReference -> {
             val symbol = resolvedSymbol.unwrapCallSiteSubstitutionOverride()
-
             symbol.toSymbolForCall(
                 dispatchReceiver,
                 preferGetter,
@@ -194,26 +194,34 @@ fun FirReference.toSymbolForCall(
         }
 
         is FirThisReference -> {
+            val firSymbol = this.boundSymbol ?: shouldNotBeCalled()
             // TODO: `ownerSafe` can be probably replaced with just `owner`
-            when (val boundSymbol = boundSymbol) {
-                is FirClassSymbol<*> -> symbolTable.referenceClass(boundSymbol).ownerSafe?.thisReceiver?.symbol
+            val irSymbol = when (firSymbol) {
+                is FirClassSymbol<*> -> symbolTable.referenceClass(firSymbol).ownerSafe?.thisReceiver?.symbol
                 is FirFunctionSymbol<*> -> {
-                    val signature = signatureComposer.composeSignature(boundSymbol.fir)
-                    symbolTable.referenceFunction(boundSymbol, signature).owner.extensionReceiverParameter?.symbol
+                    val signature = signatureComposer.composeSignature(firSymbol.fir)
+                    symbolTable.referenceFunction(firSymbol, signature).owner.extensionReceiverParameter?.symbol
                 }
                 is FirPropertySymbol -> {
-                    val signature = signatureComposer.composeSignature(boundSymbol.fir)
-                    val property = symbolTable.referenceProperty(boundSymbol, signature).owner
+                    val signature = signatureComposer.composeSignature(firSymbol.fir)
+                    val property = symbolTable.referenceProperty(firSymbol, signature).owner
                     conversionScope.parentAccessorOfPropertyFromStack(property)?.symbol
                 }
-                is FirScriptSymbol -> symbolTable.referenceScript(boundSymbol).owner.thisReceiver?.symbol
-                else -> null
+                is FirScriptSymbol -> symbolTable.referenceScript(firSymbol).owner.thisReceiver?.symbol
+                else -> shouldNotBeCalled()
             }
+            SymbolForCall(firSymbol, irSymbol, fakeOverrideOwnerLookupTag = null)
         }
 
-        else -> null
+        else -> shouldNotBeCalled()
     }
 }
+
+data class SymbolForCall(
+    val firSymbol: FirBasedSymbol<*>,
+    val irSymbol: IrSymbol?,
+    val fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag?,
+)
 
 private fun FirResolvedQualifier.toLookupTag(session: FirSession): ConeClassLikeLookupTag? =
     when (val symbol = symbol) {
@@ -230,7 +238,7 @@ fun FirCallableSymbol<*>.toSymbolForCall(
     explicitReceiver: FirExpression? = null,
     isDelegate: Boolean = false,
     isReference: Boolean = false
-): IrSymbol? {
+): SymbolForCall {
     val fakeOverrideOwnerLookupTag = when {
         // Static fake overrides
         isStatic -> {
@@ -259,7 +267,7 @@ fun FirCallableSymbol<*>.toSymbolForCall(
     }
 
     val signature = signatureComposer.composeSignature(fir, fakeOverrideOwnerLookupTag)
-    return when (this) {
+    val irSymbol = when (this) {
         is FirSimpleSyntheticPropertySymbol -> {
             val firProperty = fir
             when {
@@ -273,7 +281,7 @@ fun FirCallableSymbol<*>.toSymbolForCall(
                         } else {
                             firProperty.setter?.delegate?.symbol ?: error("Written synthetic property must have a setter")
                         }
-                        delegateSymbol.unwrapCallRepresentative()
+                        return delegateSymbol.unwrapCallRepresentative()
                             .toSymbolForCall(dispatchReceiver, preferGetter, isDelegate = false)
                     }
                 }
@@ -288,8 +296,9 @@ fun FirCallableSymbol<*>.toSymbolForCall(
         is FirDelegateFieldSymbol -> symbolTable.referenceField(this, signature)
         is FirEnumEntrySymbol -> symbolTable.referenceEnumEntry(this, signature)
         is FirValueParameterSymbol -> symbolTable.referenceValueParameter(this)
-        else -> null
+        else -> shouldNotBeCalled()
     }
+    return SymbolForCall(this, irSymbol, fakeOverrideOwnerLookupTag)
 }
 
 fun FirConstExpression<*>.getIrConstKind(): IrConstKind<*> = when (kind) {
