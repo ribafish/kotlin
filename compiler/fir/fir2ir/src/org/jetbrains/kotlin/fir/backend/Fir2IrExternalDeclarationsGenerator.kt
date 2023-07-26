@@ -49,7 +49,7 @@ class Fir2IrExternalDeclarationsGenerator(
         val fragmentForPrecompiledBinaries: IrExternalPackageFragment,
     )
 
-    private fun getIrExternalOrBuiltInsPackageFragment(fqName: FqName, firOrigin: FirDeclarationOrigin): IrExternalPackageFragment {
+    fun getIrExternalOrBuiltInsPackageFragment(fqName: FqName, firOrigin: FirDeclarationOrigin): IrExternalPackageFragment {
         val isBuiltIn = fqName in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES
         return if (isBuiltIn) getIrBuiltInsPackageFragment(fqName) else getIrExternalPackageFragment(fqName, firOrigin)
     }
@@ -60,9 +60,9 @@ class Fir2IrExternalDeclarationsGenerator(
         }
     }
 
-    fun getIrExternalPackageFragment(
+    private fun getIrExternalPackageFragment(
         fqName: FqName,
-        firOrigin: FirDeclarationOrigin = FirDeclarationOrigin.Library,
+        firOrigin: FirDeclarationOrigin,
     ): IrExternalPackageFragment {
         val fragments = fragmentCache.getOrPut(fqName) {
             ExternalPackageFragments(
@@ -97,7 +97,7 @@ class Fir2IrExternalDeclarationsGenerator(
         val firClassSymbol = firSymbol as? FirRegularClassSymbol ?: return null
         val signature = signatureComposer.composeSignature(firClassSymbol.fir)
         val irParent = when (val outerClassId = classId.outerClassId) {
-            null -> getIrExternalPackageFragment(classId.packageFqName)
+            null -> getIrExternalOrBuiltInsPackageFragment(classId.packageFqName, firClassSymbol.origin)
             else -> findDependencyClassByClassId(outerClassId)!!.owner
         }
         return getOrCreateLazyClass(firClassSymbol, signature, irParent)
@@ -188,7 +188,7 @@ class Fir2IrExternalDeclarationsGenerator(
 
         val parentId = classId.outerClassId
         val parentClass = parentId?.let { getIrClassSymbolForNotFoundClass(it.toLookupTag()) }
-        val irParent = parentClass?.owner ?: getIrExternalPackageFragment(classId.packageFqName)
+        val irParent = parentClass?.owner ?: getIrExternalPackageFragment(classId.packageFqName, FirDeclarationOrigin.Library)
 
         val irClass = symbolTable.declareClassIfNotExists(signature) {
             irFactory.createClass(
