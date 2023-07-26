@@ -81,6 +81,7 @@ val FirPropertySymbol.canNarrowDownGetterType: Boolean
 // See [BindingContext.BACKING_FIELD_REQUIRED]
 val FirProperty.hasBackingField: Boolean
     get() {
+        if (receiverParameter != null) return false
         if (isAbstract) return false
         if (delegate != null) return false
         if (hasExplicitBackingField) return true
