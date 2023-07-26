@@ -6,9 +6,6 @@
 package org.jetbrains.kotlinx.serialization.compiler.backend.ir
 
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
-import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyProperty
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -56,7 +53,7 @@ fun IrProperty.analyzeIfFromAnotherModule(): Pair<Boolean, Boolean> {
         // DeserializedPropertyDescriptor can be encountered only after K1, so it is safe to check it.
         val hasDefault = descriptor.declaresDefaultValue()
         hasDefault to (descriptor.backingField != null || hasDefault)
-    } else if (this is Fir2IrLazyProperty) {
+    } /*else if (this is Fir2IrLazyProperty) {
         // Fir2IrLazyProperty after K2 correctly deserializes information about backing field.
         // However, nor Fir2IrLazyProp nor deserialized FirProperty do not store default value (initializer expression) for property,
         // so we either should find corresponding constructor parameter and check its default, or rely on less strict check for default getter.
@@ -74,7 +71,7 @@ fun IrProperty.analyzeIfFromAnotherModule(): Pair<Boolean, Boolean> {
             // should be very marginal. If we want to solve them, we need to add protobuf metadata extension.
             (fir.getter is FirDefaultPropertyGetter) to hasBackingField
         }
-    } else {
+    }*/ else {
         false to false
     }
 }

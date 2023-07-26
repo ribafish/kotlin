@@ -125,28 +125,6 @@ class Fir2IrExternalDeclarationsGenerator(
         return irClass.symbol
     }
 
-    fun getOrCreateLazyConstructor(
-        constructorSymbol: FirConstructorSymbol,
-        signature: IdSignature?,
-        irParent: IrDeclarationParent,
-    ): IrConstructorSymbol {
-        val irConstructor = symbolTable.declareConstructorIfNotExists(constructorSymbol, signature) { symbol ->
-            val constructor = constructorSymbol.fir
-            Fir2IrLazyConstructor(
-                components,
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                constructor.computeExternalOrigin(irParent),
-                constructor,
-                symbol
-            ).apply {
-                parent = irParent
-                processTypeParameters()
-            }
-        }
-        return irConstructor.symbol
-    }
-
     fun getOrCreateSimpleFunction(
         functionSymbol: FirNamedFunctionSymbol,
         signature: IdSignature?,
@@ -160,27 +138,13 @@ class Fir2IrExternalDeclarationsGenerator(
         return irFunction.symbol
     }
 
-    fun getOrCreateLazyProperty(
+    fun getOrCreatePropertyProperty(
         propertySymbol: FirPropertySymbol,
         signature: IdSignature?,
         irParent: IrDeclarationParent,
     ): IrPropertySymbol {
         val irProperty = symbolTable.declarePropertyIfNotExists(propertySymbol, signature) { symbol ->
-            val property = propertySymbol.fir
-            val isFakeOverride =
-                property.isSubstitutionOrIntersectionOverride &&
-                        property.dispatchReceiverClassLookupTagOrNull() !=
-                        property.originalForSubstitutionOverride?.dispatchReceiverClassLookupTagOrNull()
-            Fir2IrLazyProperty(
-                components,
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                property.computeExternalOrigin(irParent),
-                property,
-                (irParent as? Fir2IrLazyClass)?.fir,
-                symbol,
-                isFakeOverride
-            ).apply {
+            components.declarationsConverter.generateIrProperty(propertySymbol.fir).apply {
                 parent = irParent
             }
         }
