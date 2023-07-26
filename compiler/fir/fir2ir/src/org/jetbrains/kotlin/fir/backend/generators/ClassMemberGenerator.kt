@@ -137,10 +137,10 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
         }
     }
 
-    fun convertPropertyContent(irProperty: IrProperty, property: FirProperty, containingClass: FirClass?): IrProperty {
+    fun convertPropertyContent(irProperty: IrProperty, property: FirProperty): IrProperty {
         val initializer = property.backingField?.initializer ?: property.initializer
         val delegate = property.delegate
-        val propertyType = property.returnTypeRef.toIrType()
+        property.returnTypeRef.toIrType()
         irProperty.initializeBackingField(property, initializerExpression = initializer ?: delegate)
 
         // Create fake body for Enum.entries

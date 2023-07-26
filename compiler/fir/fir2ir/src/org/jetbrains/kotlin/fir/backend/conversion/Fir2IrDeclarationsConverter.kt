@@ -276,7 +276,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         processBackingField(property, irProperty)
         processPropertyAccessors(property, irProperty)
 
-        memberGenerator.convertPropertyContent(irProperty, property, conversionScope.containerFirClass())
+        memberGenerator.convertPropertyContent(irProperty, property)
 
         return irProperty
     }
@@ -454,7 +454,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
             conversionScope.lastClass()!!,
             predefinedOrigin
         )
-        // TODO: generate body
+        memberGenerator.convertAnonymousInitializerContent(irAnonymousInitializer, anonymousInitializer)
         return irAnonymousInitializer
     }
 
