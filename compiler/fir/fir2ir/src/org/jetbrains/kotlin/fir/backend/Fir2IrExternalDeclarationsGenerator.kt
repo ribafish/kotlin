@@ -131,8 +131,10 @@ class Fir2IrExternalDeclarationsGenerator(
         irParent: IrDeclarationParent,
     ): IrSimpleFunctionSymbol {
         val irFunction = symbolTable.declareFunctionIfNotExists(functionSymbol, signature) { symbol ->
-            components.declarationsConverter.generateIrFunction(functionSymbol.fir).apply {
-                parent = irParent
+            conversionScope.withParent(irParent) {
+                components.declarationsConverter.generateIrFunction(functionSymbol.fir).apply {
+                    parent = irParent
+                }
             }
         }
         return irFunction.symbol
@@ -144,8 +146,8 @@ class Fir2IrExternalDeclarationsGenerator(
         irParent: IrDeclarationParent,
     ): IrPropertySymbol {
         val irProperty = symbolTable.declarePropertyIfNotExists(propertySymbol, signature) { symbol ->
-            components.declarationsConverter.generateIrProperty(propertySymbol.fir).apply {
-                parent = irParent
+            conversionScope.withParent(irParent) {
+                components.declarationsConverter.generateIrProperty(propertySymbol.fir)
             }
         }
         return irProperty.symbol
