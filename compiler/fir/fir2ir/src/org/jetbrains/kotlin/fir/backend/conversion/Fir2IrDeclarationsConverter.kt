@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.fir.declarations.comparators.FirMemberDeclarationCom
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
+import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
@@ -186,6 +187,8 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
                     // we want to collect declarations which are actually declared in this class
                     //   not inherited ones
                     if (declaration.containingClassLookupTag()?.toSymbol(session) != classSymbol) return
+                    // delegated members will be generated later alongside with corresponding delegate field
+                    if (declaration.origin == FirDeclarationOrigin.Delegated) return
                 }
                 is FirClassLikeDeclaration -> {
                     // skip nested classes which came from parent classes
@@ -286,6 +289,15 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         val irField = callablesGenerator.createIrField(field.symbol, parent, predefinedOrigin)
 
         memberGenerator.convertFieldContent(irField, field)
+        // isSynthetic = true means that the field is generated for delegate
+        if (field.isSynthetic) {
+            delegatedMemberGenerator.generateDelegatedMethodsForSpecificDelegateField(
+                field,
+                irField,
+                conversionScope.containerFirClass()!!,
+                conversionScope.lastClass()!!
+            )
+        }
 
         return irField
     }
