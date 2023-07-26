@@ -22,10 +22,9 @@ import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.scopes.processAllCallables
-import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
@@ -76,25 +75,35 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
     private fun processDeclarationsInFile(file: FirFile, irFile: IrFile) {
         conversionScope.withParent(irFile) {
             for (declaration in file.declarations) {
-                irFile.declarations += generateIrDeclaration(declaration)
+                irFile.declarations += generateIrDeclaration(declaration, predefinedOrigin = null)
             }
         }
     }
 
-    fun generateIrDeclaration(declaration: FirDeclaration): IrDeclaration {
+    fun generateIrDeclaration(
+        declaration: FirDeclaration,
+        predefinedOrigin: IrDeclarationOrigin?,
+        memberOfLazyClass: Boolean = false,
+        precomputedPrimaryConstructor: IrConstructor? = null
+    ): IrDeclaration {
         return when (declaration) {
-            is FirProperty -> generateIrProperty(declaration)
-            is FirConstructor -> generateIrConstructor(declaration)
-            is FirFunction -> generateIrFunction(declaration)
-            is FirClass -> generateIrClass(declaration)
+            is FirProperty -> generateIrProperty(declaration, predefinedOrigin)
+            is FirConstructor -> generateIrConstructor(declaration, predefinedOrigin)
+            is FirFunction -> generateIrFunction(declaration, predefinedOrigin)
+            is FirClass -> generateIrClass(declaration, memberOfLazyClass)
             is FirTypeAlias -> generateIrTypeAlias(declaration)
-            is FirAnonymousInitializer -> generateIrAnonymousInitializer(declaration)
-            is FirEnumEntry -> generateIrEnumEntry(declaration)
+            is FirAnonymousInitializer -> generateIrAnonymousInitializer(declaration, predefinedOrigin)
+            is FirEnumEntry -> generateIrEnumEntry(declaration, precomputedPrimaryConstructor, predefinedOrigin)
+            is FirField -> generateIrField(declaration, predefinedOrigin)
             else -> error("Unsupported declaration type: ${declaration::class}")
         }
     }
 
-    fun generateIrClass(klass: FirClass): IrClass {
+    fun generateIrClass(klass: FirClass, memberOfLazyClass: Boolean = false): IrClass {
+        if (memberOfLazyClass) {
+            val irClassSymbol = externalDeclarationsGenerator.findDependencyClassByClassId(klass.classId)!!
+            return irClassSymbol.owner
+        }
         val parent = conversionScope.parentFromStack()
         val irClass = when (klass) {
             is FirRegularClass -> classifierGenerator.createIrClass(klass, parent)
@@ -105,25 +114,41 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irClass
     }
 
-    fun processClassDeclarations(klass: FirClass, irClass: IrClass, destination: MutableList<IrDeclaration>) {
+    fun processClassDeclarations(
+        klass: FirClass,
+        irClass: IrClass,
+        destination: MutableList<IrDeclaration>,
+        predefinedOrigin: IrDeclarationOrigin? = null,
+        shouldCreateIrDeclaration: (FirDeclaration) -> Boolean = { true }
+    ) {
         conversionScope.withScopeAndParent(irClass) {
             conversionScope.withClass(irClass) {
                 conversionScope.withContainingFirClass(klass) {
+                    val ownerIsLazyClass = irClass is Fir2IrLazyClass
                     val classMembers = collectAllClassMembers(klass)
                     val primaryConstructor = classMembers.firstOrNull { it is FirConstructor && it.isPrimary } as FirConstructor?
                     var irPrimaryConstructor: IrConstructor? = null
                     // primary constructor should be converted first, to declare its value parameters
                     //   which may be referenced in property initializers and init blocks
                     if (primaryConstructor != null) {
-                        irPrimaryConstructor = generateIrConstructor(primaryConstructor)
-                        destination += irPrimaryConstructor
+                        if (shouldCreateIrDeclaration(primaryConstructor)) {
+                            irPrimaryConstructor = generateIrConstructor(primaryConstructor, predefinedOrigin)
+                            destination += irPrimaryConstructor
+                        }
                     }
                     for (declaration in classMembers) {
                         if (declaration === primaryConstructor) continue
-                        destination += generateIrDeclaration(declaration)
+                        if (shouldCreateIrDeclaration(declaration)) {
+                            destination += generateIrDeclaration(
+                                declaration,
+                                predefinedOrigin,
+                                precomputedPrimaryConstructor = irPrimaryConstructor,
+                                memberOfLazyClass = ownerIsLazyClass
+                            )
+                        }
                     }
 
-                    if (klass is FirRegularClass && irPrimaryConstructor != null && (irClass.isValue || irClass.isData)) {
+                    if (!ownerIsLazyClass && klass is FirRegularClass && irPrimaryConstructor != null && (irClass.isValue || irClass.isData)) {
                         val dataClassMembersGenerator = DataClassMembersGenerator(components)
                         if (irClass.isSingleFieldValueClass) {
                             dataClassMembersGenerator.generateSingleFieldValueClassMembers(klass, irClass)
@@ -143,12 +168,16 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
     private fun collectAllClassMembers(klass: FirClass): List<FirDeclaration> {
         val classSymbol = klass.symbol
 
-        val declarationsFromSources = LinkedHashSet(klass.declarations)
-        val scope = klass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
+        // For java classes all declarations should be collected from scope
+        val declarationsFromSources = if (klass.origin is FirDeclarationOrigin.Java) {
+            emptySet()
+        } else {
+            LinkedHashSet(klass.declarations)
+        }
 
         val syntheticDeclarations = mutableListOf<FirMemberDeclaration>()
 
-        fun addSyntheticDeclarationIfNeeded(declaration: FirDeclaration) {
+        fun addDeclarationFromScopeIfNeeded(declaration: FirDeclaration) {
             if (declaration in declarationsFromSources) return
             when (declaration) {
                 is FirCallableDeclaration -> {
@@ -168,8 +197,17 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
             syntheticDeclarations += declaration
         }
 
-        scope.processAllCallables { addSyntheticDeclarationIfNeeded(it.fir) }
-        scope.processAllClassifiers { addSyntheticDeclarationIfNeeded(it.fir) }
+        fun processScope(scope: FirContainingNamesAwareScope?) {
+            if (scope == null) return
+            scope.processDeclaredConstructors { addDeclarationFromScopeIfNeeded(it.fir) }
+            scope.processAllCallables { addDeclarationFromScopeIfNeeded(it.fir) }
+            scope.processAllClassifiers { addDeclarationFromScopeIfNeeded(it.fir) }
+        }
+
+        val scope = klass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
+        processScope(scope)
+        val staticScope = klass.staticScope(session, scopeSession)
+        processScope(staticScope)
 
         // Order of synthetic declarations may be unstable (e.g., because of order of compiler plugins)
         // So to have stable IR we need to sort them manually
@@ -191,8 +229,8 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irTypeAlias
     }
 
-    fun generateIrFunction(function: FirFunction): IrSimpleFunction {
-        val irFunction = callablesGenerator.createIrFunction(function, conversionScope.parent())
+    fun generateIrFunction(function: FirFunction, predefinedOrigin: IrDeclarationOrigin? = null): IrSimpleFunction {
+        val irFunction = callablesGenerator.createIrFunction(function, conversionScope.parent(), predefinedOrigin)
         conversionScope.withScopeAndParent(irFunction) {
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())
             classifierGenerator.processTypeParameters(function, irFunction)
@@ -229,9 +267,9 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irConstructor
     }
 
-    fun generateIrProperty(property: FirProperty): IrProperty {
+    fun generateIrProperty(property: FirProperty, predefinedOrigin: IrDeclarationOrigin? = null): IrProperty {
         val parent = conversionScope.parentFromStack()
-        val irProperty = callablesGenerator.createIrProperty(property, parent)
+        val irProperty = callablesGenerator.createIrProperty(property, parent, predefinedOrigin)
 
         // fields and getters are part of the scope of the container, not property itself,
         // so there is no need to call symbolTable.withScope(irProperty)
@@ -338,9 +376,13 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return propertyOrigin
     }
 
-    fun generateIrEnumEntry(enumEntry: FirEnumEntry, precomputedDefaultConstructor: IrConstructor? = null): IrEnumEntry {
+    fun generateIrEnumEntry(
+        enumEntry: FirEnumEntry,
+        precomputedDefaultConstructor: IrConstructor?,
+        predefinedOrigin: IrDeclarationOrigin? = null,
+    ): IrEnumEntry {
         val irParentEnumClass = conversionScope.lastClass()!!
-        val irEnumEntry = classifierGenerator.createIrEnumEntry(enumEntry, irParentEnumClass)
+        val irEnumEntry = classifierGenerator.createIrEnumEntry(enumEntry, irParentEnumClass, predefinedOrigin)
 
         // TODO: probably move this into Fir2IrVisitor
         symbolTable.withScope(irEnumEntry) {
@@ -403,8 +445,15 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irEnumEntry
     }
 
-    fun generateIrAnonymousInitializer(anonymousInitializer: FirAnonymousInitializer): IrAnonymousInitializer {
-        val irAnonymousInitializer = classifierGenerator.createIrAnonymousInitializer(anonymousInitializer, conversionScope.lastClass()!!)
+    fun generateIrAnonymousInitializer(
+        anonymousInitializer: FirAnonymousInitializer,
+        predefinedOrigin: IrDeclarationOrigin? = null,
+    ): IrAnonymousInitializer {
+        val irAnonymousInitializer = classifierGenerator.createIrAnonymousInitializer(
+            anonymousInitializer,
+            conversionScope.lastClass()!!,
+            predefinedOrigin
+        )
         // TODO: generate body
         return irAnonymousInitializer
     }

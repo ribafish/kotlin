@@ -50,8 +50,6 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         )
     }
 
-    private val firProvider = session.firProvider
-
     fun createIrFunction(
         function: FirFunction,
         irParent: IrDeclarationParent?,
@@ -197,25 +195,6 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
             }
         }
     }
-
-//    private fun createIrLazyFunction(
-//        fir: FirSimpleFunction,
-//        signature: IdSignature,
-//        lazyParent: IrDeclarationParent,
-//        declarationOrigin: IrDeclarationOrigin,
-//    ): IrSimpleFunction {
-//        val symbol = symbolTable.table.referenceSimpleFunction(signature)
-//        val irFunction = fir.convertWithOffsets { startOffset, endOffset ->
-//            symbolTable.table.declareSimpleFunction(signature, { symbol }) {
-//                val isFakeOverride = fir.isSubstitutionOrIntersectionOverride
-//                Fir2IrLazySimpleFunction(
-//                    components, startOffset, endOffset, declarationOrigin,
-//                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride, lazyParent
-//                )
-//            }
-//        }
-//        return irFunction
-//    }
 
     private fun <T : IrFunction> T.declareDefaultSetterParameter(type: IrType, firValueParameter: FirValueParameter?): T {
         valueParameters = listOf(

@@ -13,9 +13,11 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isFromEnumClass
+import org.jetbrains.kotlin.fir.declarations.utils.nameOrSpecialName
 import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
 import org.jetbrains.kotlin.fir.expressions.FirDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.references.toResolvedConstructorSymbol
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
@@ -31,7 +33,9 @@ import org.jetbrains.kotlin.ir.util.constructedClassType
 import org.jetbrains.kotlin.ir.util.isSetter
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.withScope
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 internal class ClassMemberGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
     private val visitor = Fir2IrVisitor(components)
@@ -40,22 +44,20 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
 
     private fun ConeKotlinType.toIrType(): IrType = with(typeConverter) { toIrType() }
 
-    private fun <T : IrDeclaration> applyParentFromStackTo(declaration: T): T = conversionScope.applyParentFromStackTo(declaration)
-
     fun <T : IrFunction> convertFunctionContent(irFunction: T, firFunction: FirFunction?, containingClass: FirClass?) {
         if (firFunction == null) return
 
         with(irFunction) {
-            if (irFunction !is IrConstructor || !irFunction.isPrimary) {
-                val irParameters = valueParameters.drop(firFunction.contextReceivers.size)
-                val annotationMode = containingClass?.classKind == ClassKind.ANNOTATION_CLASS && irFunction is IrConstructor
-                for ((valueParameter, firValueParameter) in irParameters.zip(firFunction.valueParameters)) {
-                    visitor.withAnnotationMode(enableAnnotationMode = annotationMode) {
-                        valueParameter.setDefaultValue(firValueParameter)
-                    }
+            val irParameters = valueParameters.drop(firFunction.contextReceivers.size)
+            val annotationMode = containingClass?.classKind == ClassKind.ANNOTATION_CLASS && irFunction is IrConstructor
+            val isKotlinEnumConstructor = firFunction is FirConstructor && containingClass?.nameOrSpecialName == Name.identifier("Enum")
+            for ((valueParameter, firValueParameter) in irParameters.zip(firFunction.valueParameters)) {
+                visitor.withAnnotationMode(enableAnnotationMode = annotationMode) {
+                    valueParameter.setDefaultValue(firValueParameter, useStubForDefaultValueStub = !isKotlinEnumConstructor)
                 }
-                annotationGenerator.generate(irFunction, firFunction)
             }
+            annotationGenerator.generate(irFunction, firFunction)
+
             if (firFunction is FirConstructor && irFunction is IrConstructor && !firFunction.isExpect) {
                 val body = factory.createBlockBody(startOffset, endOffset)
                 val delegatedConstructor = firFunction.delegatedConstructor
@@ -309,10 +311,17 @@ internal class ClassMemberGenerator(private val components: Fir2IrComponents) : 
         }
     }
 
-    private fun IrValueParameter.setDefaultValue(firValueParameter: FirValueParameter) {
-        val firDefaultValue = firValueParameter.defaultValue
-        if (firDefaultValue != null) {
-            this.defaultValue = factory.createExpressionBody(visitor.convertToIrExpression(firDefaultValue))
+    private fun IrValueParameter.setDefaultValue(firValueParameter: FirValueParameter, useStubForDefaultValueStub: Boolean = true) {
+        val defaultValueExpression = when(val firDefaultValue = firValueParameter.defaultValue) {
+            is FirExpressionStub -> runIf(useStubForDefaultValueStub) {
+                IrErrorExpressionImpl(
+                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, type,
+                    "Stub expression for default value of $name"
+                )
+            }
+            null -> null
+            else -> visitor.convertToIrExpression(firDefaultValue)
         }
+        this.defaultValue = defaultValueExpression?.let { factory.createExpressionBody(it) }
     }
 }

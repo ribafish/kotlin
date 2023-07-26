@@ -194,10 +194,11 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
     fun createIrAnonymousInitializer(
         anonymousInitializer: FirAnonymousInitializer,
         irParent: IrClass,
+        predefinedOrigin: IrDeclarationOrigin? = null
     ): IrAnonymousInitializer = convertCatching(anonymousInitializer) {
         return anonymousInitializer.convertWithOffsets { startOffset, endOffset ->
             irFactory.createAnonymousInitializer(
-                startOffset, endOffset, IrDeclarationOrigin.DEFINED,
+                startOffset, endOffset, predefinedOrigin ?: IrDeclarationOrigin.DEFINED,
                 IrAnonymousInitializerSymbolImpl()
             ).apply {
                 parent = irParent

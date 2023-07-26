@@ -8,19 +8,13 @@ package org.jetbrains.kotlin.fir.lazy
 import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.backend.*
-import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
-import org.jetbrains.kotlin.fir.containingClassForStaticMemberAttr
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirConstructor
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
 import org.jetbrains.kotlin.fir.isNewPlaceForBodyGeneration
-import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
-import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
-import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrMaybeDeserializedClass
@@ -30,10 +24,11 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.DeserializableClass
+import org.jetbrains.kotlin.ir.util.generateUnboundSymbolsAsDependencies
+import org.jetbrains.kotlin.ir.util.isEnumClass
+import org.jetbrains.kotlin.ir.util.isObject
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.utils.addIfNotNull
-import kotlin.properties.ReadWriteProperty
 
 class Fir2IrLazyClass(
     components: Fir2IrComponents,
@@ -148,75 +143,12 @@ class Fir2IrLazyClass(
 
     private val _declarations by lazyVar(lock) {
         val result = mutableListOf<IrDeclaration>()
-        conversionScope.withScopeAndParent(this) {
-            // NB: it's necessary to take all callables from scope,
-            // e.g. to avoid accessing un-enhanced Java declarations with FirJavaTypeRef etc. inside
-            val scope = fir.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
-            scope.processDeclaredConstructors {
-                val constructor = it.fir
-                if (shouldBuildStub(constructor)) {
-                    result += declarationsConverter.generateIrConstructor(constructor, predefinedOrigin = this@Fir2IrLazyClass.origin)
-                }
-            }
-
-            for (name in scope.getClassifierNames()) {
-                scope.processClassifiersByName(name) {
-                    val declaration = it.fir as? FirRegularClass ?: return@processClassifiersByName
-                    if (declaration.classId.outerClassId == fir.classId && shouldBuildStub(declaration)) {
-                        val nestedSymbol = externalDeclarationsGenerator.findDependencyClassByClassId(declaration.classId)!!
-                        result += nestedSymbol.owner
-                    }
-                }
-            }
-
-            if (fir.classKind == ClassKind.ENUM_CLASS) {
-                val defaultConstructor = result.firstOrNull { it is IrConstructor && it.isDefaultConstructor } as IrConstructor?
-                for (declaration in fir.declarations) {
-                    if (declaration is FirEnumEntry && shouldBuildStub(declaration)) {
-                        // TODO: consider this
-                        result += declarationsConverter.generateIrEnumEntry(declaration, defaultConstructor)
-                    }
-                }
-            }
-
-            val ownerLookupTag = fir.symbol.toLookupTag()
-
-            fun addDeclarationsFromScope(scope: FirContainingNamesAwareScope?) {
-                if (scope == null) return
-                for (name in scope.getCallableNames()) {
-                    scope.processFunctionsByName(name) {
-                        if (it.isSubstitutionOrIntersectionOverride) return@processFunctionsByName
-                        if (!shouldBuildStub(it.fir)) return@processFunctionsByName
-                        if (it.isStatic && it.fir.containingClassForStaticMemberAttr != ownerLookupTag) return@processFunctionsByName
-                        if (it.isStatic || it.dispatchReceiverClassLookupTagOrNull() == ownerLookupTag) {
-                            if (it.isAbstractMethodOfAny()) {
-                                return@processFunctionsByName
-                            }
-                            result += declarationsConverter.generateIrFunction(it.fir)
-                        }
-                    }
-                    scope.processPropertiesByName(name) {
-                        if (it.isSubstitutionOrIntersectionOverride) return@processPropertiesByName
-                        if (!shouldBuildStub(it.fir)) return@processPropertiesByName
-                        if (!(it.isStatic || it.dispatchReceiverClassLookupTagOrNull() == ownerLookupTag)) return@processPropertiesByName
-                        val declaration = when {
-                            it is FirPropertySymbol -> declarationsConverter.generateIrProperty(it.fir)
-                            it is FirFieldSymbol -> declarationsConverter.generateIrField(it.fir, origin)
-                            else -> null
-                        }
-                        result.addIfNotNull(declaration)
-                    }
-                }
-            }
-
-            addDeclarationsFromScope(scope)
-            addDeclarationsFromScope(fir.staticScope(session, scopeSession))
-
-//            with(classifierStorage) {
-//                result.addAll(this@Fir2IrLazyClass.createContextReceiverFields(fir))
-//            }
-
-        }
+        declarationsConverter.processClassDeclarations(
+            fir,
+            irClass = this,
+            destination = result,
+            predefinedOrigin = this@Fir2IrLazyClass.origin
+        ) { shouldBuildStub(it) }
         result
     }
 
