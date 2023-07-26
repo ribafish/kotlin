@@ -74,9 +74,9 @@ object DefaultFakeOverrideClassFilter : FakeOverrideClassFilter {
 class FakeOverrideBuilder(
     val linker: FileLocalAwareLinker,
     val symbolTable: SymbolTable,
-    mangler: KotlinMangler.IrMangler,
-    typeSystem: IrTypeSystemContext,
-    friendModules: Map<String, Collection<String>>,
+    val mangler: KotlinMangler.IrMangler,
+    val typeSystem: IrTypeSystemContext,
+    val friendModules: Map<String, Collection<String>>,
     private val partialLinkageSupport: PartialLinkageSupportForLinker,
     val platformSpecificClassFilter: FakeOverrideClassFilter = DefaultFakeOverrideClassFilter,
     private val fakeOverrideDeclarationTable: DeclarationTable = FakeOverrideDeclarationTable(mangler) { builder, table ->
@@ -90,6 +90,23 @@ class FakeOverrideBuilder(
     else
         ProcessAsFakeOverrides
 ) {
+    // TODO: probably replace it with some factory
+    // Note: this is needed, because during creating of fake-overrides for `Fir2IrLazyClass` we can
+    //    trigger another f/o building session, which will clean all states before outer session will be completed
+    fun copy(): FakeOverrideBuilder {
+        return FakeOverrideBuilder(
+            linker,
+            symbolTable,
+            mangler,
+            typeSystem,
+            friendModules,
+            partialLinkageSupport,
+            platformSpecificClassFilter,
+            fakeOverrideDeclarationTable,
+            afterTraversingSupertypesCallback
+        )
+    }
+
     private val haveFakeOverrides = mutableSetOf<IrClass>()
 
     private val irOverridingUtil = IrOverridingUtil(typeSystem, this, afterTraversingSupertypesCallback)
@@ -123,7 +140,7 @@ class FakeOverrideBuilder(
 
         fakeOverrideDeclarationTable.run {
             inFile(clazz.fileOrNull) {
-                irOverridingUtil.buildFakeOverridesForClass(clazz, compatibilityMode.oldSignatures, symbolTable)
+                irOverridingUtil.buildFakeOverridesForClass(clazz, compatibilityMode.oldSignatures)
             }
         }
         return true

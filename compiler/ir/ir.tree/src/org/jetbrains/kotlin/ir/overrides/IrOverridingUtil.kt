@@ -150,8 +150,7 @@ class IrOverridingUtil(
             }
         }
 
-    @OptIn(DelicateSymbolTableApi::class)
-    fun buildFakeOverridesForClass(clazz: IrClass, oldSignatures: Boolean, symbolTable: SymbolTable) {
+    fun buildFakeOverridesForClass(clazz: IrClass, oldSignatures: Boolean) {
         val superTypes = clazz.superTypes
 
         val fromCurrent = clazz.declarations.filterIsInstance<IrOverridableMember>()

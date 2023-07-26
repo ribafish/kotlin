@@ -164,7 +164,7 @@ class Fir2IrLazyClass(
                     symbolExtractor = Fir2IrSymbolTableExtension::unboundClassifiersSymbols
                 )
 
-                fakeOverrideBuilder.provideFakeOverrides(this, CompatibilityMode.CURRENT)
+                fakeOverrideBuilder.copy().provideFakeOverrides(this, CompatibilityMode.CURRENT)
                 return _declarations
             }
         }
