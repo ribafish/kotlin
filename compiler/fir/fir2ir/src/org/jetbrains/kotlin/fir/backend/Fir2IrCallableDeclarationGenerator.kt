@@ -510,6 +510,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
                     parent = irParent
                     correspondingPropertySymbol = (irProperty as? IrProperty)?.symbol
                     metadata = FirMetadataSource.Function(propertyAccessor)
+                    classifierGenerator.processTypeParameters(property, this)
                     // Note that deserialized annotations are stored in the accessor, not the property.
                     // TODO: annotations
 //                convertAnnotationsForNonDeclaredMembers(propertyAccessor, origin)

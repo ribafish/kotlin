@@ -442,10 +442,19 @@ class Fir2IrSymbolTableExtension(table: SymbolTable, val signatureComposer: FirB
         )
     }
 
+    @Deprecated("Should not be called", level = DeprecationLevel.HIDDEN)
     override fun referenceTypeParameter(declaration: FirTypeParameterSymbol): IrTypeParameterSymbol {
+        shouldNotBeCalled()
+    }
+
+    fun referenceTypeParameter(declaration: FirTypeParameterSymbol, typeOrigin: ConversionTypeOrigin): IrTypeParameterSymbol {
         val container = declaration.containingDeclarationSymbol
         val (containerSignature, typeParameters) = when (container) {
             is FirClassLikeSymbol<*> -> signatureComposer.composeSignature(container.fir) to container.typeParameterSymbols
+            is FirPropertySymbol -> {
+                signatureComposer.composeAccessorSignature(container.fir, typeOrigin.forSetter) to container.typeParameterSymbols
+            }
+
             is FirCallableSymbol<*> -> signatureComposer.composeSignature(container.fir) to container.typeParameterSymbols
             else -> error("Unexpected declaration: ${container::class.simpleName}")
         }

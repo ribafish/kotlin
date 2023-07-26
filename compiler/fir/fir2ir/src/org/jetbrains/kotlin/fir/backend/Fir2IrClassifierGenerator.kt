@@ -66,7 +66,7 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
 
     private fun setThisReceiver(irClass: IrClass, typeParameters: List<FirTypeParameterRef>) {
         val typeArguments = typeParameters.map {
-            val irTypeParameterSymbol = symbolTable.referenceTypeParameter(it.symbol)
+            val irTypeParameterSymbol = symbolTable.referenceTypeParameter(it.symbol, ConversionTypeOrigin.DEFAULT)
             IrSimpleTypeImpl(irTypeParameterSymbol, false, emptyList(), emptyList())
         }
         irClass.thisReceiver = irClass.declareThisReceiverParameter(

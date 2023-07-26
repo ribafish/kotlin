@@ -1281,7 +1281,7 @@ class Fir2IrVisitor(
             }
         val irClassReferenceSymbol = when (argument) {
             is FirResolvedReifiedParameterReference -> {
-                symbolTable.referenceTypeParameter(argument.symbol)
+                symbolTable.referenceTypeParameter(argument.symbol, ConversionTypeOrigin.DEFAULT)
             }
             is FirResolvedQualifier -> {
                 when (val symbol = argument.symbol) {
