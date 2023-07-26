@@ -182,7 +182,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         }
     }
 
-    fun generateIrTypeAlias(typeAlias: FirTypeAlias, ): IrTypeAlias {
+    fun generateIrTypeAlias(typeAlias: FirTypeAlias): IrTypeAlias {
         val parent = conversionScope.parentFromStack()
         val irTypeAlias = classifierGenerator.createTypeAlias(typeAlias, parent)
         conversionScope.withScopeAndParent(irTypeAlias) {
@@ -191,7 +191,7 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         return irTypeAlias
     }
 
-    fun generateIrFunction(function: FirFunction, ): IrSimpleFunction {
+    fun generateIrFunction(function: FirFunction): IrSimpleFunction {
         val irFunction = callablesGenerator.createIrFunction(function, conversionScope.parent())
         conversionScope.withScopeAndParent(irFunction) {
             callablesGenerator.processValueParameters(function, irFunction, conversionScope.lastClass())

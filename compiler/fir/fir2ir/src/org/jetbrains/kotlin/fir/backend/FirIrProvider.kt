@@ -98,7 +98,7 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
                 kind == CLASS_SYMBOL && symbol is FirRegularClassSymbol ->
                     externalDeclarationsGenerator.getOrCreateLazyClass(symbol, signatureForSymbol, packageFragment)
                 kind == FUNCTION_SYMBOL && symbol is FirNamedFunctionSymbol ->
-                    externalDeclarationsGenerator.getOrCreateLazySimpleFunction(symbol, signatureForSymbol, packageFragment)
+                    externalDeclarationsGenerator.getOrCreateSimpleFunction(symbol, signatureForSymbol, packageFragment)
                 kind == PROPERTY_SYMBOL && symbol is FirPropertySymbol ->
                     externalDeclarationsGenerator.getOrCreateLazyProperty(symbol, signatureForSymbol, packageFragment)
                 else -> error("Unsupported pair of kind and symbol for top-level declaration: $kind, $symbol")

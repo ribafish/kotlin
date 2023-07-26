@@ -147,29 +147,14 @@ class Fir2IrExternalDeclarationsGenerator(
         return irConstructor.symbol
     }
 
-    fun getOrCreateLazySimpleFunction(
+    fun getOrCreateSimpleFunction(
         functionSymbol: FirNamedFunctionSymbol,
         signature: IdSignature?,
         irParent: IrDeclarationParent,
     ): IrSimpleFunctionSymbol {
         val irFunction = symbolTable.declareFunctionIfNotExists(functionSymbol, signature) { symbol ->
-            val function = functionSymbol.fir
-            val isFakeOverride =
-                function.isSubstitutionOrIntersectionOverride &&
-                        function.dispatchReceiverClassLookupTagOrNull() !=
-                        function.originalForSubstitutionOverride?.dispatchReceiverClassLookupTagOrNull()
-            Fir2IrLazySimpleFunction(
-                components,
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                function.computeExternalOrigin(irParent),
-                function,
-                (irParent as? Fir2IrLazyClass)?.fir,
-                symbol,
-                isFakeOverride,
-                irParent
-            ).apply {
-                processTypeParameters()
+            components.declarationsConverter.generateIrFunction(functionSymbol.fir).apply {
+                parent = irParent
             }
         }
         return irFunction.symbol

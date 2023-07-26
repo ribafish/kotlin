@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirComponentCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
@@ -76,10 +74,10 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
 
         val signature = signatureComposer.composeSignature(function)
 
-        if (irParent is Fir2IrLazyClass && signature != null) {
-            // For private functions, signature is null, fallback to non-lazy function
-            return createIrLazyFunction(function as FirSimpleFunction, signature, irParent, updatedOrigin)
-        }
+//        if (irParent is Fir2IrLazyClass && signature != null) {
+//            // For private functions, signature is null, fallback to non-lazy function
+//            return createIrLazyFunction(function as FirSimpleFunction, signature, irParent, updatedOrigin)
+//        }
 
         val name = simpleFunction?.name ?: when {
             isLambda -> SpecialNames.ANONYMOUS
@@ -200,24 +198,24 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         }
     }
 
-    private fun createIrLazyFunction(
-        fir: FirSimpleFunction,
-        signature: IdSignature,
-        lazyParent: IrDeclarationParent,
-        declarationOrigin: IrDeclarationOrigin,
-    ): IrSimpleFunction {
-        val symbol = symbolTable.table.referenceSimpleFunction(signature)
-        val irFunction = fir.convertWithOffsets { startOffset, endOffset ->
-            symbolTable.table.declareSimpleFunction(signature, { symbol }) {
-                val isFakeOverride = fir.isSubstitutionOrIntersectionOverride
-                Fir2IrLazySimpleFunction(
-                    components, startOffset, endOffset, declarationOrigin,
-                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride, lazyParent
-                )
-            }
-        }
-        return irFunction
-    }
+//    private fun createIrLazyFunction(
+//        fir: FirSimpleFunction,
+//        signature: IdSignature,
+//        lazyParent: IrDeclarationParent,
+//        declarationOrigin: IrDeclarationOrigin,
+//    ): IrSimpleFunction {
+//        val symbol = symbolTable.table.referenceSimpleFunction(signature)
+//        val irFunction = fir.convertWithOffsets { startOffset, endOffset ->
+//            symbolTable.table.declareSimpleFunction(signature, { symbol }) {
+//                val isFakeOverride = fir.isSubstitutionOrIntersectionOverride
+//                Fir2IrLazySimpleFunction(
+//                    components, startOffset, endOffset, declarationOrigin,
+//                    fir, (lazyParent as? Fir2IrLazyClass)?.fir, symbol, isFakeOverride, lazyParent
+//                )
+//            }
+//        }
+//        return irFunction
+//    }
 
     private fun <T : IrFunction> T.declareDefaultSetterParameter(type: IrType, firValueParameter: FirValueParameter?): T {
         valueParameters = listOf(
