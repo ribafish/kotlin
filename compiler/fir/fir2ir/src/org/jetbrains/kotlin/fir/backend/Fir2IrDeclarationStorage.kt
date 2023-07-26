@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.backend.conversion.withScopeAndParent
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isLateInit
@@ -41,12 +42,7 @@ class Fir2IrDeclarationStorage(
     private val components: Fir2IrComponents,
     commonMemberStorage: Fir2IrCommonMemberStorage,
 ) : Fir2IrComponents by components {
-
-
     private val scriptCache: ConcurrentHashMap<FirScript, IrScript> = ConcurrentHashMap()
-
-    private val functionCache: ConcurrentHashMap<FirFunction, IrSimpleFunction> = commonMemberStorage.functionCache
-
 
     private val propertyCache: ConcurrentHashMap<FirProperty, IrProperty> = commonMemberStorage.propertyCache
 
@@ -61,7 +57,7 @@ class Fir2IrDeclarationStorage(
     }
 
     // For pure fields (from Java) only
-    private val fieldToPropertyCache: ConcurrentHashMap<Pair<FirField, IrDeclarationParent>, IrProperty> = ConcurrentHashMap()
+    private val fieldToPropertyCache: ConcurrentHashMap<Pair<FirField, IrDeclarationParent>, Pair<FirProperty, IrProperty>> = ConcurrentHashMap()
 
     private val delegatedReverseCache: ConcurrentHashMap<IrDeclaration, FirDeclaration> = ConcurrentHashMap()
 
@@ -95,38 +91,6 @@ class Fir2IrDeclarationStorage(
         symbolTable.leaveScope(declaration)
     }
 
-
-    internal fun createDefaultSetterParameter(
-        startOffset: Int,
-        endOffset: Int,
-        type: IrType,
-        parent: IrFunction,
-        firValueParameter: FirValueParameter?,
-        name: Name? = null,
-        isCrossinline: Boolean = false,
-        isNoinline: Boolean = false,
-    ): IrValueParameter {
-        return irFactory.createValueParameter(
-            startOffset = startOffset,
-            endOffset = endOffset,
-            origin = IrDeclarationOrigin.DEFINED,
-            name = name ?: SpecialNames.IMPLICIT_SET_PARAMETER,
-            type = type,
-            isAssignable = false,
-            symbol = IrValueParameterSymbolImpl(),
-            index = parent.contextReceiverParametersCount,
-            varargElementType = null,
-            isCrossinline = isCrossinline,
-            isNoinline = isNoinline,
-            isHidden = false,
-        ).apply {
-            this.parent = parent
-            if (firValueParameter != null) {
-                annotationGenerator.generate(this, firValueParameter)
-            }
-        }
-    }
-
     fun addContextReceiverParametersTo(
         contextReceivers: List<FirContextReceiver>,
         parent: IrFunction,
@@ -139,33 +103,16 @@ class Fir2IrDeclarationStorage(
         }
     }
 
-    internal fun cacheDelegationFunction(function: FirSimpleFunction, irFunction: IrSimpleFunction) {
-        functionCache[function] = irFunction
-        delegatedReverseCache[irFunction] = function
-    }
-
-    fun createIrFunction(
-        function: FirFunction,
-        irParent: IrDeclarationParent?,
-        thisReceiverOwner: IrClass? = irParent as? IrClass,
-        predefinedOrigin: IrDeclarationOrigin? = null,
-        isLocal: Boolean = false,
-        fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
-    ): IrSimpleFunction = convertCatching(function) {
-        TODO()
-    }
-
     fun getOrCreateIrPropertyByPureField(
         field: FirField,
         irParent: IrDeclarationParent,
-    ): IrProperty {
+    ): Pair<FirProperty, IrProperty> {
         return fieldToPropertyCache.getOrPut(field to irParent) {
-            val containingClassId = (irParent as? IrClass)?.classId
-            createIrProperty(
-                field.toStubProperty(),
-                irParent,
-                fakeOverrideOwnerLookupTag = containingClassId?.toLookupTag()
-            )
+            val stubProperty = field.toStubProperty()
+            val irProperty = conversionScope.withParent(irParent) {
+                declarationsConverter.generateIrProperty(stubProperty)
+            }
+            stubProperty to irProperty
         }
     }
 

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.languageVersionSettings
+import org.jetbrains.kotlin.fir.propertyIfBackingField
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.render
@@ -135,22 +136,49 @@ class CallAndReferenceGenerator(private val components: Fir2IrComponents) : Fir2
                 }
 
                 is IrFieldSymbol -> {
-                    val referencedField = irSymbol.owner
-                    val propertySymbol = referencedField.correspondingPropertySymbol
-                        ?: run {
+                    val fieldSymbol = callableSymbol as FirFieldSymbol
+                    val referencedProperty: FirProperty
+
+                    val irPropertySymbol = when (val property = fieldSymbol.fir.propertyIfBackingField) {
+                        is FirProperty -> {
+                            referencedProperty = property
+                            val signature = signatureComposer.composeSignature(property, fakeOverrideOwnerLookupTag)
+                            symbolTable.referenceProperty(property.symbol, signature)
+                        }
+                        else -> {
                             // In case of [IrField] without the corresponding property, we've created it directly from [FirField].
                             // Since it's used as a field reference, we need a bogus property as a placeholder.
-                            val firSymbol =
-                                (callableReferenceAccess.calleeReference as FirResolvedNamedReference).resolvedSymbol as FirFieldSymbol
-                            declarationStorage.getOrCreateIrPropertyByPureField(firSymbol.fir, referencedField.parent).symbol
+                            val parentClassId = fakeOverrideOwnerLookupTag?.classId
+                                ?: callableSymbol.dispatchReceiverType?.classId
+                                ?: error("Top-level field")
+                            val parentIrClassSymbol = externalDeclarationsGenerator.findDependencyClassByClassId(parentClassId)!!
+                            val (firProperty, irProperty) = declarationStorage.getOrCreateIrPropertyByPureField(
+                                fieldSymbol.fir,
+                                parentIrClassSymbol.owner
+                            )
+                            referencedProperty = firProperty
+                            irProperty.symbol
                         }
+                    }
+                    // TODO: extract into helper function
+                    val referencedPropertyGetterSymbol = runIf(!fieldSymbol.isStatic) {
+                        val getterSignature = signatureComposer.composeAccessorSignature(referencedProperty, isSetter = false, fakeOverrideOwnerLookupTag)
+                        symbolTable.referenceFunction(referencedProperty.getterOrDefault.symbol, getterSignature)
+                    }
+
+                    val referencedPropertySetterSymbol = runIf(!fieldSymbol.isStatic) {
+                        runIf(callableReferenceAccess.typeRef.coneType.isKMutableProperty(session)) {
+                            val setterSignature = signatureComposer.composeAccessorSignature(referencedProperty, isSetter = true, fakeOverrideOwnerLookupTag)
+                            symbolTable.referenceFunction(referencedProperty.setterOrDefault.symbol, setterSignature)
+                        }
+                    }
                     IrPropertyReferenceImpl(
                         startOffset, endOffset, type,
-                        propertySymbol,
+                        irPropertySymbol,
                         typeArgumentsCount = (type as? IrSimpleType)?.arguments?.size ?: 0,
                         field = irSymbol,
-                        getter = if (referencedField.isStatic) null else propertySymbol.owner.getter?.symbol,
-                        setter = if (referencedField.isStatic) null else propertySymbol.owner.setter?.symbol,
+                        getter = referencedPropertyGetterSymbol,
+                        setter = referencedPropertySetterSymbol,
                         origin
                     ).applyReceivers(callableReferenceAccess, explicitReceiverExpression)
                 }
