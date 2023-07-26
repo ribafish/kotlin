@@ -106,10 +106,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
             val delegateToLookupTag = delegateToSymbol.dispatchReceiverClassLookupTagOrNull()
                 ?: return@processAllFunctions
 
-            val irSubFunction = generateDelegatedFunction(
-                irClass, klass, functionSymbol.fir
-            )
-
+            val irSubFunction = declarationsConverter.generateIrFunction(functionSymbol.fir, IrDeclarationOrigin.DELEGATED_MEMBER)
             bodiesInfo += DeclarationBodyInfo(irSubFunction, irField, delegateToSymbol, delegateToLookupTag)
             irClass.addMember(irSubFunction)
         }
@@ -135,9 +132,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
             val delegateToLookupTag = delegateToSymbol.dispatchReceiverClassLookupTagOrNull()
                 ?: return@processAllProperties
 
-            val irSubProperty = generateDelegatedProperty(
-                irClass, klass, propertySymbol.fir
-            )
+            val irSubProperty = declarationsConverter.generateIrProperty(propertySymbol.fir, IrDeclarationOrigin.DELEGATED_MEMBER)
             bodiesInfo += DeclarationBodyInfo(irSubProperty, irField, delegateToSymbol, delegateToLookupTag)
             irClass.addMember(irSubProperty)
         }
@@ -168,27 +163,6 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
             }
         }
         return result?.unwrapSubstitutionOverrides()
-    }
-
-    private fun generateDelegatedFunction(
-        subClass: IrClass,
-        firSubClass: FirClass,
-        delegateOverride: FirSimpleFunction
-    ): IrSimpleFunction {
-        val delegateFunction =
-            declarationStorage.createIrFunction(
-                delegateOverride, subClass, predefinedOrigin = IrDeclarationOrigin.DELEGATED_MEMBER,
-                fakeOverrideOwnerLookupTag = firSubClass.symbol.toLookupTag()
-            )
-        val baseSymbols = mutableListOf<FirNamedFunctionSymbol>()
-        // the overridden symbols should be collected only after all fake overrides for all superclases are created and bound to their
-        // overridden symbols, otherwise in some cases they will be left in inconsistent state leading to the errors in IR
-        delegateOverride.processOverriddenFunctionSymbols(firSubClass) {
-            baseSymbols.add(it)
-        }
-        annotationGenerator.generate(delegateFunction, delegateOverride)
-
-        return delegateFunction
     }
 
     private fun createDelegateBody(
@@ -258,27 +232,6 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
             body.statements.add(irReturn)
         }
         return body
-    }
-
-    private fun generateDelegatedProperty(
-        subClass: IrClass,
-        firSubClass: FirClass,
-        firDelegateProperty: FirProperty
-    ): IrProperty {
-        val delegateProperty =
-            declarationStorage.createIrProperty(
-                firDelegateProperty, subClass, predefinedOrigin = IrDeclarationOrigin.DELEGATED_MEMBER,
-                fakeOverrideOwnerLookupTag = firSubClass.symbol.toLookupTag()
-            )
-        // the overridden symbols should be collected only after all fake overrides for all superclases are created and bound to their
-        // overridden symbols, otherwise in some cases they will be left in inconsistent state leading to the errors in IR
-        val baseSymbols = mutableListOf<FirPropertySymbol>()
-        firDelegateProperty.processOverriddenPropertySymbols(firSubClass) {
-            baseSymbols.add(it)
-        }
-        // Do not generate annotations to copy K1 behavior, see KT-57228.
-
-        return delegateProperty
     }
 
     companion object {
