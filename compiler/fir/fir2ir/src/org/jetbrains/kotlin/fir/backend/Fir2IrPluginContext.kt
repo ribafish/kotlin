@@ -78,8 +78,12 @@ class Fir2IrPluginContext(
 
     override fun referenceClass(classId: ClassId): IrClassSymbol? {
         val firSymbol = symbolProvider.getClassLikeSymbolByClassId(classId) as? FirClassSymbol<*> ?: return null
-        TODO() // create external class if needed
-//        return components.classifierStorage.getIrClassSymbol(firSymbol)
+        val symbol = components.symbolTable.referenceClass(firSymbol)
+        return if (symbol.isBound) {
+            symbol
+        } else {
+            components.externalDeclarationsGenerator.findDependencyClassByClassId(classId)
+        }
     }
 
     override fun referenceTypeAlias(classId: ClassId): IrTypeAliasSymbol? {
