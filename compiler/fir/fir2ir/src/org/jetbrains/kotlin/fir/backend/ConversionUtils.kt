@@ -748,17 +748,23 @@ fun FirSession.createFilesWithGeneratedDeclarations(): List<FirFile> {
     }
 }
 
-fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = null): IrDeclarationOrigin {
-    return predefinedOrigin
-        ?: (this?.origin as? FirDeclarationOrigin.Plugin)?.let { GeneratedByPlugin(it.key) }
-        ?: (this as? FirValueParameter)?.name?.let {
-            when (it) {
-                SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> IrDeclarationOrigin.UNDERSCORE_PARAMETER
-                SpecialNames.DESTRUCT -> IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
-                else -> null
-            }
+fun FirDeclaration.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = null): IrDeclarationOrigin {
+    val origin = this.origin
+    return when {
+        predefinedOrigin != null -> predefinedOrigin
+        origin is FirDeclarationOrigin.Plugin -> GeneratedByPlugin(origin.key)
+        origin == FirDeclarationOrigin.Synthetic -> when (this) {
+            is FirSimpleFunction -> IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER
+            is FirField -> IrDeclarationOrigin.DELEGATE
+            else -> null
         }
-        ?: IrDeclarationOrigin.DEFINED
+        this is FirValueParameter -> when (this.name) {
+            SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> IrDeclarationOrigin.UNDERSCORE_PARAMETER
+            SpecialNames.DESTRUCT -> IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
+            else -> null
+        }
+        else -> null
+    } ?: IrDeclarationOrigin.DEFINED
 }
 
 private typealias NameWithElementType = Pair<Name, IElementType>

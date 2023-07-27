@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 @Suppress("DuplicatedCode")
@@ -440,11 +441,12 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         isStatic: Boolean,
         isExternal: Boolean,
         metadataSource: FirMetadataSource,
-        // TODO: maybe can remove?
-        // firInitializerExpression: FirExpression?,
-        // type: IrType? = null,
     ): IrField {
-        val inferredType = fieldSymbol.resolvedReturnType.toIrType() //type ?: firInitializerExpression!!.typeRef.toIrType()
+        // Fields for delegate have type of initializer, not the delegated type
+        val inferredType = runIf(fieldSymbol.origin == FirDeclarationOrigin.Synthetic) {
+            fieldSymbol.fir.initializer?.typeRef?.toIrType()
+        } ?: fieldSymbol.resolvedReturnType.toIrType()
+
         val fakeOverrideLookupTag = getFieldStaticFakeOverrideKeyIfNeeded(fieldSymbol, parent)
         val signature = signatureComposer.composeSignature(fieldSymbol.fir, fakeOverrideLookupTag)
         return symbolTable.declareField(fieldSymbol, signature) { symbol ->
