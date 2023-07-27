@@ -362,7 +362,6 @@ class Fir2IrDeclarationsConverter(val components: Fir2IrComponents, val moduleDe
         // TODO: pass IR type origin
         conversionScope.applyParentFromStackTo(irAccessor)
         conversionScope.withScopeAndParent(irAccessor) {
-            classifierGenerator.processTypeParameters(accessor, irAccessor)
             callablesGenerator.processValueParameters(accessor, irAccessor, conversionScope.lastClass())
             memberGenerator.setPropertyAccessorContent(
                 accessor,
