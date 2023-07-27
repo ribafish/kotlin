@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrErrorClassImpl
@@ -473,11 +474,11 @@ class Fir2IrVisitor(
         return false
     }
      */
-    private fun shouldGenerateReceiverAsSingletonReference(irClass: IrClass): Boolean {
+    private fun shouldGenerateReceiverAsSingletonReference(irClassSymbol: IrClassSymbol, firClassSymbol: FirClassSymbol<*>): Boolean {
         val scopeOwner = conversionScope.parent()
-        return irClass.isObject &&
-                scopeOwner != irClass && // For anonymous initializers
-                !((scopeOwner is IrFunction || scopeOwner is IrProperty || scopeOwner is IrField) && (scopeOwner as IrDeclaration).parent == irClass) // Members of object
+        return firClassSymbol.classKind.isSingleton &&
+                scopeOwner?.symbol != irClassSymbol && // For anonymous initializers
+                !((scopeOwner is IrFunction || scopeOwner is IrProperty || scopeOwner is IrField) && (scopeOwner as IrDeclaration).parent?.symbol == irClassSymbol) // Members of object
     }
 
     override fun visitThisReceiverExpression(
@@ -491,7 +492,7 @@ class Fir2IrVisitor(
                 val firClass = boundSymbol.fir
                 val irClassSymbol = symbolTable.referenceClass(boundSymbol)
 
-                if (shouldGenerateReceiverAsSingletonReference(irClassSymbol)) {
+                if (shouldGenerateReceiverAsSingletonReference(irClassSymbol, boundSymbol)) {
                     return thisReceiverExpression.convertWithOffsets { startOffset, endOffset ->
                         IrGetObjectValueImpl(startOffset, endOffset, firClass.defaultType().toIrType(), irClassSymbol)
                     }
@@ -1409,3 +1410,6 @@ val KtSourceElement.operationToken: IElementType?
         else treeStructure.findChildByType(lighterASTNode, KtNodeTypes.OPERATION_REFERENCE)?.tokenType
             ?: error("No operation reference for binary expression: $lighterASTNode")
     }
+
+val IrDeclarationParent.symbol: IrSymbol?
+    get() = (this as? IrSymbolOwner)?.symbol
