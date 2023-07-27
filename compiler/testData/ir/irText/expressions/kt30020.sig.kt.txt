@@ -28,7 +28,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#add(kotlin.Int){}kotlin.Boolean
   //   Public signature: /AML.add|-1806173376318726841[0]
-  //   Public signature debug description: add(kotlin.Int){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#add(kotlin.Int){}
   //   Public signature: /AML.add|4888650976871417104[0]
@@ -38,13 +37,11 @@ abstract class AML : MutableList<Int> {
   // CHECK:
   //   Mangled name: AML#add(kotlin.Int;kotlin.Int){}
   //   Public signature: /AML.add|-6416567052772437491[0]
-  //   Public signature debug description: add(kotlin.Int;kotlin.Int){}
   abstract /* fake */ override fun add(index: Int, element: Int): Unit
 
   // CHECK JVM_IR:
   //   Mangled name: AML#addAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   //   Public signature: /AML.addAll|-6051524025259448486[0]
-  //   Public signature debug description: addAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#addAll(kotlin.collections.Collection<kotlin.Int>){}
   //   Public signature: /AML.addAll|4734310372414909061[0]
@@ -54,7 +51,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#addAll(kotlin.Int;kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   //   Public signature: /AML.addAll|304015831950772291[0]
-  //   Public signature debug description: addAll(kotlin.Int;kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#addAll(kotlin.Int;kotlin.collections.Collection<kotlin.Int>){}
   //   Public signature: /AML.addAll|6341267342254214959[0]
@@ -64,13 +60,11 @@ abstract class AML : MutableList<Int> {
   // CHECK:
   //   Mangled name: AML#clear(){}
   //   Public signature: /AML.clear|-6446868449915108923[0]
-  //   Public signature debug description: clear(){}
   abstract /* fake */ override fun clear(): Unit
 
   // CHECK JVM_IR:
   //   Mangled name: AML#contains(kotlin.Int){}kotlin.Boolean
   //   Public signature: /AML.contains|5978686608528191145[0]
-  //   Public signature debug description: contains(kotlin.Int){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#contains(kotlin.Int){}
   //   Public signature: /AML.contains|-6963927737603140469[0]
@@ -80,7 +74,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#containsAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   //   Public signature: /AML.containsAll|5891935227751154106[0]
-  //   Public signature debug description: containsAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#containsAll(kotlin.collections.Collection<kotlin.Int>){}
   //   Public signature: /AML.containsAll|3782166731660135862[0]
@@ -90,7 +83,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#get(kotlin.Int){}kotlin.Int
   //   Public signature: /AML.get|3217555545696752959[0]
-  //   Public signature debug description: get(kotlin.Int){}kotlin.Int
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#get(kotlin.Int){}
   //   Public signature: /AML.get|-1406503945102116889[0]
@@ -100,7 +92,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#indexOf(kotlin.Int){}kotlin.Int
   //   Public signature: /AML.indexOf|5710916612120162838[0]
-  //   Public signature debug description: indexOf(kotlin.Int){}kotlin.Int
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#indexOf(kotlin.Int){}
   //   Public signature: /AML.indexOf|-6923646111900672743[0]
@@ -110,7 +101,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#isEmpty(){}kotlin.Boolean
   //   Public signature: /AML.isEmpty|-626562167393617703[0]
-  //   Public signature debug description: isEmpty(){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#isEmpty(){}
   //   Public signature: /AML.isEmpty|-412363028532554867[0]
@@ -120,7 +110,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#iterator(){}kotlin.collections.MutableIterator<kotlin.Int>
   //   Public signature: /AML.iterator|5550173533307317441[0]
-  //   Public signature debug description: iterator(){}kotlin.collections.MutableIterator<kotlin.Int>
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#iterator(){}
   //   Public signature: /AML.iterator|8062689420742628886[0]
@@ -130,7 +119,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#lastIndexOf(kotlin.Int){}kotlin.Int
   //   Public signature: /AML.lastIndexOf|-172555725694166910[0]
-  //   Public signature debug description: lastIndexOf(kotlin.Int){}kotlin.Int
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#lastIndexOf(kotlin.Int){}
   //   Public signature: /AML.lastIndexOf|-1881419781556272268[0]
@@ -140,7 +128,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#listIterator(){}kotlin.collections.MutableListIterator<kotlin.Int>
   //   Public signature: /AML.listIterator|2141874514656381252[0]
-  //   Public signature debug description: listIterator(){}kotlin.collections.MutableListIterator<kotlin.Int>
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#listIterator(){}
   //   Public signature: /AML.listIterator|-1349974312270223114[0]
@@ -150,7 +137,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#listIterator(kotlin.Int){}kotlin.collections.MutableListIterator<kotlin.Int>
   //   Public signature: /AML.listIterator|1352247971240598932[0]
-  //   Public signature debug description: listIterator(kotlin.Int){}kotlin.collections.MutableListIterator<kotlin.Int>
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#listIterator(kotlin.Int){}
   //   Public signature: /AML.listIterator|2212930685100651431[0]
@@ -160,7 +146,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#remove(kotlin.Int){}kotlin.Boolean
   //   Public signature: /AML.remove|-2631909738569200722[0]
-  //   Public signature debug description: remove(kotlin.Int){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#remove(kotlin.Int){}
   //   Public signature: /AML.remove|-6905763659499399195[0]
@@ -170,7 +155,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#removeAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   //   Public signature: /AML.removeAll|-3862070029132854703[0]
-  //   Public signature debug description: removeAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#removeAll(kotlin.collections.Collection<kotlin.Int>){}
   //   Public signature: /AML.removeAll|2462148457474476520[0]
@@ -180,7 +164,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#removeAt(kotlin.Int){}kotlin.Int
   //   Public signature: /AML.removeAt|1718425690973201805[0]
-  //   Public signature debug description: removeAt(kotlin.Int){}kotlin.Int
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#removeAt(kotlin.Int){}
   //   Public signature: /AML.removeAt|530622506513389985[0]
@@ -190,7 +173,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#retainAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   //   Public signature: /AML.retainAll|1291083757121901219[0]
-  //   Public signature debug description: retainAll(kotlin.collections.Collection<kotlin.Int>){}kotlin.Boolean
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#retainAll(kotlin.collections.Collection<kotlin.Int>){}
   //   Public signature: /AML.retainAll|-2050809264705513045[0]
@@ -200,7 +182,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#set(kotlin.Int;kotlin.Int){}kotlin.Int
   //   Public signature: /AML.set|2686031312585099809[0]
-  //   Public signature debug description: set(kotlin.Int;kotlin.Int){}kotlin.Int
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#set(kotlin.Int;kotlin.Int){}
   //   Public signature: /AML.set|-213984015376347786[0]
@@ -210,7 +191,6 @@ abstract class AML : MutableList<Int> {
   // CHECK JVM_IR:
   //   Mangled name: AML#subList(kotlin.Int;kotlin.Int){}kotlin.collections.MutableList<kotlin.Int>
   //   Public signature: /AML.subList|-3444312937305653937[0]
-  //   Public signature debug description: subList(kotlin.Int;kotlin.Int){}kotlin.collections.MutableList<kotlin.Int>
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#subList(kotlin.Int;kotlin.Int){}
   //   Public signature: /AML.subList|6678865970875224003[0]
@@ -226,12 +206,10 @@ abstract class AML : MutableList<Int> {
   // CHECK:
   //   Mangled name: AML{}size
   //   Public signature: /AML.size|-6253659984320132064[0]
-  //   Public signature debug description: {}size
   abstract /* fake */ override val size: Int
     // CHECK JVM_IR:
     //   Mangled name: AML#<get-size>(){}kotlin.Int
     //   Public signature: /AML.size.<get-size>|-3941649985161900780[0]
-    //   Public signature debug description: <get-size>(){}kotlin.Int
     // CHECK JS_IR NATIVE:
     //   Mangled name: AML#<get-size>(){}
     //   Public signature: /AML.size.<get-size>|-8255337774232345969[0]

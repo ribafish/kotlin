@@ -489,7 +489,7 @@ class Fir2IrCallableDeclarationGenerator(private val components: Fir2IrComponent
         val containerSource = (irProperty as? IrProperty)?.containerSource
         return symbolTable.declareFunction(propertyAccessor.symbol, signature) { symbol ->
             val accessorReturnType = if (isSetter) irBuiltIns.unitType else property.returnTypeRef.toIrType()
-            val visibility = property.visibility.toDescriptorVisibility()
+            val visibility = propertyAccessor.visibility.toDescriptorVisibility()
             propertyAccessor.convertWithOffsets { startOffset, endOffset ->
                 irFactory.createSimpleFunction(
                     startOffset = startOffset,

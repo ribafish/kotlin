@@ -1,4 +1,3 @@
-typealias IntAlias = Cell<Int>
 class Cell<T : Any?> {
   constructor(value: T) /* primary */ {
     super/*Any*/()
@@ -12,6 +11,8 @@ class Cell<T : Any?> {
 
 }
 
+typealias IntAlias = Cell<Int>
 fun test(): Cell<Int> {
   return Cell<Int>(value = 42)
 }
+
