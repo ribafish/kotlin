@@ -13,15 +13,13 @@ import org.jetbrains.kotlin.builtins.StandardNames.DATA_CLASS_COMPONENT_PREFIX
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.startOffsetSkippingComments
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.builder.buildFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.builder.buildPackageDirective
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildFile
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
-import org.jetbrains.kotlin.fir.declarations.utils.isAbstract
-import org.jetbrains.kotlin.fir.declarations.utils.isInline
-import org.jetbrains.kotlin.fir.declarations.utils.isJava
-import org.jetbrains.kotlin.fir.declarations.utils.isStatic
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.extensions.FirExtensionApiInternals
@@ -763,6 +761,8 @@ fun FirDeclaration.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = null
             SpecialNames.DESTRUCT -> IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
             else -> null
         }
+        (this is FirSimpleFunction) && this.isLocal -> IrDeclarationOrigin.LOCAL_FUNCTION
+        (this is FirAnonymousFunction) && !this.isLambda -> IrDeclarationOrigin.LOCAL_FUNCTION
         else -> null
     } ?: IrDeclarationOrigin.DEFINED
 }
