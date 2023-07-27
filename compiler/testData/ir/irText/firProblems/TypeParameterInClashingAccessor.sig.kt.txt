@@ -51,7 +51,8 @@ private class D : C {
 
   // CHECK:
   //   Mangled name: D#getA(){0§<A>}0:0
-  //   Public signature: [ File '/test.kt' <- /D.getA|6265629995120627543[0] ]
+  //   Public signature: /D.getA|6265629995120627543[0]
+  //   Public signature debug description: getA(){0§<A>}0:0
   /* fake */ override fun <T : A> getA(): T
 
 }

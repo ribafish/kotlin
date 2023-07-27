@@ -78,6 +78,7 @@ class B : A {
   // CHECK JVM_IR:
   //   Mangled name: B#testA1(kotlin.Any){}kotlin.Int?
   //   Public signature: /B.testA1|2875421029417429294[0]
+  //   Public signature debug description: testA1(kotlin.Any){}kotlin.Int?
   // CHECK JS_IR NATIVE:
   //   Mangled name: B#testA1(kotlin.Any){}
   //   Public signature: /B.testA1|8315841731790135220[0]
@@ -87,6 +88,7 @@ class B : A {
   // CHECK JVM_IR:
   //   Mangled name: B#testA2(kotlin.Any){}kotlin.Int?
   //   Public signature: /B.testA2|-4968448057047160096[0]
+  //   Public signature debug description: testA2(kotlin.Any){}kotlin.Int?
   // CHECK JS_IR NATIVE:
   //   Mangled name: B#testA2(kotlin.Any){}
   //   Public signature: /B.testA2|7321153466955297562[0]

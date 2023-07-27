@@ -46,16 +46,19 @@ class D<T : Any?> : B<(T & Any)> {
   // CHECK:
   //   Mangled name: D#bar(1:0){}
   //   Public signature: /D.bar|-7393952686038474037[0]
+  //   Public signature debug description: bar(1:0){}
   /* fake */ override fun bar(t: (T & Any)): Unit
 
   // CHECK:
   //   Mangled name: D#qux(B<1:0>){}
   //   Public signature: /D.qux|511223586194505643[0]
+  //   Public signature debug description: qux(B<1:0>){}
   /* fake */ override fun qux(b: B<(T & Any)>): Unit
 
   // CHECK:
   //   Mangled name: D#six(1:0;0:0){0§<kotlin.Any?>}
   //   Public signature: /D.six|-243783432810149721[0]
+  //   Public signature debug description: six(1:0;0:0){0§<kotlin.Any?>}
   /* fake */ override fun <F : Any?> six(t: (T & Any), q: F): Unit
 
   // CHECK:
