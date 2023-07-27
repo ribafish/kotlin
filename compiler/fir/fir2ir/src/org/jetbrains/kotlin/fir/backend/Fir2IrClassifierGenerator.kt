@@ -55,6 +55,9 @@ class Fir2IrClassifierGenerator(private val components: Fir2IrComponents) : Fir2
         processTypeParameters(regularClass, irClass)
         setThisReceiver(irClass, regularClass.typeParameters)
         declareValueClassRepresentation(irClass, regularClass)
+        if (regularClass.isSealed) {
+            irClass.sealedSubclasses = regularClass.getIrSymbolsForSealedSubclasses()
+        }
         return irClass
     }
 

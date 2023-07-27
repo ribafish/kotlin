@@ -40,7 +40,6 @@ open class Child : Parent {
   // CHECK JVM_IR:
   //   Mangled name: Child#getQqq(){}kotlin.String?
   //   Public signature: /Child.getQqq|2603726480275639305[0]
-  //   Public signature debug description: getQqq(){}kotlin.String?
   /* fake */ override fun getQqq(): String?
 
 }

@@ -713,8 +713,8 @@ context(Fir2IrComponents)
 fun FirRegularClass.getIrSymbolsForSealedSubclasses(): List<IrClassSymbol> {
     val symbolProvider = session.symbolProvider
     return getSealedClassInheritors(session).mapNotNull {
-        symbolProvider.getClassLikeSymbolByClassId(it)?.toSymbol()
-    }.filterIsInstance<IrClassSymbol>()
+        symbolProvider.getClassLikeSymbolByClassId(it)?.toSymbol() as? IrClassSymbol
+    }
 }
 
 @OptIn(FirExtensionApiInternals::class)
