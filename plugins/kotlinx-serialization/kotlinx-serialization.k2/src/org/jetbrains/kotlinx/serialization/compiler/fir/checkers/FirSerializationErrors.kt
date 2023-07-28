@@ -36,6 +36,9 @@ object FirSerializationErrors {
     val SERIALIZER_TYPE_INCOMPATIBLE by warning3<PsiElement, ConeKotlinType, ConeKotlinType, ConeKotlinType>()
     val ABSTRACT_SERIALIZER_TYPE by error2<PsiElement, ConeKotlinType, ConeKotlinType>()
     val LOCAL_SERIALIZER_USAGE by error1<PsiElement, ConeKotlinType>()
+    val CUSTOM_SERIALIZER_PARAM_ILLEGAL_COUNT by error3<PsiElement, ConeKotlinType, ConeKotlinType, String>()
+    val CUSTOM_SERIALIZER_PARAM_ILLEGAL_TYPE by error3<PsiElement, ConeKotlinType, ConeKotlinType, String>()
+
     val GENERIC_ARRAY_ELEMENT_NOT_SUPPORTED by error0<PsiElement>()
     val TRANSIENT_MISSING_INITIALIZER by error0<PsiElement>()
 

@@ -39,6 +39,12 @@ public class SerializationFirPsiDiagnosticTestGenerated extends AbstractSerializ
         }
 
         @Test
+        @TestMetadata("customSerializers.kt")
+        public void testCustomSerializers() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/diagnostics/customSerializers.kt");
+        }
+
+        @Test
         @TestMetadata("DuplicateSerialName.kt")
         public void testDuplicateSerialName() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/diagnostics/DuplicateSerialName.kt");

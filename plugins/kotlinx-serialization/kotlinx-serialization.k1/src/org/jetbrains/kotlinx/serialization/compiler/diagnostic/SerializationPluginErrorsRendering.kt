@@ -119,6 +119,20 @@ object SerializationPluginErrorsRendering : DefaultErrorMessages.Extension {
             Renderers.RENDER_TYPE
         )
         MAP.put(
+            SerializationErrors.CUSTOM_SERIALIZER_PARAM_ILLEGAL_COUNT,
+            "Custom serializer ''{0}'' can not be used for ''{1}'' since it has an invalid number of parameters in primary constructor: {2}",
+            Renderers.RENDER_TYPE,
+            Renderers.RENDER_TYPE,
+            CommonRenderers.STRING
+        )
+        MAP.put(
+            SerializationErrors.CUSTOM_SERIALIZER_PARAM_ILLEGAL_TYPE,
+            "Custom serializer ''{0}'' can not be used for ''{1}'', type of parameter ''{2}'' in primary constructor should be ''KSerializer''",
+            Renderers.RENDER_TYPE,
+            Renderers.RENDER_TYPE,
+            CommonRenderers.STRING
+        )
+        MAP.put(
             SerializationErrors.TRANSIENT_MISSING_INITIALIZER,
             "This property is marked as @Transient and therefore must have an initializing expression"
         )

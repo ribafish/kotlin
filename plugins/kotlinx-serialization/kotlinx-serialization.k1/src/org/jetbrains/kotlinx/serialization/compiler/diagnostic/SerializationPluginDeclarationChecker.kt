@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyAnnotationDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isEnum
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.slicedMap.Slices
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
@@ -325,6 +326,7 @@ open class SerializationPluginDeclarationChecker : DeclarationChecker {
         val annotationPsi = descriptor.findSerializableOrMetaAnnotationDeclaration()
         checkCustomSerializerMatch(descriptor.module, descriptor.defaultType, descriptor, annotationPsi, trace, declaration)
         checkCustomSerializerIsNotLocal(descriptor.module, descriptor, trace, declaration)
+        checkCustomSerializerParameters(descriptor.module, descriptor, descriptor.defaultType, annotationPsi, declaration, trace)
         checkCustomSerializerNotAbstract(descriptor.module, descriptor.defaultType, descriptor, annotationPsi, trace, declaration)
     }
 
@@ -441,14 +443,16 @@ open class SerializationPluginDeclarationChecker : DeclarationChecker {
             if (serializer != null) {
                 val element = ktType?.typeElement
                 checkCustomSerializerMatch(it.module, it.type, it.descriptor, element, trace, propertyPsi)
+                val annotationPsi = it.descriptor.findSerializableOrMetaAnnotationDeclaration()
                 checkCustomSerializerNotAbstract(
                     it.module,
                     it.type,
                     it.descriptor,
-                    it.descriptor.findSerializableOrMetaAnnotationDeclaration(),
+                    annotationPsi,
                     trace,
                     propertyPsi
                 )
+                checkCustomSerializerParameters(it.module, it.descriptor, it.type, annotationPsi, propertyPsi, trace)
                 checkCustomSerializerIsNotLocal(it.module, it.descriptor, trace, propertyPsi)
                 checkSerializerNullability(it.type, serializer.defaultType, element, trace, propertyPsi)
                 generatorContextForAnalysis.checkTypeArguments(it.module, it.type, element, trace, propertyPsi)
@@ -588,6 +592,50 @@ open class SerializationPluginDeclarationChecker : DeclarationChecker {
                     serializerType
                 )
             )
+        }
+    }
+
+    private fun checkCustomSerializerParameters(
+        module: ModuleDescriptor,
+        declaration: Annotated,
+        serializableType: KotlinType,
+        element: KtElement?,
+        fallbackElement: PsiElement,
+        trace: BindingTrace,
+    ) {
+        val serializerType = declaration.annotations.serializableWith(module) ?: return
+        val serializerDescriptor = serializerType.toClassDescriptor ?: return
+
+        if (serializerDescriptor.classId in SerializersClassIds.setOfSpecialSerializers) {
+            return
+        }
+
+        val primaryConstructor = serializerDescriptor.constructors.singleOrNull { constructor -> constructor.isPrimary } ?: return
+
+        val targetElement = element ?: fallbackElement
+
+        if (primaryConstructor.valueParameters.isNotEmpty() && primaryConstructor.valueParameters.size != serializableType.arguments.size) {
+            trace.report(
+                SerializationErrors.CUSTOM_SERIALIZER_PARAM_ILLEGAL_COUNT.on(
+                    targetElement,
+                    serializerType,
+                    serializableType,
+                    "${serializableType.arguments.size}, but actual ${primaryConstructor.valueParameters.size}"
+                )
+            )
+        }
+
+        primaryConstructor.valueParameters.forEach { param ->
+            if (!isKSerializer(param.type)) {
+                trace.report(
+                    SerializationErrors.CUSTOM_SERIALIZER_PARAM_ILLEGAL_TYPE.on(
+                        targetElement,
+                        serializerType,
+                        serializableType,
+                        param.name.asString()
+                    )
+                )
+            }
         }
     }
 
