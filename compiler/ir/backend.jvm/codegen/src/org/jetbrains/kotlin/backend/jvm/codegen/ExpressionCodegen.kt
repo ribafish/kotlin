@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.codegen.inline.ReifiedTypeInliner.OperationKind.SAFE
 import org.jetbrains.kotlin.codegen.intrinsics.TypeIntrinsics
 import org.jetbrains.kotlin.codegen.pseudoInsns.fakeAlwaysFalseIfeq
 import org.jetbrains.kotlin.codegen.pseudoInsns.fixStackAndJump
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.codegen.state.JvmBackendConfig
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -156,6 +157,13 @@ class ExpressionCodegen(
 
     val state: GenerationState = context.state
     val config: JvmBackendConfig = context.config
+
+    override val inlineScopesGenerator =
+        if (state.configuration.getBoolean(JVMConfigurationKeys.ENABLE_INLINE_SCOPES_NUMBERS)) {
+            InlineScopesGenerator()
+        } else {
+            null
+        }
 
     override val visitor: InstructionAdapter
         get() = mv
