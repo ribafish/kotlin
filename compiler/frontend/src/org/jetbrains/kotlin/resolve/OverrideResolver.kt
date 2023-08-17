@@ -573,18 +573,6 @@ class OverrideResolver(
             }
         }
 
-        fun getMissingImplementations(classDescriptor: ClassDescriptor): Set<CallableMemberDescriptor> {
-            val collector = CollectMissingImplementationsStrategy()
-            // Note that it is fine to pass default refiner here. Reason:
-            // 1. We bind overrides with proper refiners and [checkInheritedAndDelegatedSignatures] skips all properly-bound overrides,
-            //    so we would consider only unbound overrides
-            // 2. Using default refiner instead of proper one can only increase amount of type mismatches, not decrease it
-            // Putting 1 and 2 together means that using default refiner might make already unbound overrides even "more unbound", which
-            // isn't an issue for case of [getMissingImplementations]
-            checkInheritedAndDelegatedSignatures(classDescriptor, collector, null, KotlinTypeRefiner.Default)
-            return collector.shouldImplement
-        }
-
         private fun checkInheritedAndDelegatedSignatures(
             classDescriptor: ClassDescriptor,
             inheritedReportStrategy: CheckInheritedSignaturesReportStrategy,
