@@ -32,7 +32,7 @@ class KotlinMocha(@Transient override val compilation: KotlinJsIrCompilation, pr
     private val npmProjectDir by project.provider { npmProject.dir }
 
     override val workingDir: Path
-        get() = npmProjectDir.toPath()
+        get() = npmProjectDir.get().asFile.toPath()
 
     override val settingsState: String
         get() = "mocha"

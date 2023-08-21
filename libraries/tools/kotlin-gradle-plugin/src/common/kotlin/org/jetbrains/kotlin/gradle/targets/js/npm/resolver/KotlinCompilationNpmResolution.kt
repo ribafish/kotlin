@@ -6,12 +6,14 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.Action
+import org.gradle.api.file.Directory
+import org.gradle.api.file.RegularFile
 import org.gradle.api.logging.Logger
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
-import java.io.File
 import java.io.Serializable
 
 class KotlinCompilationNpmResolution(
@@ -21,14 +23,10 @@ class KotlinCompilationNpmResolution(
     var externalNpmDependencies: Collection<NpmDependencyDeclaration>,
     var fileCollectionDependencies: Collection<FileCollectionExternalGradleDependency>,
     val projectPath: String,
-    val projectPackagesDir: File,
-    val rootDir: File,
     val compilationDisambiguatedName: String,
     val npmProjectName: String,
     val npmProjectVersion: String,
     val npmProjectMain: String,
-    val npmProjectPackageJsonFile: File,
-    val npmProjectDir: File,
     val tasksRequirements: TasksRequirements,
 ) : Serializable {
 
@@ -120,7 +118,7 @@ class KotlinCompilationNpmResolution(
         val allNpmDependencies = disambiguateDependencies(externalNpmDependencies, otherNpmDependencies, logger)
 
         return PreparedKotlinCompilationNpmResolution(
-            npmProjectDir,
+            npmResolutionManager.packagesDir.map { it.dir(npmProjectName) },
             importedExternalGradleDependencies,
             allNpmDependencies,
         )
@@ -142,7 +140,7 @@ class KotlinCompilationNpmResolution(
             it.execute(packageJson)
         }
 
-        packageJson.saveTo(npmProjectPackageJsonFile)
+        packageJson.saveTo(resolution.npmProjectDir.get().asFile.resolve(NpmProject.PACKAGE_JSON))
     }
 
     private fun disambiguateDependencies(

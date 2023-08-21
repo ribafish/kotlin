@@ -6,14 +6,19 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.Directory
+import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
-import org.jetbrains.kotlin.gradle.targets.js.npm.*
+import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
+import org.jetbrains.kotlin.gradle.targets.js.npm.UsesKotlinNpmResolutionManager
+import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
-import java.io.File
 
 @DisableCachingByDefault
 abstract class RootPackageJsonTask :
@@ -35,6 +40,9 @@ abstract class RootPackageJsonTask :
     private val rootResolver: KotlinRootNpmResolver
         get() = nodeJs.resolver
 
+    private val packagesDir: Provider<Directory>
+        get() = nodeJs.projectPackagesDir
+
     // -----
 
     private val npmEnvironment by lazy {
@@ -46,19 +54,22 @@ abstract class RootPackageJsonTask :
     }
 
     @get:OutputFile
-    val rootPackageJson: File by lazy {
-        nodeJs.rootPackageDir.resolve(NpmProject.PACKAGE_JSON)
+    val rootPackageJson: Provider<RegularFile> by lazy {
+        nodeJs.rootPackageDir.map { it.file(NpmProject.PACKAGE_JSON) }
     }
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:IgnoreEmptyDirectories
     @get:NormalizeLineEndings
     @get:InputFiles
-    val packageJsonFiles: Collection<File> by lazy {
+    val packageJsonFiles: Collection<Provider<RegularFile>> by lazy {
         rootResolver.projectResolvers.values
             .flatMap { it.compilationResolvers }
             .map { it.compilationNpmResolution }
-            .map { it.npmProjectPackageJsonFile }
+            .map { resolution ->
+                val name = resolution.npmProjectName
+                packagesDir.map { it.dir(name).file(NpmProject.PACKAGE_JSON) }
+            }
     }
 
     @TaskAction

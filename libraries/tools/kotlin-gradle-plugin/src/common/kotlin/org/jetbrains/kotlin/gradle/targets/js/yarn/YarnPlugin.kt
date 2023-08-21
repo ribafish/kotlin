@@ -91,7 +91,7 @@ open class YarnPlugin : Plugin<Project> {
 
         tasks.register(STORE_YARN_LOCK_NAME, YarnLockStoreTask::class.java) { task ->
             task.dependsOn(kotlinNpmInstall)
-            task.inputFile.set(nodeJs.rootPackageDir.resolve("yarn.lock"))
+            task.inputFile.set(nodeJs.rootPackageDir.map { it.file("yarn.lock") })
             task.outputDirectory.set(yarnRootExtension.lockFileDirectory)
             task.fileName.set(yarnRootExtension.lockFileName)
 
@@ -102,7 +102,7 @@ open class YarnPlugin : Plugin<Project> {
 
         tasks.register(UPGRADE_YARN_LOCK, YarnLockCopyTask::class.java) { task ->
             task.dependsOn(kotlinNpmInstall)
-            task.inputFile.set(nodeJs.rootPackageDir.resolve("yarn.lock"))
+            task.inputFile.set(nodeJs.rootPackageDir.map { it.file("yarn.lock") })
             task.outputDirectory.set(yarnRootExtension.lockFileDirectory)
             task.fileName.set(yarnRootExtension.lockFileName)
         }

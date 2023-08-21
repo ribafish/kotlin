@@ -78,7 +78,7 @@ class KotlinKarma(
         get() = requiredDependencies + webpackConfig.getRequiredDependencies(versions)
 
     override val workingDir: Path
-        get() = npmProjectDir.toPath()
+        get() = npmProjectDir.get().asFile.toPath()
 
     override fun getPath() = "$basePath:kotlinKarma"
 
@@ -95,7 +95,7 @@ class KotlinKarma(
         devtool = null,
         export = false,
         progressReporter = true,
-        progressReporterPathFilter = nodeRootPackageDir,
+        progressReporterPathFilter = nodeRootPackageDir.get().asFile,
         rules = project.objects.webpackRulesContainer(),
         experiments = mutableSetOf("topLevelAwait")
     )
@@ -352,10 +352,10 @@ class KotlinKarma(
                     )
                 )
                 config.files.add(
-                    createLoadWasm(npmProject.dir, file).normalize().absolutePath
+                    createLoadWasm(npmProject.dir.get().asFile, file).normalize().absolutePath
                 )
 
-                config.proxies["/${wasmFile.name}"] = basify(npmProjectDir, wasmFile)
+                config.proxies["/${wasmFile.name}"] = basify(npmProjectDir.get().asFile, wasmFile)
 
                 config.customContextFile = npmProject.require("kotlin-test-js-runner/static/context.html")
                 config.customDebugFile = npmProject.require("kotlin-test-js-runner/static/debug.html")
@@ -397,7 +397,7 @@ class KotlinKarma(
             escapeTCMessagesInLog = isTeamCity.isPresent
         )
 
-        config.basePath = npmProjectDir.absolutePath
+        config.basePath = npmProjectDir.get().asFile.absolutePath
 
         configurators.forEach {
             it(task)
@@ -410,7 +410,7 @@ class KotlinKarma(
 
         config.client.args.addAll(cliArgs.toList())
 
-        val karmaConfJs = npmProject.dir.resolve("karma.conf.js")
+        val karmaConfJs = npmProject.dir.get().asFile.resolve("karma.conf.js")
         karmaConfJs.printWriter().use { confWriter ->
             envJsCollector.forEach { (envVar, value) ->
                 //language=JavaScript 1.8
@@ -585,7 +585,7 @@ class KotlinKarma(
     private fun createDebuggerJs(
         file: String,
     ): File {
-        val adapterJs = npmProject.dir.resolve("debugger.js")
+        val adapterJs = npmProject.dir.get().asFile.resolve("debugger.js")
         adapterJs.printWriter().use { writer ->
             // It is necessary for debugger attaching (--inspect-brk analogue)
             writer.println("debugger;")

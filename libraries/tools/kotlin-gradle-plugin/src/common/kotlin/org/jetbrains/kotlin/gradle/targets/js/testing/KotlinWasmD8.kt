@@ -33,7 +33,7 @@ internal class KotlinWasmD8(private val kotlinJsTest: KotlinJsTest) : KotlinJsTe
     private val npmProjectDir by project.provider { compilation.npmProject.dir }
 
     override val workingDir: Path
-        get() = npmProjectDir.toPath()
+        get() = npmProjectDir.get().asFile.toPath()
 
     override fun createTestExecutionSpec(
         task: KotlinJsTest,
