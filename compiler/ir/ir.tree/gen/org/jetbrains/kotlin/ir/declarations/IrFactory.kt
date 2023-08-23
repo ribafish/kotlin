@@ -36,6 +36,13 @@ import org.jetbrains.kotlin.types.Variance
 interface IrFactory {
     val stageController: StageController
 
+    @Suppress("UNUSED_PARAMETER")
+    var trackCreatedClasses: Boolean
+        get() = false
+        set(value) {
+            error("Not supported.")
+        }
+
     fun createAnonymousInitializer(
         startOffset: Int,
         endOffset: Int,

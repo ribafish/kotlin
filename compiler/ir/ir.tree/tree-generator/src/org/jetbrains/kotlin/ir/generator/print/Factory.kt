@@ -24,6 +24,14 @@ internal val IR_FACTORY_TYPE = type(Packages.declarations, "IrFactory")
 internal fun printFactory(generationPath: File, model: Model): GeneratedFile {
     val visitorType = TypeSpec.interfaceBuilder(IR_FACTORY_TYPE.toPoet() as ClassName).apply {
         addProperty("stageController", ClassName(Packages.declarations, "StageController"))
+        addProperty(
+            PropertySpec.builder("trackCreatedClasses", Boolean::class.java).mutable(true)
+                .getter(FunSpec.getterBuilder().addCode("return false").build())
+                .setter(FunSpec.setterBuilder().addParameter("value", Boolean::class.java).addCode("error(\"Not supported.\")").build())
+                .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "UNUSED_PARAMETER").build())
+                .build()
+        )
+
         model.elements
             .filter { it.isLeaf && it.generateIrFactoryMethod }
             .sortedWith(compareBy({ it.packageName }, { it.name }))

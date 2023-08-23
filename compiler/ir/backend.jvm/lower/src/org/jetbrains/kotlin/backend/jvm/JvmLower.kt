@@ -199,7 +199,7 @@ private val defaultArgumentInjectorPhase = makeIrFilePhase(
     prerequisite = setOf(functionReferencePhase, inlineCallableReferenceToLambdaPhase)
 )
 
-private val interfacePhase = makeIrFilePhase(
+private val _interfacePhase = makeIrFilePhase(
     ::InterfaceLowering,
     name = "Interface",
     description = "Move default implementations of interface members to DefaultImpls class",
@@ -226,7 +226,7 @@ private val innerClassConstructorCallsPhase = makeIrFilePhase<JvmBackendContext>
     description = "Handle constructor calls for inner classes"
 )
 
-private val staticInitializersPhase = makeIrFilePhase(
+private val _staticInitializersPhase = makeIrFilePhase(
     ::StaticInitializersLowering,
     name = "StaticInitializers",
     description = "Move code from object init blocks and static field initializers to a new <clinit> function"
@@ -273,7 +273,7 @@ private val syntheticAccessorPhase = makeIrFilePhase(
     ::SyntheticAccessorLowering,
     name = "SyntheticAccessor",
     description = "Introduce synthetic accessors",
-    prerequisite = setOf(objectClassPhase, staticDefaultFunctionPhase, interfacePhase)
+    prerequisite = setOf(_objectClassPhase, staticDefaultFunctionPhase, _interfacePhase)
 )
 
 private val tailrecPhase = makeIrFilePhase(
@@ -343,13 +343,15 @@ private val constEvaluationPhase = makeIrModulePhase<JvmBackendContext>(
 )
 
 private val jvmFilePhases = listOf(
-    typeAliasAnnotationMethodsPhase,
+    startTrackingClasses,
+
+    _typeAliasAnnotationMethodsPhase,
     provisionalFunctionExpressionPhase,
 
-    jvmOverloadsAnnotationPhase,
-    mainMethodGenerationPhase,
+    _jvmOverloadsAnnotationPhase,
+    _mainMethodGenerationPhase,
 
-    annotationPhase,
+    _annotationPhase,
     annotationImplementationPhase,
     polymorphicSignaturePhase,
     varargPhase,
@@ -369,7 +371,7 @@ private val jvmFilePhases = listOf(
 
     // TODO: merge the next three phases together, as visitors behave incorrectly between them
     //  (backing fields moved out of companion objects are reachable by two paths):
-    moveOrCopyCompanionObjectFieldsPhase,
+    _moveOrCopyCompanionObjectFieldsPhase,
     propertiesPhase,
     remapObjectFieldAccesses,
 
@@ -378,7 +380,7 @@ private val jvmFilePhases = listOf(
 
     rangeContainsLoweringPhase,
     forLoopsPhase,
-    collectionStubMethodLowering,
+    _collectionStubMethodLowering,
     singleAbstractMethodPhase,
     jvmValueClassPhase,
     tailrecPhase,
@@ -399,7 +401,7 @@ private val jvmFilePhases = listOf(
     jvmLocalClassExtractionPhase,
     staticCallableReferencePhase,
 
-    jvmDefaultConstructorPhase,
+    _jvmDefaultConstructorPhase,
 
     flattenStringConcatenationPhase,
     jvmStringConcatenationLowering,
@@ -409,9 +411,10 @@ private val jvmFilePhases = listOf(
     defaultArgumentCleanerPhase,
 
     // makePatchParentsPhase(),
-    interfacePhase,
-    inheritedDefaultMethodsOnClassesPhase,
-    replaceDefaultImplsOverriddenSymbolsPhase,
+    _interfacePhase,
+
+    _inheritedDefaultMethodsOnClassesPhase,
+    _replaceDefaultImplsOverriddenSymbolsPhase,
     interfaceSuperCallsPhase,
     interfaceDefaultCallsPhase,
     interfaceObjectCallsPhase,
@@ -425,24 +428,25 @@ private val jvmFilePhases = listOf(
 
     // makePatchParentsPhase(),
 
-    enumClassPhase,
+    _enumClassPhase,
     enumExternalEntriesPhase,
-    objectClassPhase,
-    staticInitializersPhase,
+    _objectClassPhase,
+    _staticInitializersPhase,
     uniqueLoopLabelsPhase,
     initializersPhase,
     initializersCleanupPhase,
+
     functionNVarargBridgePhase,
     jvmStaticInCompanionPhase,
     staticDefaultFunctionPhase,
-    bridgePhase,
+    _bridgePhase,
     syntheticAccessorPhase,
 
     jvmArgumentNullabilityAssertions,
-    toArrayPhase,
+    _toArrayPhase,
     jvmSafeCallFoldingPhase,
     jvmOptimizationLoweringPhase,
-    additionalClassAnnotationPhase,
+    _additionalClassAnnotationPhase,
     recordEnclosingMethodsPhase,
     typeOperatorLowering,
     replaceKFunctionInvokeWithFunctionInvokePhase,
@@ -451,9 +455,11 @@ private val jvmFilePhases = listOf(
     addSuperQualifierToJavaFieldAccessPhase,
     replaceNumberToCharCallSitesPhase,
 
-    renameFieldsPhase,
+    _renameFieldsPhase,
     fakeLocalVariablesForBytecodeInlinerLowering,
     fakeLocalVariablesForIrInlinerLowering,
+
+    stopTrackingClasses,
 
     // makePatchParentsPhase()
 )
