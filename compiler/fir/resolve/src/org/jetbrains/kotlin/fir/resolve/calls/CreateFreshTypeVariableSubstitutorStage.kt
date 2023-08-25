@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExplicitTypeParamete
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -136,6 +137,7 @@ private fun createToFreshVariableSubstitutorAndAddInitialConstraints(
 }
 
 private fun FirTypeParameter.getTypeParameterFromExpandedClass(index: Int, session: FirSession): FirTypeParameter {
+    if (containingDeclarationSymbol is FirCallableSymbol) return this
     val containingDeclaration = containingDeclarationSymbol.fir
     if (containingDeclaration is FirRegularClass) {
         return containingDeclaration.typeParameters.elementAtOrNull(index)?.symbol?.fir ?: this
