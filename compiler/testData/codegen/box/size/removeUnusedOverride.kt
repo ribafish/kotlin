@@ -2,6 +2,7 @@
 // TARGET_BACKEND: WASM
 
 // WASM_DCE_EXPECTED_OUTPUT_SIZE: wasm 13_109
+// WASM_DCE_EXPECTED_OUTPUT_SIZE:  mjs  5_451
 
 interface I {
     fun foo() = "OK"

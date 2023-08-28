@@ -69,7 +69,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      */
     @kotlin.internal.InlineOnly
     @Suppress("OVERRIDE_BY_INLINE")
-    public override inline operator fun compareTo(other: ULong): Int = ulongCompare(this.data, other.data)
+    public override inline operator fun compareTo(other: ULong): Int = ulongCompare(this.toLong(), other.toLong())
 
     /** Adds the other value to this value. */
     @kotlin.internal.InlineOnly
@@ -82,7 +82,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
     public inline operator fun plus(other: UInt): ULong = this.plus(other.toULong())
     /** Adds the other value to this value. */
     @kotlin.internal.InlineOnly
-    public inline operator fun plus(other: ULong): ULong = ULong(this.data.plus(other.data))
+    public inline operator fun plus(other: ULong): ULong = ULong(this.toLong().plus(other.toLong()))
 
     /** Subtracts the other value from this value. */
     @kotlin.internal.InlineOnly
@@ -95,7 +95,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
     public inline operator fun minus(other: UInt): ULong = this.minus(other.toULong())
     /** Subtracts the other value from this value. */
     @kotlin.internal.InlineOnly
-    public inline operator fun minus(other: ULong): ULong = ULong(this.data.minus(other.data))
+    public inline operator fun minus(other: ULong): ULong = ULong(this.toLong().minus(other.toLong()))
 
     /** Multiplies this value by the other value. */
     @kotlin.internal.InlineOnly
@@ -108,7 +108,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
     public inline operator fun times(other: UInt): ULong = this.times(other.toULong())
     /** Multiplies this value by the other value. */
     @kotlin.internal.InlineOnly
-    public inline operator fun times(other: ULong): ULong = ULong(this.data.times(other.data))
+    public inline operator fun times(other: ULong): ULong = ULong(this.toLong().times(other.toLong()))
 
     /** Divides this value by the other value, truncating the result to an integer that is closer to zero. */
     @kotlin.internal.InlineOnly
@@ -224,7 +224,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * @sample samples.misc.Builtins.inc
      */
     @kotlin.internal.InlineOnly
-    public inline operator fun inc(): ULong = ULong(data.inc())
+    public inline operator fun inc(): ULong = ULong(toLong().inc())
 
     /**
      * Returns this value decremented by one.
@@ -232,7 +232,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * @sample samples.misc.Builtins.dec
      */
     @kotlin.internal.InlineOnly
-    public inline operator fun dec(): ULong = ULong(data.dec())
+    public inline operator fun dec(): ULong = ULong(toLong().dec())
 
     /** Creates a range from this value to the specified [other] value. */
     @kotlin.internal.InlineOnly
@@ -255,7 +255,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * The shift distance actually used is therefore always in the range `0..63`.
      */
     @kotlin.internal.InlineOnly
-    public inline infix fun shl(bitCount: Int): ULong = ULong(data shl bitCount)
+    public inline infix fun shl(bitCount: Int): ULong = ULong(toLong() shl bitCount)
 
     /**
      * Shifts this value right by the [bitCount] number of bits, filling the leftmost bits with zeros.
@@ -264,20 +264,20 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * The shift distance actually used is therefore always in the range `0..63`.
      */
     @kotlin.internal.InlineOnly
-    public inline infix fun shr(bitCount: Int): ULong = ULong(data ushr bitCount)
+    public inline infix fun shr(bitCount: Int): ULong = ULong(toLong() ushr bitCount)
 
     /** Performs a bitwise AND operation between the two values. */
     @kotlin.internal.InlineOnly
-    public inline infix fun and(other: ULong): ULong = ULong(this.data and other.data)
+    public inline infix fun and(other: ULong): ULong = ULong(this.toLong() and other.toLong())
     /** Performs a bitwise OR operation between the two values. */
     @kotlin.internal.InlineOnly
-    public inline infix fun or(other: ULong): ULong = ULong(this.data or other.data)
+    public inline infix fun or(other: ULong): ULong = ULong(this.toLong() or other.toLong())
     /** Performs a bitwise XOR operation between the two values. */
     @kotlin.internal.InlineOnly
-    public inline infix fun xor(other: ULong): ULong = ULong(this.data xor other.data)
+    public inline infix fun xor(other: ULong): ULong = ULong(this.toLong() xor other.toLong())
     /** Inverts the bits in this value. */
     @kotlin.internal.InlineOnly
-    public inline fun inv(): ULong = ULong(data.inv())
+    public inline fun inv(): ULong = ULong(toLong().inv())
 
     /**
      * Converts this [ULong] value to [Byte].
@@ -289,7 +289,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * Note that the resulting `Byte` value may be negative.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toByte(): Byte = data.toByte()
+    public inline fun toByte(): Byte = toLong().toByte()
     /**
      * Converts this [ULong] value to [Short].
      *
@@ -300,7 +300,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * Note that the resulting `Short` value may be negative.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toShort(): Short = data.toShort()
+    public inline fun toShort(): Short = toLong().toShort()
     /**
      * Converts this [ULong] value to [Int].
      *
@@ -311,7 +311,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * Note that the resulting `Int` value may be negative.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toInt(): Int = data.toInt()
+    public inline fun toInt(): Int = toLong().toInt()
     /**
      * Converts this [ULong] value to [Long].
      *
@@ -321,7 +321,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * The resulting `Long` value has the same binary representation as this `ULong` value.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toLong(): Long = data
+    public inline fun toLong(): Long = ulongToLong(this)
 
     /**
      * Converts this [ULong] value to [UByte].
@@ -332,7 +332,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * The resulting `UByte` value is represented by the least significant 8 bits of this `ULong` value.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toUByte(): UByte = data.toUByte()
+    public inline fun toUByte(): UByte = toLong().toUByte()
     /**
      * Converts this [ULong] value to [UShort].
      *
@@ -342,7 +342,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * The resulting `UShort` value is represented by the least significant 16 bits of this `ULong` value.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toUShort(): UShort = data.toUShort()
+    public inline fun toUShort(): UShort = toLong().toUShort()
     /**
      * Converts this [ULong] value to [UInt].
      *
@@ -352,7 +352,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * The resulting `UInt` value is represented by the least significant 32 bits of this `ULong` value.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toUInt(): UInt = data.toUInt()
+    public inline fun toUInt(): UInt = toLong().toUInt()
     /** Returns this value. */
     @kotlin.internal.InlineOnly
     public inline fun toULong(): ULong = this
@@ -365,7 +365,7 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * the one with zero at least significant bit of mantissa is selected.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toFloat(): Float = this.toDouble().toFloat()
+    public inline fun toFloat(): Float = ulongToFloat(toLong())
     /**
      * Converts this [ULong] value to [Double].
      *
@@ -374,9 +374,9 @@ public value class ULong @kotlin.internal.IntrinsicConstEvaluation @PublishedApi
      * the one with zero at least significant bit of mantissa is selected.
      */
     @kotlin.internal.InlineOnly
-    public inline fun toDouble(): Double = ulongToDouble(data)
+    public inline fun toDouble(): Double = ulongToDouble(toLong())
 
-    public override fun toString(): String = ulongToString(data)
+    public override fun toString(): String = ulongToString(toLong())
 
 }
 
@@ -426,7 +426,7 @@ public inline fun Int.toULong(): ULong = ULong(this.toLong())
 @SinceKotlin("1.5")
 @WasExperimental(ExperimentalUnsignedTypes::class)
 @kotlin.internal.InlineOnly
-public inline fun Long.toULong(): ULong = ULong(this)
+public inline fun Long.toULong(): ULong = longToULong(this)
 
 /**
  * Converts this [Float] value to [ULong].
@@ -437,7 +437,7 @@ public inline fun Long.toULong(): ULong = ULong(this)
 @SinceKotlin("1.5")
 @WasExperimental(ExperimentalUnsignedTypes::class)
 @kotlin.internal.InlineOnly
-public inline fun Float.toULong(): ULong = doubleToULong(this.toDouble())
+public inline fun Float.toULong(): ULong = floatToULong(this)
 /**
  * Converts this [Double] value to [ULong].
  *
