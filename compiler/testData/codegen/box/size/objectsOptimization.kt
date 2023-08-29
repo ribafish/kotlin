@@ -20,7 +20,7 @@ object SimpleWithPropertyInitializedDurintInit {
     }
 }
 
-object SimpleWithFunctionsOnly {
+//object SimpleWithFunctionsOnly {
     fun foo() = "Foo"
     fun bar() = "Bar"
 }

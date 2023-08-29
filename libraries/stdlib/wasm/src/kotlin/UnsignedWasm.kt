@@ -37,14 +37,6 @@ internal actual inline fun ulongCompare(v1: Long, v2: Long): Int = wasm_u64_comp
 
 @PublishedApi
 @WasmNoOpCast
-internal actual fun ubyteToByte(value: UByte): Byte = implementedAsIntrinsic
-
-@PublishedApi
-@WasmNoOpCast
-internal actual fun ushortToShort(value: UShort): Short = implementedAsIntrinsic
-
-@PublishedApi
-@WasmNoOpCast
 internal actual fun uintToInt(value: UInt): Int = implementedAsIntrinsic
 
 @PublishedApi
@@ -102,7 +94,6 @@ internal actual fun doubleToULong(value: Double): ULong = implementedAsIntrinsic
 @PublishedApi
 internal actual fun ulongToString(value: Long): String = utoa64(value.toULong(), 10)
 
-@InlineOnly
 @PublishedApi
 internal actual fun ulongToString(value: Long, base: Int): String {
     checkRadix(base)

@@ -39,7 +39,6 @@ enum class UnsignedType {
     ULONG;
 
     val capitalized: String get() = name.substring(0, 2) + name.substring(2).lowercase()
-    val lowercase: String get() = name.lowercase()
     val asSigned: PrimitiveType = PrimitiveType.valueOf(name.substring(1))
 
     val byteSize = (1 shl ordinal)
