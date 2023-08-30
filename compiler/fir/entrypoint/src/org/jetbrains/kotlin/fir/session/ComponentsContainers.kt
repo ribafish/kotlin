@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirNameConflictsTr
 import org.jetbrains.kotlin.fir.analysis.jvm.FirJvmOverridesBackwardCompatibilityHelper
 import org.jetbrains.kotlin.fir.analysis.jvm.checkers.FirJvmInlineCheckerComponent
 import org.jetbrains.kotlin.fir.caches.FirCachesFactory
+import org.jetbrains.kotlin.fir.caches.FirConeExpansionCache
 import org.jetbrains.kotlin.fir.caches.FirThreadUnsafeCachesFactory
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOverloadabilityHelper
 import org.jetbrains.kotlin.fir.declarations.FirTypeSpecificityComparatorProvider
@@ -92,6 +93,7 @@ fun FirSession.registerCommonComponentsAfterExtensionsAreConfigured() {
 @OptIn(SessionConfiguration::class)
 fun FirSession.registerCliCompilerOnlyComponents() {
     register(FirCachesFactory::class, FirThreadUnsafeCachesFactory)
+    register(FirConeExpansionCache::class, FirConeExpansionCache(synchronized = false))
     register(SealedClassInheritorsProvider::class, SealedClassInheritorsProviderImpl)
     register(FirLazyDeclarationResolver::class, FirDummyCompilerLazyDeclarationResolver)
     register(FirExceptionHandler::class, FirCliExceptionHandler)

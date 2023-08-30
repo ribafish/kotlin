@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.FirExceptionHandler
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.caches.FirCachesFactory
+import org.jetbrains.kotlin.fir.caches.FirConeExpansionCache
 import org.jetbrains.kotlin.fir.declarations.SealedClassInheritorsProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.fir.session.FirSessionConfigurator
 internal fun LLFirSession.registerIdeComponents(project: Project) {
     register(IdeSessionComponents::class, IdeSessionComponents.create())
     register(FirCachesFactory::class, FirThreadSafeCachesFactory)
+    register(FirConeExpansionCache::class, FirConeExpansionCache(synchronized = true))
     register(SealedClassInheritorsProvider::class, project.createSealedInheritorsProvider())
     register(FirExceptionHandler::class, LLFirExceptionHandler)
     register(CodeFragmentScopeProvider::class, CodeFragmentScopeProvider(this))

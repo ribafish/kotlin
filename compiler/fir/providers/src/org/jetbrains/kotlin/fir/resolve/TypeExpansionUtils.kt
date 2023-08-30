@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve
 
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.caches.coneExpansionCache
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.declarations.utils.expandedConeType
@@ -32,12 +33,22 @@ fun ConeClassLikeType.fullyExpandedType(
             return cachedExpandedType
         }
 
-        val computedExpandedType = fullyExpandedTypeNoCache(useSiteSession, expandedConeType)
+        val computedExpandedType = if (!hasAttributes()) {
+            useSiteSession.coneExpansionCache.compute(this) {
+                fullyExpandedTypeNoCache(useSiteSession, expandedConeType)
+            }
+        } else {
+            fullyExpandedTypeNoCache(useSiteSession, expandedConeType)
+        }
         this.cachedExpandedType = WeakPair(useSiteSession, computedExpandedType)
         return computedExpandedType
     }
 
     return fullyExpandedTypeNoCache(useSiteSession, expandedConeType)
+}
+
+private fun ConeKotlinType.hasAttributes(): Boolean {
+    return attributes.isNotEmpty() || typeArguments.any { it is ConeKotlinType && it.hasAttributes() }
 }
 
 fun ConeKotlinType.fullyExpandedType(
