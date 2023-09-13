@@ -5,7 +5,13 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
+/**
+ * Options for Kotlin JavaScript dead code elimiation tool.
+ */
 interface KotlinJsDceOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions {
+    /**
+     * @suppress
+     */
     override val options: org.jetbrains.kotlin.gradle.dsl.KotlinJsDceCompilerToolOptions
 
     /**
