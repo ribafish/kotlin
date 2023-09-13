@@ -181,6 +181,8 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsCoroutineContext
         get() = context.ir.symbols.coroutineContextGetter
 
+    val jsYieldFunctionSymbol = getInternalFunction("jsYield")
+
     val jsGetContinuation = getInternalFunction("getContinuation")
     val jsInvokeSuspendSuperType =
         getInternalWithoutPackage("kotlin.coroutines.intrinsics.invokeSuspendSuperType")
@@ -188,6 +190,15 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
         getInternalWithoutPackage("kotlin.coroutines.intrinsics.invokeSuspendSuperTypeWithReceiver")
     val jsInvokeSuspendSuperTypeWithReceiverAndParam =
         getInternalWithoutPackage("kotlin.coroutines.intrinsics.invokeSuspendSuperTypeWithReceiverAndParam")
+
+    val generatorCoroutineImplClassSymbol = getInternalClassWithoutPackage("kotlin.coroutines.GeneratorCoroutineImpl")
+    val createCoroutineFromGeneratorFunction =
+        getInternalWithoutPackage("kotlin.coroutines.intrinsics.createCoroutineFromGeneratorFunction")
+
+    val createCoroutineUnintercepted =
+        getManyInternalWithoutPackage("kotlin.coroutines.intrinsics.createCoroutineUnintercepted")
+    val startCoroutineUninterceptedOrReturn =
+        getManyInternalWithoutPackage("kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn")
 
     val jsNumberRangeToNumber = getInternalFunction("numberRangeToNumber")
     val jsNumberRangeToLong = getInternalFunction("numberRangeToLong")
@@ -391,6 +402,9 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
 
     private fun getInternalWithoutPackage(name: String) =
         context.symbolTable.descriptorExtension.referenceSimpleFunction(context.getFunctions(FqName(name)).single())
+
+    private fun getManyInternalWithoutPackage(name: String) =
+        context.getFunctions(FqName(name)).mapTo(mutableSetOf()) { context.symbolTable.descriptorExtension.referenceSimpleFunction(it) }
 
     private fun getInternalWithoutPackageOrNull(name: String): IrSimpleFunctionSymbol? {
         val descriptor = context.getFunctions(FqName(name)).singleOrNull() ?: return null

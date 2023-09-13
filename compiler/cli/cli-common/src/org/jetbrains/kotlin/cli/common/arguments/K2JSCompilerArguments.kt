@@ -505,6 +505,21 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
         }
 
     @GradleOption(
+        value = DefaultValue.BOOLEAN_FALSE_DEFAULT,
+        gradleInputType = GradleInputTypes.INPUT,
+        shouldGenerateDeprecatedKotlinOptions = true,
+    )
+    @Argument(
+        value = "-Xes-generators",
+        description = "Enable ES2015 generator functions usage inside the compiled code"
+    )
+    var useEsGenerators = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @GradleOption(
         value = DefaultValue.BOOLEAN_TRUE_DEFAULT,
         gradleInputType = GradleInputTypes.INPUT,
         shouldGenerateDeprecatedKotlinOptions = true,
