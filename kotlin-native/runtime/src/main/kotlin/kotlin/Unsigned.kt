@@ -7,6 +7,7 @@ package kotlin
 
 import kotlin.internal.InlineOnly
 
+// CHANGES IN THIS FILE SHOULD BE SYNCED WITH THE SAME CHANGES IN: UnsignedJVM.kt and UnsignedJs.kt
 // Division and remainder are based on Guava's UnsignedLongs implementation
 // Copyright 2011 The Guava Authors
 
