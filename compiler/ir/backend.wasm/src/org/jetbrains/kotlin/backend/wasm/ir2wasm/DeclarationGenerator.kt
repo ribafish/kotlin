@@ -523,10 +523,10 @@ fun generateConstExpression(
             body.buildInstr(WasmOp.REF_NULL, location, WasmImmediate.HeapType(bottomType))
         }
         is IrConstKind.Boolean -> body.buildConstI32(if (kind.valueOf(expression)) 1 else 0, location)
-        is IrConstKind.Byte -> body.buildConstI32(getConstNumberFor(expression), location)
-        is IrConstKind.Short -> body.buildConstI32(getConstNumberFor(expression), location)
-        is IrConstKind.Int -> body.buildConstI32(getConstNumberFor(expression), location)
-        is IrConstKind.Long -> body.buildConstI64(getConstNumberFor(expression), location)
+        is IrConstKind.Byte -> body.buildConstI32(kind.valueOf(expression).toInt(), location)
+        is IrConstKind.Short -> body.buildConstI32(kind.valueOf(expression).toInt(), location)
+        is IrConstKind.Int -> body.buildConstI32(kind.valueOf(expression), location)
+        is IrConstKind.Long -> body.buildConstI64(kind.valueOf(expression), location)
         is IrConstKind.Char -> body.buildConstI32(kind.valueOf(expression).code, location)
         is IrConstKind.Float -> body.buildConstF32(kind.valueOf(expression), location)
         is IrConstKind.Double -> body.buildConstF64(kind.valueOf(expression), location)
@@ -542,11 +542,3 @@ fun generateConstExpression(
         }
         else -> error("Unknown constant kind")
     }
-
-@Suppress("UNCHECKED_CAST")
-private fun <T> getConstNumberFor(expression: IrConst<*>): T =
-    when {
-        expression.type.isUByte() -> (expression.value as Byte).toUByte().toInt()
-        expression.type.isUShort() -> (expression.value as Short).toUShort().toInt()
-        else -> expression.value as Number
-    } as T
