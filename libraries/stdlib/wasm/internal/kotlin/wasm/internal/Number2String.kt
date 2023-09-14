@@ -42,14 +42,9 @@ private fun digitToChar(input: Int): Char {
     return (CharCodes._0.code + input).toChar()
 }
 
-private fun assertCorrectRadix(radix: Int) {
-    if (radix < 2 || radix > 36)
-        throw IllegalArgumentException("Radix argument is unreasonable")
-}
-
 // Inspired by the AssemblyScript implementation
 internal fun itoa32(inputValue: Int, radix: Int): String {
-    assertCorrectRadix(radix)
+    checkRadix(radix)
 
     if (radix != 10)
         TODO("When we need it")
@@ -72,7 +67,7 @@ internal fun itoa32(inputValue: Int, radix: Int): String {
 }
 
 internal fun utoa32(inputValue: UInt, radix: Int): String {
-    assertCorrectRadix(radix)
+    checkRadix(radix)
 
     if (radix != 10) TODO("When we need it")
     if (inputValue == 0U) return "0"
@@ -141,7 +136,7 @@ internal fun itoa64(inputValue: Long, radix: Int): String {
     if (inputValue in Int.MIN_VALUE..Int.MAX_VALUE)
         return itoa32(inputValue.toInt(), radix)
 
-    assertCorrectRadix(radix)
+    checkRadix(radix)
 
     if (inputValue == 0L) return "0"
     // We can't represent abs(Long.MIN_VALUE), so just hardcode it here
@@ -168,7 +163,7 @@ internal fun utoa64(inputValue: ULong, radix: Int): String {
     if (inputValue <= UInt.MAX_VALUE)
         return utoa32(inputValue.toUInt(), radix)
 
-    assertCorrectRadix(radix)
+    checkRadix(radix)
 
     if (inputValue == 0UL) return "0"
     if (radix != 10) TODO("When we need it")
