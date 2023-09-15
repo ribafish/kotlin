@@ -30,7 +30,6 @@ object FirDiagnosticsCompilerResultsReporter {
                 diagnosticsCollector.diagnostics.any { it.factory == FirErrors.INCOMPATIBLE_CLASS },
                 diagnosticsCollector.diagnostics.any { it.factory == FirErrors.PRE_RELEASE_CLASS },
                 hasUnstableClasses = false,     // TODO (KT-61598): report FIR_COMPILED_CLASS and IR_WITH_UNSTABLE_ABI_COMPILED_CLASS
-                hasFirUnstableClasses = false,  // TODO (KT-61598): report FIR_COMPILED_CLASS and IR_WITH_UNSTABLE_ABI_COMPILED_CLASS
                 messageCollector,
             )
         }
