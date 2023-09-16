@@ -315,17 +315,6 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
         }
 
     @Argument(
-        value = "-Xdump-declarations-to",
-        valueDescription = "<path>",
-        description = "Path to JSON file to dump Java to Kotlin declaration mappings"
-    )
-    var declarationsOutputPath: String? = null
-        set(value) {
-            checkFrozen()
-            field = if (value.isNullOrEmpty()) null else value
-        }
-
-    @Argument(
         value = "-Xsuppress-missing-builtins-error",
         description = "Suppress the \"cannot access built-in declaration\" error (useful with -no-stdlib)"
     )

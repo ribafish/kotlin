@@ -21,7 +21,6 @@ where advanced options include:
                              Default value is 1
   -Xbuild-file=<path>        Path to the .xml build file to compile
   -Xcompile-java             Reuse javac analysis and compile Java source files
-  -Xdump-declarations-to=<path> Path to JSON file to dump Java to Kotlin declaration mappings
   -Xdefault-script-extension=<script filename extension>
                              Compile expressions and unrecognized scripts passed with the -script argument as scripts with given filename extension
   -Xdisable-standard-script  Disable standard kotlin script support
