@@ -846,6 +846,16 @@ This option is deprecated and will be deleted in future versions."""
         }
 
     @Argument(
+        value = "-Xinline-scopes-numbers",
+        description = "Enable inline scopes numbers for inline marker variables."
+    )
+    var enableInlineScopesNumbers: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xuse-kapt4",
         description = "Enable the experimental KAPT 4."
     )
