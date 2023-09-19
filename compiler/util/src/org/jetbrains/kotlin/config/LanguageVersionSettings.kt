@@ -472,6 +472,12 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
     override val isStable: Boolean
         get() = this <= LATEST_STABLE
 
+    // This means that the version is not considered experimental, but has pre-release flag
+    // The flag can be used in beta timeframe for language versions with a lot of breaking changes
+    // TODO: make KOTLIN_2_0 not pseudo-stable in 2.0-RC timeframe (KT-xxxxx)
+    val isPseudoStable: Boolean
+        get() = this == KOTLIN_2_0
+
     val usesK2: Boolean
         get() = this >= KOTLIN_2_0
 
@@ -596,7 +602,7 @@ class LanguageVersionSettingsImpl @JvmOverloads constructor(
         }
     }
 
-    override fun isPreRelease(): Boolean = !languageVersion.isStable ||
+    override fun isPreRelease(): Boolean = !languageVersion.isStable || languageVersion.isPseudoStable ||
             specificFeatures.any { (feature, state) ->
                 state == LanguageFeature.State.ENABLED && feature.forcesPreReleaseBinariesIfEnabled()
             }

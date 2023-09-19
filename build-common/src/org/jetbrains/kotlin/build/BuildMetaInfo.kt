@@ -74,7 +74,7 @@ abstract class BuildMetaInfo {
         val languageVersionSting = languageVersion.versionString
         resultMap[CustomKeys.LANGUAGE_VERSION_STRING.name] = languageVersionSting
 
-        val isEAP = !languageVersion.isStable
+        val isEAP = !languageVersion.isStable || languageVersion.isPseudoStable
         resultMap[CustomKeys.IS_EAP.name] = isEAP.toString()
 
         val apiVersionString = args.apiVersion ?: languageVersionSting
