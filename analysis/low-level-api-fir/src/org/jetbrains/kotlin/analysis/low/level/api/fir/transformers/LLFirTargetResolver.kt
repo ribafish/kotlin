@@ -178,7 +178,7 @@ internal abstract class LLFirTargetResolver(
 
     private inline fun withPossiblyJumpingLock(target: FirElementWithResolveState, action: () -> Unit) {
         if (isJumpingPhase) {
-            lockProvider.withJumpingLock(target, resolverPhase, action)
+            lockProvider.withJumpingWriteLock(target, resolverPhase, action)
         } else {
             lockProvider.withWriteLock(target, resolverPhase, action)
         }
@@ -191,7 +191,11 @@ internal abstract class LLFirTargetResolver(
      */
     protected inline fun withReadLock(target: FirElementWithResolveState, action: () -> Unit) {
         checkThatResolvedAtLeastToPreviousPhase(target)
-        lockProvider.withReadLock(target, resolverPhase, action)
+        if (isJumpingPhase) {
+            lockProvider.withJumpingReadLock(target, resolverPhase, action)
+        } else {
+            lockProvider.withReadLock(target, resolverPhase, action)
+        }
     }
 
     private fun checkThatResolvedAtLeastToPreviousPhase(target: FirElementWithResolveState) {
