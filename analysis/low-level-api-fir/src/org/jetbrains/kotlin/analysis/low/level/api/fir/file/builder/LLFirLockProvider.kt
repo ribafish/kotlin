@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirLazyResolveContractChecker
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.lockWithPCECheck
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
@@ -17,9 +15,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 
 /**
  * Keyed locks provider.
@@ -83,7 +78,7 @@ internal class LLFirLockProvider(private val checker: LLFirLazyResolveContractCh
         phase: FirResolvePhase,
         action: () -> Unit,
     ) {
-        withLock(target, phase, updatePhase = true, action)
+        withLock(target, phase, updatePhase = true, isJumpingPhase = false, action)
     }
 
     /**
@@ -99,28 +94,35 @@ internal class LLFirLockProvider(private val checker: LLFirLazyResolveContractCh
         phase: FirResolvePhase,
         action: () -> Unit,
     ) {
-        withLock(target, phase, updatePhase = false, action)
+        withLock(target, phase, updatePhase = false, isJumpingPhase = false, action)
     }
 
     private inline fun withLock(
         target: FirElementWithResolveState,
         phase: FirResolvePhase,
         updatePhase: Boolean,
+        isJumpingPhase: Boolean,
         action: () -> Unit,
     ) {
-        checker.lazyResolveToPhaseInside(phase) {
+        checker.lazyResolveToPhaseInside(phase, isJumpingPhase = isJumpingPhase) {
             target.withCriticalSection(toPhase = phase, updatePhase = updatePhase, action = action)
         }
     }
 
-    inline fun withJumpingLock(
+    inline fun withJumpingReadLock(
         target: FirElementWithResolveState,
         phase: FirResolvePhase,
         action: () -> Unit,
     ) {
-        checker.lazyResolveToPhaseInside(phase, isJumpingPhase = true) {
-            target.withCriticalSection(toPhase = phase, updatePhase = true, action = action)
-        }
+        withLock(target, phase, updatePhase = false, isJumpingPhase = true, action)
+    }
+
+    inline fun withJumpingWriteLock(
+        target: FirElementWithResolveState,
+        phase: FirResolvePhase,
+        action: () -> Unit,
+    ) {
+        withLock(target, phase, updatePhase = true, isJumpingPhase = true, action)
     }
 
     /**
