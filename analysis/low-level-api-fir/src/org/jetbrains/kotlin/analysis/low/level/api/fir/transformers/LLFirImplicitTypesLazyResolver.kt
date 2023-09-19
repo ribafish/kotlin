@@ -68,20 +68,49 @@ internal class LLFirImplicitBodyTargetResolver(
         override val buildCfgForFiles: Boolean get() = false
     }
 
+    override fun doResolveWithoutLock(target: FirElementWithResolveState): Boolean {
+        when {
+            target is FirCallableDeclaration && target.attributes.callableCopySubstitutionForTypeUpdater != null -> {
+                performCustomResolveUnderLock(target) {
+                    transformer.returnTypeCalculator.callableCopyTypeCalculator.computeReturnType(target)
+                }
+
+                return true
+            }
+
+            target is FirFunction -> {
+                resolveFunction(target)
+                return true
+            }
+
+            target is FirProperty -> {
+                resolveProperty(target)
+                return true
+            }
+        }
+
+        return super.doResolveWithoutLock(target)
+    }
+
+    private fun resolveFunction(function: FirFunction) {
+        performCustomResolveUnderLock(function) {
+            if (function.returnTypeRef is FirImplicitTypeRef) {
+                resolve(function, BodyStateKeepers.FUNCTION)
+            }
+        }
+    }
+
+    private fun resolveProperty(property: FirProperty) {
+        performCustomResolveUnderLock(property) {
+            if (property.returnTypeRef is FirImplicitTypeRef || property.backingField?.returnTypeRef is FirImplicitTypeRef) {
+                resolve(property, BodyStateKeepers.PROPERTY)
+            }
+        }
+    }
+
     override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
         when (target) {
-            is FirFunction -> {
-                if (target.returnTypeRef is FirImplicitTypeRef) {
-                    resolve(target, BodyStateKeepers.FUNCTION)
-                }
-            }
-
-            is FirProperty -> {
-                if (target.returnTypeRef is FirImplicitTypeRef || target.backingField?.returnTypeRef is FirImplicitTypeRef) {
-                    resolve(target, BodyStateKeepers.PROPERTY)
-                }
-            }
-
+            is FirFunction, is FirProperty -> error("${target::class.simpleName} should have been resolved in ${::doResolveWithoutLock.name}")
             is FirField -> {
                 if (target.returnTypeRef is FirImplicitTypeRef) {
                     resolve(target, BodyStateKeepers.FIELD)
@@ -111,14 +140,10 @@ internal class LLFirImplicitBodyTargetResolver(
     }
 
     override fun rawResolve(target: FirElementWithResolveState) {
-        when {
-            target is FirScript -> resolveScript(target)
-            target is FirCallableDeclaration && target.attributes.callableCopySubstitutionForTypeUpdater != null -> {
-                transformer.returnTypeCalculator.callableCopyTypeCalculator.computeReturnType(target)
-                Unit
-            }
-
-            else -> super.rawResolve(target)
+        if (target is FirScript) {
+            resolveScript(target)
+        } else {
+            super.rawResolve(target)
         }
 
         LLFirDeclarationModificationService.bodyResolved(target, resolverPhase)
