@@ -460,5 +460,5 @@ object StandaloneProjectFactory {
     }
 
     private val latestLanguageVersionSettings: LanguageVersionSettings =
-        LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
+        LanguageVersionSettingsImpl(LanguageVersion.DEFAULT, ApiVersion.LATEST)
 }

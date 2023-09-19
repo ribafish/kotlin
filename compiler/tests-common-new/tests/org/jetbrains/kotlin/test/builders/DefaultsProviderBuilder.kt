@@ -43,7 +43,7 @@ class DefaultsProviderBuilder {
     fun build(): DefaultsProvider {
         return DefaultsProvider(
             frontend,
-            languageVersionSettings ?: LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE),
+            languageVersionSettings ?: LanguageVersionSettingsImpl.DEFAULT,
             languageVersionSettingsBuilder ?: LanguageVersionSettingsBuilder(),
             targetPlatform,
             artifactKind,

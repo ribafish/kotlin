@@ -472,12 +472,6 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
     override val isStable: Boolean
         get() = this <= LATEST_STABLE
 
-    // This means that the version is not considered experimental, but has pre-release flag
-    // The flag can be used in beta timeframe for language versions with a lot of breaking changes
-    // TODO: make KOTLIN_2_0 not pseudo-stable in 2.0-RC timeframe (KT-xxxxx)
-    val isPseudoStable: Boolean
-        get() = this == KOTLIN_2_0
-
     val usesK2: Boolean
         get() = this >= KOTLIN_2_0
 
@@ -500,9 +494,9 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.3        1.4..1.6           1.7..2.0    2.1
-        // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
-        // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
+        //            1.0..1.3        1.4..1.6          1.7..1.9        2.0                          2.1
+        // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ----> DEFAULT (experimental) ---> EXPERIMENTAL
+        // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ----> DEFAULT (experimental) ---> EXPERIMENTAL
 
         @JvmField
         val FIRST_API_SUPPORTED = KOTLIN_1_4
@@ -514,7 +508,10 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
         val FIRST_NON_DEPRECATED = KOTLIN_1_7
 
         @JvmField
-        val LATEST_STABLE = KOTLIN_2_0
+        val LATEST_STABLE = KOTLIN_1_9
+
+        @JvmField
+        val DEFAULT = KOTLIN_2_0
     }
 }
 
@@ -554,6 +551,11 @@ interface LanguageVersionSettings {
 
     fun <T> getFlag(flag: AnalysisFlag<T>): T
 
+    fun copy(
+        analysisFlags: Map<AnalysisFlag<*>, Any?> = emptyMap(),
+        specificFeatures: Map<LanguageFeature, LanguageFeature.State> = emptyMap(),
+    ): LanguageVersionSettings
+
     val apiVersion: ApiVersion
 
     // Please do not use this to enable/disable specific features/checks. Instead add a new LanguageFeature entry and call supportsFeature
@@ -587,6 +589,13 @@ class LanguageVersionSettingsImpl @JvmOverloads constructor(
         return LanguageFeature.State.DISABLED
     }
 
+    override fun copy(
+        analysisFlags: Map<AnalysisFlag<*>, Any?>,
+        specificFeatures: Map<LanguageFeature, LanguageFeature.State>,
+    ): LanguageVersionSettings {
+        return LanguageVersionSettingsImpl(languageVersion, apiVersion, analysisFlags, specificFeatures)
+    }
+
     override fun toString() = buildString {
         append("Language = $languageVersion, API = $apiVersion")
         specificFeatures.entries.sortedBy { (feature, _) -> feature.ordinal }.forEach { (feature, state) ->
@@ -609,7 +618,7 @@ class LanguageVersionSettingsImpl @JvmOverloads constructor(
 
     companion object {
         @JvmField
-        val DEFAULT = LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE)
+        val DEFAULT = LanguageVersionSettingsImpl(LanguageVersion.DEFAULT, ApiVersion.DEFAULT)
     }
 }
 

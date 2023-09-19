@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import java.io.File
 
 abstract class AbstractFirJavaModulesIntegrationTest(jdkVersion: Int, jdkHome: File) : AbstractJavaModulesIntegrationTest(
-    jdkVersion, jdkHome, maxOf(LanguageVersion.KOTLIN_2_0, LanguageVersion.LATEST_STABLE),
+    jdkVersion, jdkHome, maxOf(LanguageVersion.KOTLIN_2_0, LanguageVersion.DEFAULT),
 ) {
     override fun muteForK2(test: () -> Unit) {
         try {

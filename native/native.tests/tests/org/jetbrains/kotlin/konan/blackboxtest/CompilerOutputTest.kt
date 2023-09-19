@@ -45,7 +45,7 @@ class CompilerOutputTest : AbstractNativeSimpleTest() {
     }
 
     private fun doTestPreReleaseKotlinLibrary(rootDir: File, additionalOptions: List<String>) {
-        val someNonStableVersion = LanguageVersion.values().firstOrNull { it > LanguageVersion.LATEST_STABLE } ?: return
+        val someNonStableVersion = LanguageVersion.entries.firstOrNull { !it.isStable } ?: return
 
         val libraryOptions = listOf(
             "-language-version", someNonStableVersion.versionString,
@@ -60,7 +60,7 @@ class CompilerOutputTest : AbstractNativeSimpleTest() {
 
         val compilationResult = compileLibrary(
             source = rootDir.resolve("source.kt"),
-            freeCompilerArgs = additionalOptions + listOf("-language-version", LanguageVersion.LATEST_STABLE.versionString),
+            freeCompilerArgs = additionalOptions + listOf("-language-version", LanguageVersion.DEFAULT.versionString),
             dependencies = listOf(library)
         )
 

@@ -50,7 +50,7 @@ fun makeJvmIncrementally(
     val buildReporter = BuildReporter(icReporter = reporter, buildMetricsReporter = DoNothingBuildMetricsReporter)
 
     withIncrementalCompilation(args) {
-        val languageVersion = LanguageVersion.fromVersionString(args.languageVersion) ?: LanguageVersion.LATEST_STABLE
+        val languageVersion = LanguageVersion.fromVersionString(args.languageVersion) ?: LanguageVersion.DEFAULT
         val useK2 = languageVersion.usesK2
         val compiler =
             if (useK2 && args.useFirIC && args.useFirLT /* TODO by @Ilya.Chernikov: move LT check into runner */)

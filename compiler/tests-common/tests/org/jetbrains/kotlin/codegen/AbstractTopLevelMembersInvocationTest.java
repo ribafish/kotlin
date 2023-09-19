@@ -59,7 +59,7 @@ public abstract class AbstractTopLevelMembersInvocationTest extends AbstractByte
                 ConfigurationKind.JDK_ONLY, TestJdkKind.MOCK_JDK,
                 CollectionsKt.plus(classPath, KtTestUtil.getAnnotationsJar()), Collections.emptyList()
         );
-        if (LanguageVersion.LATEST_STABLE.compareTo(LanguageVersion.KOTLIN_2_0) >= 0) {
+        if (LanguageVersion.DEFAULT.getUsesK2()) {
             configuration.put(CommonConfigurationKeys.USE_FIR, true);
         }
         myEnvironment = KotlinCoreEnvironment.createForTests(

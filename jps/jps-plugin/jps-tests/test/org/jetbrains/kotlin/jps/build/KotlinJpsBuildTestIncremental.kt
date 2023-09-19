@@ -146,7 +146,7 @@ class KotlinJpsBuildTestIncremental : KotlinJpsBuildTest() {
         // Try to set Language version to Stable+2 (there is no promises that metadata will be supported)
         val experimentalLevelVersion: LanguageVersion
         try {
-            experimentalLevelVersion = LanguageVersion.values()[LanguageVersion.LATEST_STABLE.ordinal + 2]
+            experimentalLevelVersion = LanguageVersion.values()[LanguageVersion.DEFAULT.ordinal + 2]
         } catch (e: ArrayIndexOutOfBoundsException) {
             // there is no Stable+2 version for now, skiping test
             return
@@ -173,7 +173,7 @@ class KotlinJpsBuildTestIncremental : KotlinJpsBuildTest() {
         assertNull(args.apiVersion)
         buildAllModules().assertSuccessful()
 
-        setVersion(LanguageVersion.LATEST_STABLE.versionString)
+        setVersion(LanguageVersion.DEFAULT.versionString)
         buildAllModules().assertSuccessful()
         assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME)
 

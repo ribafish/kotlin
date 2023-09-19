@@ -45,8 +45,8 @@ sealed class TargetPlatformKind<out Version : TargetPlatformVersion>(
 sealed class VersionView : DescriptionAware {
     abstract val version: LanguageOrApiVersion
 
-    object LatestStable : VersionView() {
-        override val version: LanguageVersion = LanguageVersion.LATEST_STABLE
+    object Default : VersionView() {
+        override val version: LanguageVersion = LanguageVersion.DEFAULT
 
         override val description: String
             get() = "Latest stable (${version.versionString})"
@@ -63,9 +63,9 @@ sealed class VersionView : DescriptionAware {
 
     companion object {
         fun deserialize(value: String?, isAutoAdvance: Boolean): VersionView {
-            if (isAutoAdvance) return LatestStable
+            if (isAutoAdvance) return Default
             val languageVersion = LanguageVersion.fromVersionString(value)
-            return if (languageVersion != null) Specific(languageVersion) else LatestStable
+            return if (languageVersion != null) Specific(languageVersion) else Default
         }
     }
 }
@@ -74,14 +74,14 @@ var CommonCompilerArguments.languageVersionView: VersionView
     get() = VersionView.deserialize(languageVersion, autoAdvanceLanguageVersion)
     set(value) {
         languageVersion = value.version.versionString
-        autoAdvanceLanguageVersion = value == VersionView.LatestStable
+        autoAdvanceLanguageVersion = value == VersionView.Default
     }
 
 var CommonCompilerArguments.apiVersionView: VersionView
     get() = VersionView.deserialize(apiVersion, autoAdvanceApiVersion)
     set(value) {
         apiVersion = value.version.versionString
-        autoAdvanceApiVersion = value == VersionView.LatestStable
+        autoAdvanceApiVersion = value == VersionView.Default
     }
 
 enum class KotlinModuleKind {

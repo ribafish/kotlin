@@ -61,9 +61,7 @@ class JvmClassFileBasedSymbolProvider(
     private val ownMetadataVersion: JvmMetadataVersion = session.languageVersionSettings.languageVersion.toMetadataVersion()
 
     private val reportErrorsOnPreReleaseDependencies =
-        !session.languageVersionSettings.getFlag(AnalysisFlags.skipPrereleaseCheck) &&
-                !session.languageVersionSettings.isPreRelease() &&
-                !session.languageVersionSettings.languageVersion.isPseudoStable
+        !session.languageVersionSettings.getFlag(AnalysisFlags.skipPrereleaseCheck) && !session.languageVersionSettings.isPreRelease()
 
     override fun computePackagePartsInfos(packageFqName: FqName): List<PackagePartsCacheData> =
         packagePartProvider.findPackageParts(packageFqName.asString()).mapNotNull { partName ->

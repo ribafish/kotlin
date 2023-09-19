@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.utils.toMetadataVersion
 
 class FirCompileKotlinAgainstCustomBinariesTest : AbstractCompileKotlinAgainstCustomBinariesTest() {
     override val languageVersion: LanguageVersion
-        get() = maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.KOTLIN_2_0)
+        get() = maxOf(LanguageVersion.DEFAULT, LanguageVersion.KOTLIN_2_0)
 
     override fun muteForK2(test: () -> Unit) {
         try {

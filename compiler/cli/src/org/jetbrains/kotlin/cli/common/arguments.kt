@@ -64,7 +64,7 @@ private fun switchToFallbackModeIfNecessary(arguments: CommonCompilerArguments, 
 
     if (arguments !is K2JVMCompilerArguments) return
     val isK2 =
-        arguments.useK2 || (arguments.languageVersion?.startsWith('2') ?: (LanguageVersion.LATEST_STABLE >= LanguageVersion.KOTLIN_2_0))
+        arguments.useK2 || (arguments.languageVersion?.startsWith('2') ?: LanguageVersion.DEFAULT.usesK2)
     val isKaptUsed = arguments.pluginOptions?.any { it.startsWith("plugin:org.jetbrains.kotlin.kapt3") } == true
     when {
         isK2 && isKaptUsed && !arguments.useKapt4 -> {

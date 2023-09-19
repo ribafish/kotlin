@@ -111,9 +111,7 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
                 lvs.languageVersion, lvs.apiVersion, lvs.analysisFlags + irFlag, lvs.extraLanguageFeatures,
             )
         } else {
-            configuration.languageVersionSettings = LanguageVersionSettingsImpl(
-                LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE, irFlag,
-            )
+            configuration.languageVersionSettings = LanguageVersionSettingsImpl.DEFAULT.copy(irFlag)
         }
     }
 

@@ -1050,10 +1050,10 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     }
 
     private fun checkProgressiveMode(languageVersion: LanguageVersion, collector: MessageCollector) {
-        if (progressiveMode && languageVersion < LanguageVersion.LATEST_STABLE && !suppressVersionWarnings) {
+        if (progressiveMode && languageVersion < LanguageVersion.DEFAULT && !suppressVersionWarnings) {
             collector.report(
                 CompilerMessageSeverity.STRONG_WARNING,
-                "'-progressive' is meaningful only for the latest language version (${LanguageVersion.LATEST_STABLE}), " +
+                "'-progressive' is meaningful only for the latest language version (${LanguageVersion.DEFAULT}), " +
                         "while this build uses $languageVersion\n" +
                         "Compiler behavior in such mode is undefined; please, consider moving to the latest stable version " +
                         "or turning off progressive mode."
@@ -1062,7 +1062,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     }
 
     protected open fun defaultLanguageVersion(collector: MessageCollector): LanguageVersion =
-        LanguageVersion.LATEST_STABLE
+        LanguageVersion.DEFAULT
 
     protected open fun checkPlatformSpecificSettings(languageVersionSettings: LanguageVersionSettings, collector: MessageCollector) {
     }

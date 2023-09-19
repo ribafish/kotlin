@@ -44,9 +44,7 @@ class LoadJavaPackageAnnotationsTest : KtUsefulTestCase() {
             if (useJavac) {
                 put(JVMConfigurationKeys.USE_JAVAC, true)
             }
-            languageVersionSettings = LanguageVersionSettingsImpl(
-                LanguageVersion.LATEST_STABLE,
-                ApiVersion.LATEST_STABLE,
+            languageVersionSettings = LanguageVersionSettingsImpl.DEFAULT.copy(
                 mapOf(JvmAnalysisFlags.javaTypeEnhancementState to JavaTypeEnhancementState.DEFAULT)
             )
             configurator(this)

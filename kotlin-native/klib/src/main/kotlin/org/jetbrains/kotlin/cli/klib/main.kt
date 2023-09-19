@@ -288,8 +288,8 @@ class Library(val libraryNameOrPath: String, val requestedRepository: String?, v
     }
 }
 
-val currentLanguageVersion = LanguageVersion.LATEST_STABLE
-val currentApiVersion = ApiVersion.LATEST_STABLE
+val currentLanguageVersion = LanguageVersion.DEFAULT
+val currentApiVersion = ApiVersion.DEFAULT
 
 fun libraryInRepo(repository: File, name: String) =
         resolverByName(listOf(repository.absolutePath), skipCurrentDir = true, logger = KlibToolLogger).resolve(name)

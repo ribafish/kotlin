@@ -103,9 +103,7 @@ class TypeQualifierAnnotationResolverTest : KtUsefulTestCase() {
             ),
             listOf(File(TEST_DATA_PATH))
         ).apply {
-            languageVersionSettings = LanguageVersionSettingsImpl(
-                LanguageVersion.LATEST_STABLE,
-                ApiVersion.LATEST_STABLE,
+            languageVersionSettings = LanguageVersionSettingsImpl.DEFAULT.copy(
                 mapOf(JvmAnalysisFlags.javaTypeEnhancementState to JavaTypeEnhancementState.DEFAULT)
             )
         }

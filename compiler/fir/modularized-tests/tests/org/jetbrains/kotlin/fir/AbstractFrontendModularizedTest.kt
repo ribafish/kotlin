@@ -30,7 +30,7 @@ abstract class AbstractFrontendModularizedTest : AbstractModularizedTest() {
 
         configuration.languageVersionSettings = LanguageVersionSettingsImpl(
             languageVersion,
-            originalArguments?.apiVersion?.let { ApiVersion.parse(it) } ?: ApiVersion.LATEST_STABLE,
+            originalArguments?.apiVersion?.let { ApiVersion.parse(it) } ?: ApiVersion.DEFAULT,
             analysisFlags = buildMap {
                 put(AnalysisFlags.optIn, moduleData.optInAnnotations + originalArguments?.optIn.orEmpty())
                 if (originalArguments != null) {

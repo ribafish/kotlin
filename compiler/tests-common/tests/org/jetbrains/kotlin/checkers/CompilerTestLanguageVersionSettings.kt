@@ -39,6 +39,13 @@ data class CompilerTestLanguageVersionSettings(
 
     override fun isPreRelease(): Boolean = false
 
+    override fun copy(
+        analysisFlags: Map<AnalysisFlag<*>, Any?>,
+        specificFeatures: Map<LanguageFeature, LanguageFeature.State>
+    ): LanguageVersionSettings {
+        return CompilerTestLanguageVersionSettings(specificFeatures, apiVersion, languageVersion, analysisFlags)
+    }
+
     @Suppress("UNCHECKED_CAST")
     override fun <T> getFlag(flag: AnalysisFlag<T>): T = analysisFlags[flag] as T? ?: flag.defaultValue
 }
@@ -78,12 +85,12 @@ fun parseLanguageVersionSettings(
     }
 
     val apiVersion = when (apiVersionString) {
-        null -> ApiVersion.LATEST_STABLE
+        null -> ApiVersion.DEFAULT
         "LATEST" -> ApiVersion.LATEST
         else -> ApiVersion.parse(apiVersionString) ?: error("Unknown API version: $apiVersionString")
     }
 
-    val languageVersion = maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.fromVersionString(apiVersion.versionString)!!)
+    val languageVersion = maxOf(LanguageVersion.DEFAULT, LanguageVersion.fromVersionString(apiVersion.versionString)!!)
 
     val languageFeatures = languageFeaturesString?.let(::collectLanguageFeatureMap).orEmpty() + extraLanguageFeatures
 
@@ -91,7 +98,7 @@ fun parseLanguageVersionSettings(
 }
 
 fun defaultLanguageVersionSettings(): CompilerTestLanguageVersionSettings =
-    CompilerTestLanguageVersionSettings(emptyMap(), ApiVersion.LATEST_STABLE, LanguageVersion.LATEST_STABLE)
+    CompilerTestLanguageVersionSettings(emptyMap(), ApiVersion.DEFAULT, LanguageVersion.DEFAULT)
 
 fun languageVersionSettingsFromText(fileTexts: List<String>): LanguageVersionSettings {
     val allDirectives = Directives()

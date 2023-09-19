@@ -62,9 +62,7 @@ abstract class KotlinJvmReplServiceBase(
         configureJdkHomeFromSystemProperty() // needed for IdeaJsr223Test in Kotlin plugin
         configureJdkClasspathRoots()
         put(CommonConfigurationKeys.MODULE_NAME, "kotlin-script")
-        languageVersionSettings = LanguageVersionSettingsImpl(
-                LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE, mapOf(AnalysisFlags.skipMetadataVersionCheck to true)
-        )
+        languageVersionSettings = LanguageVersionSettingsImpl.DEFAULT.copy(mapOf(AnalysisFlags.skipMetadataVersionCheck to true))
         configureScripting(compilerId)
     }
 

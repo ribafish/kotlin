@@ -82,8 +82,7 @@ class GenerateIrRuntime {
         runtimeConfiguration.put(CommonConfigurationKeys.MODULE_NAME, "JS_IR_RUNTIME")
         runtimeConfiguration.put(JSConfigurationKeys.MODULE_KIND, ModuleKind.UMD)
 
-        runtimeConfiguration.languageVersionSettings = LanguageVersionSettingsImpl(
-            LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE,
+        runtimeConfiguration.languageVersionSettings = LanguageVersionSettingsImpl.DEFAULT.copy(
             specificFeatures = mapOf(
                 LanguageFeature.AllowContractsForCustomFunctions to LanguageFeature.State.ENABLED,
                 LanguageFeature.MultiPlatformProjects to LanguageFeature.State.ENABLED

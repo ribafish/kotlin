@@ -70,7 +70,7 @@ abstract class BuildMetaInfo {
     open fun createPropertiesMapFromCompilerArguments(args: CommonCompilerArguments): Map<String, String> {
         val resultMap = transformClassToPropertiesMap(args, excludedProperties).toMutableMap()
         val languageVersion = args.languageVersion?.let { LanguageVersion.fromVersionString(it) }
-            ?: LanguageVersion.LATEST_STABLE
+            ?: LanguageVersion.DEFAULT
         val languageVersionSting = languageVersion.versionString
         resultMap[CustomKeys.LANGUAGE_VERSION_STRING.name] = languageVersionSting
 

@@ -111,12 +111,12 @@ object LanguageSettingsDirectives : SimpleDirectivesContainer() {
 
     fun parseApiVersion(versionString: String): ApiVersion = when (versionString) {
         "LATEST" -> ApiVersion.LATEST
-        "LATEST_STABLE" -> ApiVersion.LATEST_STABLE
+        "LATEST_STABLE" -> ApiVersion.DEFAULT
         else -> ApiVersion.parse(versionString) ?: error("Unknown API version: $versionString")
     }
 
     fun parseLanguageVersion(versionString: String): LanguageVersion = when (versionString) {
-        "LATEST_STABLE" -> LanguageVersion.LATEST_STABLE
+        "LATEST_STABLE" -> LanguageVersion.DEFAULT
         else -> LanguageVersion.fromVersionString(versionString) ?: error("Unknown language version: $versionString")
     }
 }

@@ -107,7 +107,7 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         // Compiles the library with some non-stable language version, then compiles a usage of this library with stable LV.
         // If there's no non-stable language version yet, the test does nothing.
         val someNonStableVersion =
-            LanguageVersion.entries.firstOrNull { it > languageVersion && it > LanguageVersion.LATEST_STABLE } ?: return
+            LanguageVersion.entries.firstOrNull { it > languageVersion && !it.isStable } ?: return
 
         val libraryOptions = listOf(
             "-language-version", someNonStableVersion.versionString,

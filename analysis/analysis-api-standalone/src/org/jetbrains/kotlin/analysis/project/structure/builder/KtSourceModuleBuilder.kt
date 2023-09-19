@@ -29,7 +29,7 @@ public class KtSourceModuleBuilder(
 ) : KtModuleBuilder() {
     public lateinit var moduleName: String
     public var languageVersionSettings: LanguageVersionSettings =
-        LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
+        LanguageVersionSettingsImpl(LanguageVersion.DEFAULT, ApiVersion.LATEST)
 
     private val sourceRoots: MutableList<Path> = mutableListOf()
 

@@ -13,7 +13,7 @@ abstract class AbstractIncrementalK1JvmCompilerRunnerTest : AbstractIncrementalJ
     override fun createCompilerArguments(destinationDir: File, testDir: File): K2JVMCompilerArguments =
         super.createCompilerArguments(destinationDir, testDir).apply {
             useK2 = false
-            if (LanguageVersion.LATEST_STABLE >= LanguageVersion.KOTLIN_2_0) {
+            if (LanguageVersion.DEFAULT.usesK2) {
                 languageVersion = "1.9"
             }
         }

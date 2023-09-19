@@ -74,7 +74,7 @@ abstract class AbstractDecompiledClassTest : KotlinTestWithEnvironment() {
 
     private fun getLanguageVersionToCompile(): LanguageVersion {
         return if (useK2ToCompileCode) {
-            val k2Version = maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.KOTLIN_2_0)
+            val k2Version = maxOf(LanguageVersion.DEFAULT, LanguageVersion.KOTLIN_2_0)
             check(k2Version.usesK2)
             k2Version
         } else {

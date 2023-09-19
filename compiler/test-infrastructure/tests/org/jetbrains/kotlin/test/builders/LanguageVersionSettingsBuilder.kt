@@ -28,8 +28,8 @@ class LanguageVersionSettingsBuilder {
         }
     }
 
-    var languageVersion: LanguageVersion = LanguageVersion.LATEST_STABLE
-    var apiVersion: ApiVersion = ApiVersion.LATEST_STABLE
+    var languageVersion: LanguageVersion = LanguageVersion.DEFAULT
+    var apiVersion: ApiVersion = ApiVersion.DEFAULT
 
     private val specificFeatures: MutableMap<LanguageFeature, LanguageFeature.State> = mutableMapOf()
     private val analysisFlags: MutableMap<AnalysisFlag<*>, Any?> = mutableMapOf()
@@ -59,7 +59,7 @@ class LanguageVersionSettingsBuilder {
         val apiVersion = directives.singleOrZeroValue(LanguageSettingsDirectives.API_VERSION)
         if (apiVersion != null) {
             this.apiVersion = apiVersion
-            val languageVersion = maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.fromVersionString(apiVersion.versionString)!!)
+            val languageVersion = maxOf(LanguageVersion.DEFAULT, LanguageVersion.fromVersionString(apiVersion.versionString)!!)
             this.languageVersion = languageVersion
         }
         val languageVersionDirective = directives.singleOrZeroValue(LanguageSettingsDirectives.LANGUAGE_VERSION)
@@ -93,8 +93,8 @@ class LanguageVersionSettingsBuilder {
             }
         }
         when {
-            useK2 && this.languageVersion < LanguageVersion.KOTLIN_2_0 -> this.languageVersion = LanguageVersion.LATEST_STABLE
-            !useK2 && this.languageVersion > LanguageVersion.KOTLIN_1_9 -> this.languageVersion = LanguageVersion.KOTLIN_1_9
+            useK2 && !languageVersion.usesK2 -> this.languageVersion = LanguageVersion.DEFAULT
+            !useK2 && languageVersion.usesK2 -> this.languageVersion = LanguageVersion.KOTLIN_1_9
         }
 
         val analysisFlags = listOfNotNull(

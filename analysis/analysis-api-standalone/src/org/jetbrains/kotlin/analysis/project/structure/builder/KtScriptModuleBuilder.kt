@@ -24,7 +24,7 @@ public class KtScriptModuleBuilder(
     public lateinit var file: KtFile
 
     public var languageVersionSettings: LanguageVersionSettings =
-        LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
+        LanguageVersionSettingsImpl(LanguageVersion.DEFAULT, ApiVersion.LATEST)
 
     override fun build(): KtScriptModule {
         return KtScriptModuleImpl(

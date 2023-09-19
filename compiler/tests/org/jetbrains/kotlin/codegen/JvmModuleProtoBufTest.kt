@@ -32,8 +32,8 @@ import java.io.File
 class JvmModuleProtoBufTest : KtUsefulTestCase() {
     private fun doTest(
         relativeDirectory: String,
-        compileWith: LanguageVersion = LanguageVersion.LATEST_STABLE,
-        loadWith: LanguageVersion = LanguageVersion.LATEST_STABLE,
+        compileWith: LanguageVersion = LanguageVersion.DEFAULT,
+        loadWith: LanguageVersion = LanguageVersion.DEFAULT,
         extraOptions: List<String> = emptyList()
     ) {
         val directory = KtTestUtil.getTestDataPathBase() + relativeDirectory

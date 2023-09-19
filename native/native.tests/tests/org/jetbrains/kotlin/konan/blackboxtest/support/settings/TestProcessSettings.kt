@@ -284,7 +284,7 @@ internal enum class PipelineType(val mutedOption: MutedOption, val compilerFlags
     ),
     K2(
         MutedOption.K2,
-        listOf("-language-version", if (LanguageVersion.LATEST_STABLE.major < 2) "2.0" else LanguageVersion.LATEST_STABLE.toString())
+        listOf("-language-version", if (!LanguageVersion.DEFAULT.usesK2) "2.0" else LanguageVersion.DEFAULT.toString())
     );
 
     override fun toString() = if (compilerFlags.isEmpty()) "" else compilerFlags.joinToString(prefix = "(", postfix = ")", separator = " ")

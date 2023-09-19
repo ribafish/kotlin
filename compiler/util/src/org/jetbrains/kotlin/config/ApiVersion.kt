@@ -76,6 +76,9 @@ class ApiVersion private constructor(
         val LATEST_STABLE: ApiVersion = createByLanguageVersion(LanguageVersion.LATEST_STABLE)
 
         @JvmField
+        val DEFAULT: ApiVersion = createByLanguageVersion(LanguageVersion.DEFAULT)
+
+        @JvmField
         val FIRST_SUPPORTED: ApiVersion = createByLanguageVersion(LanguageVersion.FIRST_API_SUPPORTED)
 
         @JvmField

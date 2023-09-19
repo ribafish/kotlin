@@ -13,7 +13,7 @@ abstract class AbstractIncrementalK2JvmJpsTest(
     allowNoFilesWithSuffixInTestData: Boolean = false
 ) : AbstractIncrementalJpsTest(allowNoFilesWithSuffixInTestData = allowNoFilesWithSuffixInTestData) {
     override fun updateCommandLineArguments(arguments: CommonCompilerArguments) {
-        if (LanguageVersion.LATEST_STABLE.major < 2) {
+        if (!LanguageVersion.DEFAULT.usesK2) {
             arguments.languageVersion = "2.0"
         }
         additionalCommandLineArguments = additionalCommandLineArguments + listOf("-Xuse-fir-lt=false")
