@@ -57,7 +57,7 @@ fun writeSyntheticClassMetadata(cb: ClassBuilder, state: GenerationState, public
 
 fun generateLanguageVersionSettingsBasedMetadataFlags(languageVersionSettings: LanguageVersionSettings): Int {
     var flags = 0
-    if (languageVersionSettings.isPreRelease()) {
+    if (languageVersionSettings.isPreRelease() || languageVersionSettings.languageVersion.isPseudoStable) {
         flags = flags or JvmAnnotationNames.METADATA_PRE_RELEASE_FLAG
     }
     if (languageVersionSettings.getFlag(JvmAnalysisFlags.strictMetadataVersionSemantics)) {
