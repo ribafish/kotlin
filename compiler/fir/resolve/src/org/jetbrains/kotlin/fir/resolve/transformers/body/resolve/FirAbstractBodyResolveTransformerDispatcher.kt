@@ -32,6 +32,11 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
     open val preserveCFGForClasses: Boolean get() = !implicitTypeOnly
     open val buildCfgForFiles: Boolean get() = !implicitTypeOnly
 
+    /**
+     * Required for LL FIR to provide correct declaration in the case of on-air resolution.
+     */
+    open fun <T : FirDeclaration> substituteDeclarationForContextPurposes(declaration: T): T = declaration
+
     final override val context: BodyResolveContext =
         outerBodyResolveContext ?: BodyResolveContext(returnTypeCalculator, DataFlowAnalyzerContext(session))
     final override val components: BodyResolveTransformerComponents =

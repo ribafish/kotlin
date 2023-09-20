@@ -75,7 +75,11 @@ open class FirDeclarationsResolveTransformer(
     }
 
     protected fun transformDeclarationContent(declaration: FirDeclaration, data: ResolutionMode): FirDeclaration {
-        transformer.firResolveContextCollector?.addDeclarationContext(declaration, context)
+        transformer.firResolveContextCollector?.addDeclarationContext(
+            transformer.substituteDeclarationForContextPurposes(declaration),
+            context,
+        )
+
         return transformer.transformDeclarationContent(declaration, data)
     }
 
@@ -771,7 +775,8 @@ open class FirDeclarationsResolveTransformer(
         }
 
         val containingDeclaration = context.containerIfAny
-        return context.withSimpleFunction(simpleFunction, session) {
+        val contextFunction = transformer.substituteDeclarationForContextPurposes(simpleFunction)
+        return context.withSimpleFunction(contextFunction, session) {
             // this is required to resolve annotations on functions of local classes
             if (shouldResolveEverything) {
                 simpleFunction.transformReceiverParameter(this, data)
@@ -788,7 +793,7 @@ open class FirDeclarationsResolveTransformer(
                 }
             }
 
-            context.forFunctionBody(simpleFunction, components) {
+            context.forFunctionBody(contextFunction, components) {
                 withFullBodyResolve {
                     transformFunctionWithGivenSignature(simpleFunction, shouldResolveEverything = shouldResolveEverything)
                 }
@@ -838,9 +843,10 @@ open class FirDeclarationsResolveTransformer(
         shouldResolveEverything: Boolean,
     ): FirFunction = whileAnalysing(session, function) {
         val bodyResolved = function.bodyResolved
-        dataFlowAnalyzer.enterFunction(function)
+        val contextFunction = transformer.substituteDeclarationForContextPurposes(function)
+        dataFlowAnalyzer.enterFunction(contextFunction)
 
-        transformer.firResolveContextCollector?.addDeclarationContext(function, context)
+        transformer.firResolveContextCollector?.addDeclarationContext(contextFunction, context)
         if (shouldResolveEverything) {
             // Annotations here are required only in the case of a local class member function.
             // Separate annotation transformers are responsible in the case of non-local functions.
@@ -855,7 +861,7 @@ open class FirDeclarationsResolveTransformer(
             function.transformContractDescription(this, data)
         }
 
-        val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(function)
+        val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(contextFunction)
         if (!bodyResolved) {
             function.replaceControlFlowGraphReference(controlFlowGraphReference)
         }
@@ -933,19 +939,19 @@ open class FirDeclarationsResolveTransformer(
         valueParameter: FirValueParameter,
         data: ResolutionMode
     ): FirValueParameter = whileAnalysing(session, valueParameter) {
-        dataFlowAnalyzer.enterValueParameter(valueParameter)
-        val result = context.withValueParameter(valueParameter, session) {
-            transformDeclarationContent(
-                valueParameter,
-                withExpectedType(valueParameter.returnTypeRef)
-            ) as FirValueParameter
+        val contextParameter = transformer.substituteDeclarationForContextPurposes(valueParameter)
+        dataFlowAnalyzer.enterValueParameter(contextParameter)
+
+        context.withValueParameter(contextParameter, session) {
+            val resolutionMode = withExpectedType(valueParameter.returnTypeRef)
+            transformDeclarationContent(valueParameter, resolutionMode)
         }
 
-        dataFlowAnalyzer.exitValueParameter(result)?.let { graph ->
-            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
+        dataFlowAnalyzer.exitValueParameter(contextParameter)?.let { graph ->
+            valueParameter.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
         }
 
-        return result
+        return valueParameter
     }
 
     override fun transformAnonymousFunction(

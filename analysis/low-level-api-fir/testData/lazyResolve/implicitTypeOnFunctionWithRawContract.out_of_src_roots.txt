@@ -70,40 +70,24 @@ FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithRawContract.kt
 
 IMPLICIT_TYPES_BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithRawContract.kt
-    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun foo([ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            returns#().implies#(bool#)
-        >
-     {
+    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun foo([ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
 
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithRawContract.kt
-    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun foo([ResolvedTo(ANNOTATION_ARGUMENTS)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            returns#().implies#(bool#)
-        >
-     {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun foo([ResolvedTo(ANNOTATION_ARGUMENTS)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
 
 BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithRawContract.kt
-    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            <Unresolved name: returns>#().<Unresolved name: implies>#(R|<local>/bool|)
-        >
-     {
+    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
 
 FILE RAW TO BODY:
 FILE: [ResolvedTo(BODY_RESOLVE)] implicitTypeOnFunctionWithRawContract.kt
-    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            <Unresolved name: returns>#().<Unresolved name: implies>#(R|<local>/bool|)
-        >
-     {
+    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
