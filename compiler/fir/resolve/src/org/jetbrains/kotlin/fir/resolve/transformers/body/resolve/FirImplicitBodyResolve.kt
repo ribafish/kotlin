@@ -402,7 +402,7 @@ open class ImplicitBodyResolveComputationSession {
         return transformation()
     }
 
-    internal fun <D : FirCallableDeclaration> compute(symbol: FirCallableSymbol<*>, transformation: () -> D): D {
+    fun <D : FirCallableDeclaration> compute(symbol: FirCallableSymbol<*>, transformation: () -> D): D {
         startComputing(symbol)
         val result = executeTransformation(symbol, transformation)
         storeResult(symbol, result)

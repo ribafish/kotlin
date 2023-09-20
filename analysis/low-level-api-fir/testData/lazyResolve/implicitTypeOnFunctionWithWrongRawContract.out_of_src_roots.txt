@@ -70,40 +70,24 @@ FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithWrongRawContract.kt
 
 IMPLICIT_TYPES_BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithWrongRawContract.kt
-    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun foo([ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            abc#
-        >
-     {
+    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun foo([ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
 
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithWrongRawContract.kt
-    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun foo([ResolvedTo(ANNOTATION_ARGUMENTS)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            abc#
-        >
-     {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun foo([ResolvedTo(ANNOTATION_ARGUMENTS)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
 
 BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeOnFunctionWithWrongRawContract.kt
-    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            <Unresolved name: abc>#
-        >
-     {
+    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }
 
 FILE RAW TO BODY:
 FILE: [ResolvedTo(BODY_RESOLVE)] implicitTypeOnFunctionWithWrongRawContract.kt
-    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean|
-        [Contract description] <
-            <Unresolved name: abc>#
-        >
-     {
+    public final [ResolvedTo(BODY_RESOLVE)] fun foo([ResolvedTo(BODY_RESOLVE)] bool: R|kotlin/Boolean|): R|kotlin/Boolean| {
         ^foo R|<local>/bool|
     }

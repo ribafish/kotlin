@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignation
+import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator.calculateLazyBodiesForFunction
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.forEachDependentDeclaration
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.builder.PsiRawFirBuilder
@@ -50,6 +51,19 @@ internal object FirLazyBodiesCalculator {
             FirTargetLazyBodiesCalculatorTransformer,
             designation.path.toPersistentList(),
         )
+    }
+
+    fun calculateLazyBodiesForFunction(designation: FirDesignation, target: FirSimpleFunction) {
+        val simpleFunction = designation.target as FirSimpleFunction
+        if (simpleFunction === target) {
+            require(needCalculatingLazyBodyForFunction(target))
+        }
+
+        val newSimpleFunction = revive<FirSimpleFunction>(designation, simpleFunction.unwrapFakeOverridesOrDelegated().psi)
+
+        replaceLazyContractDescription(target, newSimpleFunction)
+        replaceLazyBody(target, newSimpleFunction)
+        replaceLazyValueParameters(target, newSimpleFunction)
     }
 
     fun calculateAllLazyExpressionsInFile(firFile: FirFile) {
@@ -169,17 +183,6 @@ private fun replaceLazyDelegate(target: FirVariable, copy: FirVariable) {
     if (target.delegate is FirLazyExpression) {
         target.replaceDelegate(copy.delegate)
     }
-}
-
-private fun calculateLazyBodiesForFunction(designation: FirDesignation) {
-    val simpleFunction = designation.target as FirSimpleFunction
-    require(needCalculatingLazyBodyForFunction(simpleFunction))
-
-    val newSimpleFunction = revive<FirSimpleFunction>(designation, simpleFunction.unwrapFakeOverridesOrDelegated().psi)
-
-    replaceLazyContractDescription(simpleFunction, newSimpleFunction)
-    replaceLazyBody(simpleFunction, newSimpleFunction)
-    replaceLazyValueParameters(simpleFunction, newSimpleFunction)
 }
 
 private fun calculateLazyBodyForConstructor(designation: FirDesignation) {
@@ -794,7 +797,7 @@ private abstract class FirLazyBodiesCalculatorTransformer : FirTransformer<Persi
     ): FirSimpleFunction {
         if (needCalculatingLazyBodyForFunction(simpleFunction)) {
             val designation = FirDesignation(data, simpleFunction)
-            calculateLazyBodiesForFunction(designation)
+            calculateLazyBodiesForFunction(designation, simpleFunction)
         }
 
         return simpleFunction
