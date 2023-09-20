@@ -176,7 +176,7 @@ internal class KtFirMetadataCalculator(override val analysisSession: KtFirAnalys
             data1 = JvmProtoBufUtil.writeData(message, stringTable),
             data2 = stringTable.strings.toTypedArray(),
             extraInt = FirJvmBackendExtension.generateMetadataExtraFlags(JvmAbiStability.STABLE) or
-                    generateLanguageVersionSettingsBasedMetadataFlags(firSession.languageVersionSettings)
+                    generateLanguageVersionSettingsBasedMetadataFlags(firSession.languageVersionSettings, JvmAbiStability.STABLE)
         )
 }
 
