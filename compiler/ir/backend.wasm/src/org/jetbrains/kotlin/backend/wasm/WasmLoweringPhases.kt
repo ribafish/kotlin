@@ -599,6 +599,12 @@ private val unhandledExceptionLowering = makeWasmModulePhase(
     description = "Wrap JsExport functions with try-catch to convert unhandled Wasm exception into Js exception",
 )
 
+private val coroutineEventLoopLowering = makeWasmModulePhase(
+    ::CoroutineEventLoopLowering,
+    name = "CoroutineEventLoopLowering",
+    description = "This pass needed to call coroutines event loop run after exported functions calls for WASI",
+)
+
 private val propertyAccessorInlinerLoweringPhase = makeWasmModulePhase(
     ::PropertyAccessorInlineLowering,
     name = "PropertyAccessorInlineLowering",
@@ -700,6 +706,7 @@ val wasmPhases = SameTypeNamedCompilerPhase(
             addMainFunctionCallsLowering then
 
             unhandledExceptionLowering then
+            coroutineEventLoopLowering then
 
             tryCatchCanonicalization then
 

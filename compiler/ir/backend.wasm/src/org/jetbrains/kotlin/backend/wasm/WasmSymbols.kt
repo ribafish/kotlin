@@ -372,6 +372,15 @@ class WasmSymbols(
 
     val jsRelatedSymbols get() = jsRelatedSymbolsIfNonWasi ?: error("Cannot access to js related std in wasi mode")
 
+
+    private val processCoroutineEventsIfWasi =
+        when (context.configuration.get(JSConfigurationKeys.WASM_TARGET, WasmTarget.JS) == WasmTarget.WASI) {
+            true -> getFunction("processCoroutineEvents", context.module.getPackage(FqName("coroutines")))
+            else -> null
+        }
+
+    val processCoroutineEvents get() = processCoroutineEventsIfWasi ?: error("Cannot access to wasi related std in js mode")
+
     private fun findClass(memberScope: MemberScope, name: Name): ClassDescriptor =
         memberScope.getContributedClassifier(name, NoLookupLocation.FROM_BACKEND) as ClassDescriptor
 
