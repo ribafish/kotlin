@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignation
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator.calculateLazyBodiesForFunction
+import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator.calculateLazyBodyForProperty
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.builder.PsiRawFirBuilder
 import org.jetbrains.kotlin.fir.contracts.FirRawContractDescription
@@ -46,6 +47,35 @@ internal object FirLazyBodiesCalculator {
         replaceLazyContractDescription(target, newSimpleFunction)
         replaceLazyBody(target, newSimpleFunction)
         replaceLazyValueParameters(target, newSimpleFunction)
+    }
+
+    fun calculateLazyBodyForProperty(designation: FirDesignation, target: FirProperty) {
+        val firProperty = designation.target as FirProperty
+        if (firProperty === target) {
+            require(needCalculatingLazyBodyForProperty(target))
+        }
+
+        val newProperty = revive<FirProperty>(designation, firProperty.unwrapFakeOverridesOrDelegated().psi)
+
+        target.getter?.let { getter ->
+            val newGetter = newProperty.getter!!
+            replaceLazyContractDescription(getter, newGetter)
+            replaceLazyBody(getter, newGetter)
+        }
+
+        target.setter?.let { setter ->
+            val newSetter = newProperty.setter!!
+            replaceLazyContractDescription(setter, newSetter)
+            replaceLazyBody(setter, newSetter)
+        }
+
+        replaceLazyInitializer(target, newProperty)
+        replaceLazyDelegate(target, newProperty)
+
+        target.backingField?.let { backingField ->
+            val newBackingField = newProperty.backingField!!
+            replaceLazyInitializer(backingField, newBackingField)
+        }
     }
 
     fun calculateAllLazyExpressionsInFile(firFile: FirFile) {
@@ -179,33 +209,6 @@ private fun calculateLazyBodyForConstructor(designation: FirDesignation) {
     replaceLazyValueParameters(constructor, newConstructor)
 }
 
-private fun calculateLazyBodyForProperty(designation: FirDesignation) {
-    val firProperty = designation.target as FirProperty
-    if (!needCalculatingLazyBodyForProperty(firProperty)) return
-
-    val newProperty = revive<FirProperty>(designation, firProperty.unwrapFakeOverridesOrDelegated().psi)
-
-    firProperty.getter?.let { getter ->
-        val newGetter = newProperty.getter!!
-        replaceLazyContractDescription(getter, newGetter)
-        replaceLazyBody(getter, newGetter)
-    }
-
-    firProperty.setter?.let { setter ->
-        val newSetter = newProperty.setter!!
-        replaceLazyContractDescription(setter, newSetter)
-        replaceLazyBody(setter, newSetter)
-    }
-
-    replaceLazyInitializer(firProperty, newProperty)
-    replaceLazyDelegate(firProperty, newProperty)
-
-    firProperty.getExplicitBackingField()?.let { backingField ->
-        val newBackingField = newProperty.getExplicitBackingField()!!
-        replaceLazyInitializer(backingField, newBackingField)
-    }
-}
-
 private fun calculateLazyInitializerForEnumEntry(designation: FirDesignation) {
     val enumEntry = designation.target as FirEnumEntry
     require(enumEntry.initializer is FirLazyExpression)
@@ -265,7 +268,7 @@ private fun needCalculatingLazyBodyForProperty(firProperty: FirProperty): Boolea
             || firProperty.setter?.let { needCalculatingLazyBodyForFunction(it) } == true
             || firProperty.initializer is FirLazyExpression
             || firProperty.delegate is FirLazyExpression
-            || firProperty.getExplicitBackingField()?.initializer is FirLazyExpression
+            || firProperty.backingField?.initializer is FirLazyExpression
 
 private fun calculateLazyBodyForCodeFragment(designation: FirDesignation) {
     val codeFragment = designation.target as FirCodeFragment
@@ -461,7 +464,7 @@ private abstract class FirLazyBodiesCalculatorTransformer : FirTransformer<Persi
     override fun transformProperty(property: FirProperty, data: PersistentList<FirRegularClass>): FirProperty {
         if (needCalculatingLazyBodyForProperty(property)) {
             val designation = FirDesignation(data, property)
-            calculateLazyBodyForProperty(designation)
+            calculateLazyBodyForProperty(designation, property)
         }
 
         return property

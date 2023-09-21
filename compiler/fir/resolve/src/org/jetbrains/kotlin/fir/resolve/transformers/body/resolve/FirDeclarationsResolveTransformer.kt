@@ -145,12 +145,13 @@ open class FirDeclarationsResolveTransformer(
         val bodyResolveState = property.bodyResolveState
         return withFullBodyResolve {
             val initializerIsAlreadyResolved = bodyResolveState >= FirPropertyBodyResolveState.INITIALIZER_RESOLVED
+            val contextProperty = transformer.substituteDeclarationForContextPurposes(property)
             if (!initializerIsAlreadyResolved) {
-                dataFlowAnalyzer.enterProperty(property)
+                dataFlowAnalyzer.enterProperty(contextProperty)
             }
 
             var backingFieldIsAlreadyResolved = false
-            context.withProperty(property) {
+            context.withProperty(contextProperty) {
                 context.forPropertyInitializer {
                     if (!initializerIsAlreadyResolved) {
                         val resolutionMode = withExpectedType(returnTypeRefBeforeResolve)
@@ -231,7 +232,7 @@ open class FirDeclarationsResolveTransformer(
                     }
                 }
 
-                dataFlowAnalyzer.exitProperty(property)?.let {
+                dataFlowAnalyzer.exitProperty(contextProperty)?.let {
                     property.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(it))
                 }
             }
@@ -309,7 +310,11 @@ open class FirDeclarationsResolveTransformer(
     ) {
         val isImplicitTypedProperty = property.returnTypeRef is FirImplicitTypeRef
 
-        context.forPropertyDelegateAccessors(property, resolutionContext, callCompleter) {
+        context.forPropertyDelegateAccessors(
+            transformer.substituteDeclarationForContextPurposes(property),
+            resolutionContext,
+            callCompleter,
+        ) {
             dataFlowAnalyzer.enterDelegateExpression()
             // Resolve delegate expression, after that, delegate will contain either expr.provideDelegate or expr
             if (property.isLocal) {
@@ -600,7 +605,11 @@ open class FirDeclarationsResolveTransformer(
         owner: FirProperty,
         shouldResolveEverything: Boolean,
     ): Unit = whileAnalysing(session, accessor) {
-        context.withPropertyAccessor(owner, accessor, components) {
+        context.withPropertyAccessor(
+            transformer.substituteDeclarationForContextPurposes(owner),
+            transformer.substituteDeclarationForContextPurposes(accessor),
+            components
+        ) {
             val propertyTypeRef = owner.returnTypeRef
 
             // Currently, this condition might only be true for delegates, because if type is set explicitly for the property,
@@ -1228,7 +1237,7 @@ open class FirDeclarationsResolveTransformer(
                         val expectedType = it.toExpectedTypeRef()
                         expectedType.approximateDeclarationType(session, variable.visibilityForApproximation(), variable.isLocal)
                     } ?: buildErrorTypeRef {
-                        diagnostic = ConeLocalVariableNoTypeOrInitializer(variable)
+                        diagnostic = ConeLocalVariableNoTypeOrInitializer(transformer.substituteDeclarationForContextPurposes(variable))
                         source = variable.source
                     }
                 )
