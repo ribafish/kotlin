@@ -247,6 +247,10 @@ object BuilderConfigurator : AbstractFirBuilderConfigurator<FirTreeBuilder>(FirT
             withCopy()
         }
 
+        builder(backingField) {
+            withCopy()
+        }
+
         builder(field) {
             parents += variableBuilder
             default("resolvePhase", "FirResolvePhase.DECLARATIONS")
@@ -339,6 +343,7 @@ object BuilderConfigurator : AbstractFirBuilderConfigurator<FirTreeBuilder>(FirT
             defaultNull("defaultValue", "initializer", "delegate", "receiverParameter", "getter", "setter")
             defaultFalse("isCrossinline", "isNoinline", "isVararg", "isVar")
             defaultTrue("isVal")
+            withCopy()
         }
 
         builder(simpleFunction) {

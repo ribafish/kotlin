@@ -93,3 +93,37 @@ inline fun buildDefaultSetterValueParameter(init: FirDefaultSetterValueParameter
     }
     return FirDefaultSetterValueParameterBuilder().apply(init).build()
 }
+
+@OptIn(ExperimentalContracts::class)
+inline fun buildDefaultSetterValueParameterCopy(original: FirValueParameter, init: FirDefaultSetterValueParameterBuilder.() -> Unit): FirValueParameter {
+    contract {
+        callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+    }
+    val copyBuilder = FirDefaultSetterValueParameterBuilder()
+    copyBuilder.source = original.source
+    copyBuilder.resolvePhase = original.resolvePhase
+    copyBuilder.moduleData = original.moduleData
+    copyBuilder.origin = original.origin
+    copyBuilder.attributes = original.attributes.copy()
+    copyBuilder.returnTypeRef = original.returnTypeRef
+    copyBuilder.receiverParameter = original.receiverParameter
+    copyBuilder.deprecationsProvider = original.deprecationsProvider
+    copyBuilder.containerSource = original.containerSource
+    copyBuilder.dispatchReceiverType = original.dispatchReceiverType
+    copyBuilder.contextReceivers.addAll(original.contextReceivers)
+    copyBuilder.initializer = original.initializer
+    copyBuilder.delegate = original.delegate
+    copyBuilder.isVar = original.isVar
+    copyBuilder.isVal = original.isVal
+    copyBuilder.getter = original.getter
+    copyBuilder.setter = original.setter
+    copyBuilder.backingField = original.backingField
+    copyBuilder.annotations.addAll(original.annotations)
+    copyBuilder.symbol = original.symbol
+    copyBuilder.defaultValue = original.defaultValue
+    copyBuilder.containingFunctionSymbol = original.containingFunctionSymbol
+    copyBuilder.isCrossinline = original.isCrossinline
+    copyBuilder.isNoinline = original.isNoinline
+    copyBuilder.isVararg = original.isVararg
+    return copyBuilder.apply(init).build()
+}

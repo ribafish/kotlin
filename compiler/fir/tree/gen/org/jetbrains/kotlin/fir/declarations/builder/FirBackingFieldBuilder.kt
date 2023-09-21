@@ -94,3 +94,36 @@ inline fun buildBackingField(init: FirBackingFieldBuilder.() -> Unit): FirBackin
     }
     return FirBackingFieldBuilder().apply(init).build()
 }
+
+@OptIn(ExperimentalContracts::class)
+inline fun buildBackingFieldCopy(original: FirBackingField, init: FirBackingFieldBuilder.() -> Unit): FirBackingField {
+    contract {
+        callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+    }
+    val copyBuilder = FirBackingFieldBuilder()
+    copyBuilder.source = original.source
+    copyBuilder.resolvePhase = original.resolvePhase
+    copyBuilder.moduleData = original.moduleData
+    copyBuilder.origin = original.origin
+    copyBuilder.attributes = original.attributes.copy()
+    copyBuilder.returnTypeRef = original.returnTypeRef
+    copyBuilder.receiverParameter = original.receiverParameter
+    copyBuilder.deprecationsProvider = original.deprecationsProvider
+    copyBuilder.containerSource = original.containerSource
+    copyBuilder.dispatchReceiverType = original.dispatchReceiverType
+    copyBuilder.contextReceivers.addAll(original.contextReceivers)
+    copyBuilder.name = original.name
+    copyBuilder.delegate = original.delegate
+    copyBuilder.isVar = original.isVar
+    copyBuilder.isVal = original.isVal
+    copyBuilder.getter = original.getter
+    copyBuilder.setter = original.setter
+    copyBuilder.backingField = original.backingField
+    copyBuilder.symbol = original.symbol
+    copyBuilder.propertySymbol = original.propertySymbol
+    copyBuilder.initializer = original.initializer
+    copyBuilder.annotations.addAll(original.annotations)
+    copyBuilder.typeParameters.addAll(original.typeParameters)
+    copyBuilder.status = original.status
+    return copyBuilder.apply(init).build()
+}
