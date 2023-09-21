@@ -42,9 +42,7 @@ internal class LLFirReturnTypeCalculatorWithJump(
             llImplicitBodyResolveComputationSessionParameter = implicitBodyResolveComputationSession as LLImplicitBodyResolveComputationSession,
         )
 
-        lockProvider.withGlobalPhaseLock(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
-            resolver.resolveDesignation()
-        }
+        resolver.resolveDesignation()
 
         LLFirImplicitTypesLazyResolver.checkIsResolved(designation)
         return declaration.returnTypeRef as FirResolvedTypeRef
