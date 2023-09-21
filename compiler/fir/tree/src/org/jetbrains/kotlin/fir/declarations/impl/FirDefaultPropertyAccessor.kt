@@ -85,13 +85,24 @@ abstract class FirDefaultPropertyAccessor(
             propertySymbol: FirPropertySymbol,
             isGetter: Boolean,
             parameterAnnotations: List<FirAnnotation> = emptyList(),
+            resolvePhase: FirResolvePhase = FirResolvePhase.RAW_FIR,
         ): FirDefaultPropertyAccessor {
             return if (isGetter) {
-                FirDefaultPropertyGetter(source, moduleData, origin, propertyTypeRef, visibility, propertySymbol, Modality.FINAL)
+                FirDefaultPropertyGetter(
+                    source,
+                    moduleData,
+                    origin,
+                    propertyTypeRef,
+                    visibility,
+                    propertySymbol,
+                    Modality.FINAL,
+                    resolvePhase = resolvePhase,
+                )
             } else {
                 FirDefaultPropertySetter(
                     source, moduleData, origin, propertyTypeRef, visibility, propertySymbol, Modality.FINAL,
-                    parameterAnnotations = parameterAnnotations
+                    parameterAnnotations = parameterAnnotations,
+                    resolvePhase = resolvePhase,
                 )
             }
         }

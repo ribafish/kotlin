@@ -134,6 +134,11 @@ open class FirImplicitAwareBodyResolveTransformer(
         return outerTransformer?.transformForeignAnnotationCall(symbol, annotationCall) ?: annotationCall
     }
 
+    override fun <T : FirDeclaration> substituteDeclarationForContextPurposes(declaration: T): T {
+        val outerTransformer = (returnTypeCalculator as ReturnTypeCalculatorWithJump).outerTransformer
+        return outerTransformer?.substituteDeclarationForContextPurposes(declaration) ?: declaration
+    }
+
     /**
      * This is required to avoid transformations of class annotations
      */

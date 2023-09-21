@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.getExplicitBackingField
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildLazyDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildMultiDelegatedConstructorCall
@@ -489,7 +488,7 @@ private val FirVariable.delegateIfUnresolved: FirExpression?
     }
 
 private val FirProperty.backingFieldIfUnresolved: FirBackingField?
-    get() = if (bodyResolveState < FirPropertyBodyResolveState.INITIALIZER_RESOLVED) getExplicitBackingField() else null
+    get() = if (bodyResolveState < FirPropertyBodyResolveState.INITIALIZER_RESOLVED) backingField else null
 
 private val FirProperty.getterIfUnresolved: FirPropertyAccessor?
     get() = if (bodyResolveState < FirPropertyBodyResolveState.INITIALIZER_AND_GETTER_RESOLVED) getter else null

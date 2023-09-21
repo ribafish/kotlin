@@ -12,6 +12,8 @@ import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignation
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator.calculateLazyBodiesForFunction
+import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator.calculateLazyBodyForProperty
+import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator.rebindArgumentList
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.forEachDependentDeclaration
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.builder.PsiRawFirBuilder
@@ -64,6 +66,94 @@ internal object FirLazyBodiesCalculator {
         replaceLazyContractDescription(target, newSimpleFunction)
         replaceLazyBody(target, newSimpleFunction)
         replaceLazyValueParameters(target, newSimpleFunction)
+    }
+
+    fun calculateLazyBodyForProperty(designation: FirDesignation, target: FirProperty) {
+        val firProperty = designation.target as FirProperty
+        if (firProperty === target) {
+            require(needCalculatingLazyBodyForProperty(target))
+        }
+
+        val recreatedProperty = revive<FirProperty>(designation, firProperty.unwrapFakeOverridesOrDelegated().psi)
+
+        target.getter?.let { getter ->
+            val recreatedGetter = recreatedProperty.getter!!
+            replaceLazyContractDescription(getter, recreatedGetter)
+            replaceLazyBody(getter, recreatedGetter)
+            rebindDelegatedAccessorBody(newTarget = getter, oldTarget = recreatedGetter)
+        }
+
+        target.setter?.let { setter ->
+            val recreatedSetter = recreatedProperty.setter!!
+            replaceLazyContractDescription(setter, recreatedSetter)
+            replaceLazyBody(setter, recreatedSetter)
+            rebindDelegatedAccessorBody(newTarget = setter, oldTarget = recreatedSetter)
+        }
+
+        replaceLazyInitializer(target, recreatedProperty)
+        replaceLazyDelegate(target, recreatedProperty)
+        rebindDelegate(newTarget = target, oldTarget = recreatedProperty)
+
+        target.getExplicitBackingField()?.let { backingField ->
+            val newBackingField = recreatedProperty.getExplicitBackingField()!!
+            replaceLazyInitializer(backingField, newBackingField)
+        }
+    }
+
+    /**
+     * This function is required to correctly rebind symbols
+     * after [generateAccessorsByDelegate][org.jetbrains.kotlin.fir.builder.generateAccessorsByDelegate]
+     * for correct work
+     *
+     * @see org.jetbrains.kotlin.fir.builder.generateAccessorsByDelegate
+     * @see rebindDelegate
+     */
+    fun rebindDelegatedAccessorBody(newTarget: FirPropertyAccessor, oldTarget: FirPropertyAccessor) {
+        if (newTarget.source?.kind != KtFakeSourceElementKind.DelegatedPropertyAccessor) return
+        val body = newTarget.body
+        requireWithAttachment(
+            body is FirSingleExpressionBlock,
+            { "Unexpected body for generated accessor ${body?.let { it::class.simpleName }}" },
+        ) {
+            withFirSymbolEntry("newTarget", newTarget.propertySymbol)
+            withFirSymbolEntry("oldTarget", oldTarget.propertySymbol)
+            body?.let { withFirEntry("body", it) } ?: withEntry("body", "null")
+        }
+
+        val returnExpression = body.statement
+        rebindReturnExpression(returnExpression = returnExpression, newTarget = newTarget, oldTarget = oldTarget)
+    }
+
+    fun rebindArgumentList(
+        argumentList: FirArgumentList,
+        newTarget: FirPropertySymbol,
+        oldTarget: FirPropertySymbol,
+        isSetter: Boolean,
+        canHavePropertySymbolAsThisReference: Boolean,
+    ) {
+        val arguments = argumentList.arguments
+        val expectedSize = 2 + if (isSetter) 1 else 0
+        requireWithAttachment(
+            arguments.size == expectedSize,
+            { "Unexpected arguments size. Expected: $expectedSize, actual: ${arguments.size}" },
+        ) {
+            withFirSymbolEntry("newTarget", newTarget)
+            withFirSymbolEntry("oldTarget", oldTarget)
+            withFirEntry("expression", argumentList)
+        }
+
+        rebindThisRef(
+            expression = arguments[0],
+            newTarget = newTarget,
+            oldTarget = oldTarget,
+            canHavePropertySymbolAsThisReference = canHavePropertySymbolAsThisReference,
+        )
+
+        rebindPropertyRef(expression = arguments[1], newPropertySymbol = newTarget, oldPropertySymbol = oldTarget)
+
+        if (isSetter) {
+            rebindSetterParameter(expression = arguments[2], newPropertySymbol = newTarget, oldPropertySymbol = oldTarget)
+        }
     }
 
     fun calculateAllLazyExpressionsInFile(firFile: FirFile) {
@@ -197,36 +287,6 @@ private fun calculateLazyBodyForConstructor(designation: FirDesignation) {
     replaceLazyValueParameters(constructor, newConstructor)
 }
 
-private fun calculateLazyBodyForProperty(designation: FirDesignation) {
-    val firProperty = designation.target as FirProperty
-    if (!needCalculatingLazyBodyForProperty(firProperty)) return
-
-    val recreatedProperty = revive<FirProperty>(designation, firProperty.unwrapFakeOverridesOrDelegated().psi)
-
-    firProperty.getter?.let { getter ->
-        val recreatedGetter = recreatedProperty.getter!!
-        replaceLazyContractDescription(getter, recreatedGetter)
-        replaceLazyBody(getter, recreatedGetter)
-        rebindDelegatedAccessorBody(newTarget = getter, oldTarget = recreatedGetter)
-    }
-
-    firProperty.setter?.let { setter ->
-        val recreatedSetter = recreatedProperty.setter!!
-        replaceLazyContractDescription(setter, recreatedSetter)
-        replaceLazyBody(setter, recreatedSetter)
-        rebindDelegatedAccessorBody(newTarget = setter, oldTarget = recreatedSetter)
-    }
-
-    replaceLazyInitializer(firProperty, recreatedProperty)
-    replaceLazyDelegate(firProperty, recreatedProperty)
-    rebindDelegate(newTarget = firProperty, oldTarget = recreatedProperty)
-
-    firProperty.getExplicitBackingField()?.let { backingField ->
-        val newBackingField = recreatedProperty.getExplicitBackingField()!!
-        replaceLazyInitializer(backingField, newBackingField)
-    }
-}
-
 /**
  * This function is required to correctly rebind symbols
  * after [generateAccessorsByDelegate][org.jetbrains.kotlin.fir.builder.generateAccessorsByDelegate]
@@ -262,30 +322,6 @@ private fun rebindDelegate(newTarget: FirProperty, oldTarget: FirProperty) {
         isSetter = false,
         canHavePropertySymbolAsThisReference = false,
     )
-}
-
-/**
- * This function is required to correctly rebind symbols
- * after [generateAccessorsByDelegate][org.jetbrains.kotlin.fir.builder.generateAccessorsByDelegate]
- * for correct work
- *
- * @see org.jetbrains.kotlin.fir.builder.generateAccessorsByDelegate
- * @see rebindDelegate
- */
-private fun rebindDelegatedAccessorBody(newTarget: FirPropertyAccessor, oldTarget: FirPropertyAccessor) {
-    if (newTarget.source?.kind != KtFakeSourceElementKind.DelegatedPropertyAccessor) return
-    val body = newTarget.body
-    requireWithAttachment(
-        body is FirSingleExpressionBlock,
-        { "Unexpected body for generated accessor ${body?.let { it::class.simpleName }}" },
-    ) {
-        withFirSymbolEntry("newTarget", newTarget.propertySymbol)
-        withFirSymbolEntry("oldTarget", oldTarget.propertySymbol)
-        body?.let { withFirEntry("body", it) } ?: withEntry("body", "null")
-    }
-
-    val returnExpression = body.statement
-    rebindReturnExpression(returnExpression = returnExpression, newTarget = newTarget, oldTarget = oldTarget)
 }
 
 private fun rebindReturnExpression(returnExpression: FirStatement, newTarget: FirPropertyAccessor, oldTarget: FirPropertyAccessor) {
@@ -363,38 +399,6 @@ private fun rebindThisRef(
     expression.replaceCalleeReference(buildImplicitThisReference {
         this.boundSymbol = newTarget
     })
-}
-
-private fun rebindArgumentList(
-    argumentList: FirArgumentList,
-    newTarget: FirPropertySymbol,
-    oldTarget: FirPropertySymbol,
-    isSetter: Boolean,
-    canHavePropertySymbolAsThisReference: Boolean,
-) {
-    val arguments = argumentList.arguments
-    val expectedSize = 2 + if (isSetter) 1 else 0
-    requireWithAttachment(
-        arguments.size == expectedSize,
-        { "Unexpected arguments size. Expected: $expectedSize, actual: ${arguments.size}" },
-    ) {
-        withFirSymbolEntry("newTarget", newTarget)
-        withFirSymbolEntry("oldTarget", oldTarget)
-        withFirEntry("expression", argumentList)
-    }
-
-    rebindThisRef(
-        expression = arguments[0],
-        newTarget = newTarget,
-        oldTarget = oldTarget,
-        canHavePropertySymbolAsThisReference = canHavePropertySymbolAsThisReference,
-    )
-
-    rebindPropertyRef(expression = arguments[1], newPropertySymbol = newTarget, oldPropertySymbol = oldTarget)
-
-    if (isSetter) {
-        rebindSetterParameter(expression = arguments[2], newPropertySymbol = newTarget, oldPropertySymbol = oldTarget)
-    }
 }
 
 /**
@@ -611,7 +615,7 @@ private fun needCalculatingLazyBodyForProperty(firProperty: FirProperty): Boolea
             || firProperty.setter?.let { needCalculatingLazyBodyForFunction(it) } == true
             || firProperty.initializer is FirLazyExpression
             || firProperty.delegate is FirLazyExpression
-            || firProperty.getExplicitBackingField()?.initializer is FirLazyExpression
+            || firProperty.backingField?.initializer is FirLazyExpression
 
 private fun calculateLazyBodyForCodeFragment(designation: FirDesignation) {
     val codeFragment = designation.target as FirCodeFragment
@@ -823,7 +827,7 @@ private abstract class FirLazyBodiesCalculatorTransformer : FirTransformer<Persi
     override fun transformProperty(property: FirProperty, data: PersistentList<FirRegularClass>): FirProperty {
         if (needCalculatingLazyBodyForProperty(property)) {
             val designation = FirDesignation(data, property)
-            calculateLazyBodyForProperty(designation)
+            calculateLazyBodyForProperty(designation, property)
         }
 
         return property
