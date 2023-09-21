@@ -5,50 +5,18 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder
 
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirLazyResolveContractChecker
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.lockWithPCECheck
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.declarations.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
-import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Keyed locks provider.
  */
 internal class LLFirLockProvider(private val checker: LLFirLazyResolveContractChecker) {
-    private val globalLock = ReentrantLock()
-
-    private val implicitTypesLock = ReentrantLock()
-
-    inline fun <R> withGlobalLock(
-        lockingIntervalMs: Long = DEFAULT_LOCKING_INTERVAL,
-        action: () -> R,
-    ): R {
-        if (!globalLockEnabled) return action()
-
-        return globalLock.lockWithPCECheck(lockingIntervalMs, action)
-    }
-
-    fun withGlobalPhaseLock(
-        phase: FirResolvePhase,
-        action: () -> Unit,
-    ) {
-        val lock = when (phase) {
-            FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE -> implicitTypesLock
-            else -> null
-        }
-
-        if (lock == null) {
-            action()
-        } else {
-            lock.lockWithPCECheck(DEFAULT_LOCKING_INTERVAL, action)
-        }
-    }
-
     /**
      * A contract violation check to be sure that we won't request a violated phase later.
      * This is useful to catch a contract violation for jumping phases because they may encounter infinite recursion.
@@ -234,9 +202,5 @@ private val resolveStateFieldUpdater = AtomicReferenceFieldUpdater.newUpdater(
     FirResolveState::class.java,
     "resolveState"
 )
-
-private val globalLockEnabled: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    Registry.`is`("kotlin.parallel.resolve.under.global.lock", false)
-}
 
 private const val DEFAULT_LOCKING_INTERVAL = 50L
