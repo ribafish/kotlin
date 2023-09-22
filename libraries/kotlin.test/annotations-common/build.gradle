@@ -9,6 +9,15 @@ dependencies {
     testApi project(":kotlin-test:kotlin-test-common")
 }
 
+sourceSets {
+    if (BuildPropertiesKt.getKotlinBuildProperties(project).inIdeaSync) {
+        main {
+            kotlin.srcDirs = []
+            java.srcDirs = []
+        }
+    }
+}
+
 tasks.withType(org.jetbrains.kotlin.gradle.dsl.KotlinCompile) {
     kotlinOptions.freeCompilerArgs += [
         "-Xallow-kotlin-package",

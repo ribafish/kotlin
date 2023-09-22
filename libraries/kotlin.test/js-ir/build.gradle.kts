@@ -31,6 +31,7 @@ kotlin {
         nodejs()
     }
 
+    if (!kotlinBuildProperties.isInIdeaSync)
     sourceSets {
         named("commonMain") {
             dependencies {
