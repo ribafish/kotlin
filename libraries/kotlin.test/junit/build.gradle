@@ -10,6 +10,18 @@ sourceSets {
     if (includeJava9) {
         java9
     }
+    if (BuildPropertiesKt.getKotlinBuildProperties(project).inIdeaSync) {
+        main {
+            kotlin.srcDirs = []
+            java.srcDirs = []
+            resources.srcDirs = []
+        }
+        test {
+            kotlin.srcDirs = []
+            java.srcDirs = []
+            resources.srcDirs = []
+        }
+    }
 }
 
 dependencies {

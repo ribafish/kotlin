@@ -63,6 +63,7 @@ fun Project.configureWasmKotlinTest(
 
             sourceSets.named("wasmMain") {
                 dependsOn(commonWasm)
+                if (!kotlinBuildProperties.isInIdeaSync)
                 kotlin.srcDir(targetSourceDir)
             }
         }
