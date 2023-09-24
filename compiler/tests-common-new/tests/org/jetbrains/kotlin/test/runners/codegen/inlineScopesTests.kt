@@ -8,13 +8,6 @@ package org.jetbrains.kotlin.test.runners.codegen
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 
-open class AbstractBlackBoxInlineCodegenTestWithInlineScopes : AbstractBlackBoxInlineCodegenTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-    }
-}
-
 open class AbstractIrBlackBoxInlineCodegenWithBytecodeInlinerTestWithInlineScopes :
     AbstractIrBlackBoxInlineCodegenWithBytecodeInlinerTest() {
     override fun configure(builder: TestConfigurationBuilder) {
@@ -24,13 +17,6 @@ open class AbstractIrBlackBoxInlineCodegenWithBytecodeInlinerTestWithInlineScope
 }
 
 open class AbstractIrBlackBoxInlineCodegenWithIrInlinerTestWithInlineScopes : AbstractIrBlackBoxInlineCodegenWithIrInlinerTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-    }
-}
-
-open class AbstractBlackBoxCodegenTestWithInlineScopes : AbstractBlackBoxCodegenTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineScopesNumbers()
@@ -155,15 +141,6 @@ open class AbstractJvmOldAgainstIrBoxInlineTestWithInlineScopes : AbstractJvmOld
 }
 
 open class AbstractJvmOldAgainstIrBoxTestWithInlineScopes : AbstractJvmOldAgainstIrBoxTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-    }
-}
-
-open class AbstractLocalVariableTestWithInlineScopes : AbstractLocalVariableTest() {
-    override val targetBackend = TargetBackend.JVM_WITH_INLINE_SCOPES
-
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineScopesNumbers()
