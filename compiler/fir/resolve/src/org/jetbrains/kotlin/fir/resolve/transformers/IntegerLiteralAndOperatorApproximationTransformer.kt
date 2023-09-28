@@ -123,6 +123,7 @@ class IntegerLiteralAndOperatorApproximationTransformer(
             explicitReceiver = call
             dispatchReceiver = call
             this.calleeReference = buildResolvedNamedReference {
+                source = this@buildFunctionCall.source
                 if (operatorType.isUnsigned) {
                     name = TO_U_LONG
                     resolvedSymbol = toULongSymbol
