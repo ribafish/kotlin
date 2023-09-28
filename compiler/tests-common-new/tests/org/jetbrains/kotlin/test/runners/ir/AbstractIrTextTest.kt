@@ -104,7 +104,7 @@ abstract class AbstractIrTextTest<FrontendOutput : ResultingArtifact.FrontendOut
         }
     }
 
-    protected fun TestConfigurationBuilder.commonConfigurationForK2(parser: FirParser) {
+    protected open fun TestConfigurationBuilder.commonConfigurationForK2(parser: FirParser) {
         configureFirParser(parser)
         useAfterAnalysisCheckers(
             ::FirIrDumpIdenticalChecker,
