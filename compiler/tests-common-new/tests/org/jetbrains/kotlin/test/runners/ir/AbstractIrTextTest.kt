@@ -90,6 +90,10 @@ abstract class AbstractIrTextTest<FrontendOutput : ResultingArtifact.FrontendOut
 
         facadeStep(converter)
 
+        irHandlersStep()
+    }
+
+    protected open fun TestConfigurationBuilder.irHandlersStep() {
         irHandlersStep {
             useHandlers(
                 ::IrTextDumpHandler,
