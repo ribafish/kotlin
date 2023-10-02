@@ -67,10 +67,10 @@ fun box(): String {
     val myContainer: MyContainer = MyContainer(s = "fail")
     myContainer.set($context_receiver_0 = $this$with, index = 0, value = "OK")
     return { // BLOCK
-      val <elvis>: String? = myContainer.get($context_receiver_0 = $this$with, index = 0)
+      val tmp0_elvis_lhs: String? = myContainer.get($context_receiver_0 = $this$with, index = 0)
       when {
-        EQEQ(arg0 = <elvis>, arg1 = null) -> "fail"
-        else -> <elvis>
+        EQEQ(arg0 = tmp0_elvis_lhs, arg1 = null) -> "fail"
+        else -> tmp0_elvis_lhs
       }
     }
   }
