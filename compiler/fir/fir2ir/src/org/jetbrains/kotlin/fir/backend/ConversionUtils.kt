@@ -121,10 +121,6 @@ internal inline fun <T : IrElement> KtSourceElement?.convertWithOffsets(f: (star
     return f(startOffset, endOffset)
 }
 
-internal inline fun <T : IrElement> FirQualifiedAccessExpression.convertWithOffsets(f: (startOffset: Int, endOffset: Int) -> T): T {
-    return convertWithOffsets(this.calleeReference, f)
-}
-
 internal inline fun <T : IrElement> FirThisReceiverExpression.convertWithOffsets(f: (startOffset: Int, endOffset: Int) -> T): T {
     return source.convertWithOffsets(f)
 }
