@@ -91,7 +91,7 @@ data class BuildOptions(
         val reinstall: Boolean? = null,
         val restrictedDistribution: Boolean? = null,
         val useXcodeMessageStyle: Boolean? = null,
-        val version: String? = null,
+        val version: String? = System.getProperty("kotlinNativeVersion"),
         val cacheOrchestration: String? = null,
     )
 

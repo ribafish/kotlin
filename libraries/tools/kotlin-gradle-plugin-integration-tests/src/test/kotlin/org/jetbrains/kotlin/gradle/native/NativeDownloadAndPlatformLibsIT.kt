@@ -48,7 +48,11 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
             // so we create it within each test project folder
             konanDataDir = workingDir.resolve(".konan")
                 .toFile()
-                .apply { mkdirs() }.toPath()
+                .apply { mkdirs() }.toPath(),
+            // In this test class we should use k/n version, which declared in KGP
+            nativeOptions = super.defaultBuildOptions.nativeOptions.copy(
+                version = null
+            )
         )
 
     @OptIn(EnvironmentalVariablesOverride::class)
