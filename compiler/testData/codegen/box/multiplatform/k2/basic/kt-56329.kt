@@ -2,6 +2,7 @@
 // IGNORE_NATIVE_K1: mode=ONE_STAGE_MULTI_MODULE
 // !LANGUAGE: +MultiPlatformProjects
 // ISSUE: KT-56329
+// JVM_ABI_K1_K2_DIFF: KT-63903
 
 // MODULE: common
 // TARGET_PLATFORM: Common

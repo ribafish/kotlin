@@ -1,0 +1,16 @@
+MODULE main
+	Missing in K1
+		MainKt$value$2.class
+	CLASS MainKt.class
+		PACKAGE METADATA
+			PROPERTY getValue()Ljava/lang/String;
+				Property: class.metadata.property.fieldSignature
+					K1
+						---
+					K2
+						value$delegate:Lkotlin/reflect/KProperty0;
+				Property: class.metadata.property.syntheticMethodForDelegate
+					K1
+						getValue$delegate()Ljava/lang/Object;
+					K2
+						---
