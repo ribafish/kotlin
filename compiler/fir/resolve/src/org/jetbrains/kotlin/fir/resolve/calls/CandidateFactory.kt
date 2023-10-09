@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildErrorProperty
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.extensions.callRefinementService
+import org.jetbrains.kotlin.fir.extensions.callRefinementExtensions
+import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.resolve.isIntegerLiteralOrOperatorCall
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -31,6 +34,9 @@ class CandidateFactory private constructor(
     val context: ResolutionContext,
     private val baseSystem: ConstraintStorage
 ) {
+
+    private val callRefinementExtensions = context.session.extensionService.callRefinementExtensions.takeIf { it.isNotEmpty() }
+    private val callRefinementService = context.session.callRefinementService
 
     companion object {
         private fun buildBaseSystem(context: ResolutionContext, callInfo: CallInfo): ConstraintStorage {
@@ -60,7 +66,40 @@ class CandidateFactory private constructor(
         isFromOriginalTypeInPresenceOfSmartCast: Boolean = false,
     ): Candidate {
         @Suppress("NAME_SHADOWING")
-        val symbol = symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
+        val symbol: FirBasedSymbol<*> = if (callRefinementExtensions != null && callInfo.callKind == CallKind.Function) {
+            if (callRefinementExtensions.size == 1) {
+                val interceptor = callRefinementExtensions[0]
+                val result = interceptor.intercept(callInfo, symbol)
+
+                if (result != null) {
+                    callRefinementService.associate(result, interceptor)
+                    result
+                } else {
+                    symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
+                }
+            } else {
+                val variants = context.session.extensionService.callRefinementExtensions.mapNotNull { extension ->
+                    val result = extension.intercept(callInfo, symbol)
+                    result?.let { it to extension }
+                }
+                when (variants.size) {
+                    0 -> {
+                        symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
+                    }
+                    1 -> {
+                        val (symbol, extension) = variants[0]
+                        callRefinementService.associate(symbol, extension)
+                        symbol
+                    }
+                    else -> {
+                        // report error here or save it and report later, at transform
+                        symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
+                    }
+                }
+            }
+        } else {
+            symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
+        }
 
         val result = Candidate(
             symbol,

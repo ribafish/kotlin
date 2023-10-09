@@ -149,6 +149,7 @@ fun FirSession.registerResolveComponents(lookupTracker: LookupTracker? = null, e
     register(FirNameConflictsTrackerComponent::class, FirNameConflictsTracker())
     register(FirModuleVisibilityChecker::class, FirModuleVisibilityChecker.Standard(this))
     register(SourcesToPathsMapper::class, SourcesToPathsMapper())
+    register(CallRefinementService::class, CallRefinementService())
     if (lookupTracker != null) {
         val firFileToPath: (KtSourceElement) -> String? = {
             sourcesToPathsMapper.getSourceFilePath(it)

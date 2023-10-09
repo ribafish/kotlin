@@ -27,6 +27,7 @@ class FirPluginPrototypeExtensionRegistrar : FirExtensionRegistrar() {
         +::FirNumberSignAttributeExtension
         +::AlgebraReceiverInjector
         +::ComposableLikeFunctionTypeKindExtension
+        +::DataFrameCallsRefinementExtension
 
         // Declaration generators
         +::TopLevelDeclarationsGenerator

@@ -35,6 +35,7 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
             Fir2IrScriptConfiguratorExtension::class,
             FirFunctionTypeKindExtension::class,
             FirDeclarationsForMetadataProviderExtension::class,
+            FirFunctionCallRefinementExtension::class,
         )
 
         internal val ALLOWED_EXTENSIONS_FOR_LIBRARY_SESSION = listOf(
@@ -113,6 +114,11 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
             registerExtension(FirDeclarationsForMetadataProviderExtension::class, this)
         }
 
+        @JvmName("plusFunctionCallRefinementExtension")
+        operator fun (FirFunctionCallRefinementExtension.Factory).unaryPlus() {
+            registerExtension(FirFunctionCallRefinementExtension::class, this)
+        }
+
         // ------------------ reference methods ------------------
 
         @JvmName("plusStatusTransformerExtension")
@@ -178,6 +184,11 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
         @JvmName("plusDeclarationForMetadataProviderExtension")
         operator fun ((FirSession) -> FirDeclarationsForMetadataProviderExtension).unaryPlus() {
             FirDeclarationsForMetadataProviderExtension.Factory { this.invoke(it) }.unaryPlus()
+        }
+
+        @JvmName("plusFunctionCallRefinementExtension")
+        operator fun ((FirSession) -> FirFunctionCallRefinementExtension).unaryPlus() {
+            FirFunctionCallRefinementExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         // ------------------ utilities ------------------

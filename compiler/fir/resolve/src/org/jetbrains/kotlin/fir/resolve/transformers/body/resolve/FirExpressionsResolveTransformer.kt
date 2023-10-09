@@ -18,9 +18,7 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.toAnnotationArgumentMapping
-import org.jetbrains.kotlin.fir.extensions.assignAltererExtensions
-import org.jetbrains.kotlin.fir.extensions.expressionResolutionExtensions
-import org.jetbrains.kotlin.fir.extensions.extensionService
+import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
@@ -61,6 +59,8 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
     private val expressionResolutionExtensions = session.extensionService.expressionResolutionExtensions.takeIf { it.isNotEmpty() }
     private val assignAltererExtensions = session.extensionService.assignAltererExtensions.takeIf { it.isNotEmpty() }
+    private val callRefinementExtensions = session.extensionService.callRefinementExtensions.takeIf { it.isNotEmpty() }
+    private val callRefinementService = session.callRefinementService
 
     init {
         @Suppress("LeakingThis")
@@ -429,9 +429,20 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             val resultExpression = callResolver.resolveCallAndSelectCandidate(withTransformedArguments)
             val completeInference = callCompleter.completeCall(resultExpression, data)
-            val result = completeInference.transformToIntegerOperatorCallOrApproximateItIfNeeded(data)
+            var result = completeInference.transformToIntegerOperatorCallOrApproximateItIfNeeded(data)
             if (!resolvingAugmentedAssignment) {
                 dataFlowAnalyzer.exitFunctionCall(result, data.forceFullCompletion)
+            }
+
+            if (callRefinementExtensions != null) {
+                val reference = result.calleeReference
+                if (reference is FirResolvedNamedReference) {
+                    val interceptor = callRefinementService.get(reference.resolvedSymbol)
+                    if (interceptor != null) {
+                        result = interceptor.transform(result)
+                    }
+                    // validate result ?
+                }
             }
 
             addReceiversFromExtensions(result)
