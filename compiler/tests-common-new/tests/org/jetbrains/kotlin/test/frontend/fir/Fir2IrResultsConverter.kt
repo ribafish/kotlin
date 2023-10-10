@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.test.services.TestServices
  * @see [IrActualizerAndPluginsFacade]
  */
 fun TestModule.shouldUseIrFakeOverrideBuilderInConvertToIr() =
-    CodegenTestDirectives.ENABLE_IR_FAKE_OVERRIDE_GENERATION in directives &&
+    (!targetPlatform.isJvm() || CodegenTestDirectives.ENABLE_IR_FAKE_OVERRIDE_GENERATION in directives) &&
             !languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)
 
 class Fir2IrResultsConverter(

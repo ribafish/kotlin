@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.frontend.fir.getAllNativeDependenciesPaths
 import org.jetbrains.kotlin.test.frontend.fir.resolveLibraries
+import org.jetbrains.kotlin.test.frontend.fir.shouldUseIrFakeOverrideBuilderInConvertToIr
 import org.jetbrains.kotlin.test.model.BackendKinds
 import org.jetbrains.kotlin.test.model.Frontend2BackendConverter
 import org.jetbrains.kotlin.test.model.FrontendKinds
@@ -149,7 +150,7 @@ fun ModuleCompilerAnalyzedOutput.convertToNativeIr(
         inlineConstTracker = null,
         allowNonCachedDeclarations = false,
         expectActualTracker = configuration[CommonConfigurationKeys.EXPECT_ACTUAL_TRACKER],
-        useIrFakeOverrideBuilder = configuration.getBoolean(CommonConfigurationKeys.USE_IR_FAKE_OVERRIDE_BUILDER),
+        useIrFakeOverrideBuilder = module.shouldUseIrFakeOverrideBuilderInConvertToIr(),
     )
     return convertToIr(
         Fir2IrExtensions.Default,
