@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.providers.impl
 
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
@@ -221,7 +223,18 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
                 ?.let { return ConeErrorType(it) }
         }
 
-        val resultingArguments = allTypeArguments.toTypedArray()
+        val resultingArguments =
+            if (symbol is FirRegularClassSymbol && symbol.classId == StandardClassIds.Array &&
+                topContainer is FirRegularClass && topContainer.classKind == ClassKind.ANNOTATION_CLASS
+            ) {
+                Array(allTypeArguments.size) { i ->
+                    val originalArgument = allTypeArguments[i]
+                    if (originalArgument !is ConeKotlinType) originalArgument
+                    else ConeKotlinTypeProjectionOut(originalArgument)
+                }
+            } else {
+                allTypeArguments.toTypedArray()
+            }
 
         if (symbol == null || symbol !is FirClassifierSymbol<*>) {
             val diagnostic = when {

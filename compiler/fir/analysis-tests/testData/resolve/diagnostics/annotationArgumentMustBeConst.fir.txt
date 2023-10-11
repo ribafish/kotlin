@@ -18,12 +18,12 @@ FILE: annotationArgumentMustBeConst.kt
 
     }
     public final annotation class Ann3 : R|kotlin/Annotation| {
-        public constructor(a: R|kotlin/Array<kotlin/String>|): R|Ann3| {
+        public constructor(a: R|kotlin/Array<out kotlin/String>|): R|Ann3| {
             super<R|kotlin/Any|>()
         }
 
-        public final val a: R|kotlin/Array<kotlin/String>| = R|<local>/a|
-            public get(): R|kotlin/Array<kotlin/String>|
+        public final val a: R|kotlin/Array<out kotlin/String>| = R|<local>/a|
+            public get(): R|kotlin/Array<out kotlin/String>|
 
     }
     public final var foo: R|kotlin/String| = String(a)

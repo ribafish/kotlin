@@ -99,21 +99,21 @@ FILE fqName:<root> fileName:/C.kt
       $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.E>
   CLASS ANNOTATION_CLASS name:Annos modality:OPEN visibility:public superTypes:[kotlin.Annotation]
     $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.Annos
-    CONSTRUCTOR visibility:public <> (value:kotlin.Array<<root>.Anno>) returnType:<root>.Annos [primary]
-      VALUE_PARAMETER name:value index:0 type:kotlin.Array<<root>.Anno>
+    CONSTRUCTOR visibility:public <> (value:kotlin.Array<out <root>.Anno>) returnType:<root>.Annos [primary]
+      VALUE_PARAMETER name:value index:0 type:kotlin.Array<out <root>.Anno>
       BLOCK_BODY
         DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () declared in kotlin.Any'
         INSTANCE_INITIALIZER_CALL classDescriptor='CLASS ANNOTATION_CLASS name:Annos modality:OPEN visibility:public superTypes:[kotlin.Annotation]'
     PROPERTY name:value visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<<root>.Anno> visibility:private [final]
+      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out <root>.Anno> visibility:private [final]
         EXPRESSION_BODY
-          GET_VAR 'value: kotlin.Array<<root>.Anno> declared in <root>.Annos.<init>' type=kotlin.Array<<root>.Anno> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Annos) returnType:kotlin.Array<<root>.Anno>
+          GET_VAR 'value: kotlin.Array<out <root>.Anno> declared in <root>.Annos.<init>' type=kotlin.Array<out <root>.Anno> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Annos) returnType:kotlin.Array<out <root>.Anno>
         correspondingProperty: PROPERTY name:value visibility:public modality:FINAL [val]
         $this: VALUE_PARAMETER name:<this> type:<root>.Annos
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<<root>.Anno> declared in <root>.Annos'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<<root>.Anno> visibility:private [final]' type=kotlin.Array<<root>.Anno> origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<out <root>.Anno> declared in <root>.Annos'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out <root>.Anno> visibility:private [final]' type=kotlin.Array<out <root>.Anno> origin=null
               receiver: GET_VAR '<this>: <root>.Annos declared in <root>.Annos.<get-value>' type=<root>.Annos origin=null
     FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
       overridden:
@@ -130,21 +130,21 @@ FILE fqName:<root> fileName:/C.kt
       $this: VALUE_PARAMETER name:<this> type:kotlin.Any
   CLASS ANNOTATION_CLASS name:Strings modality:OPEN visibility:public superTypes:[kotlin.Annotation]
     $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.Strings
-    CONSTRUCTOR visibility:public <> (value:kotlin.Array<kotlin.String>) returnType:<root>.Strings [primary]
-      VALUE_PARAMETER name:value index:0 type:kotlin.Array<kotlin.String>
+    CONSTRUCTOR visibility:public <> (value:kotlin.Array<out kotlin.String>) returnType:<root>.Strings [primary]
+      VALUE_PARAMETER name:value index:0 type:kotlin.Array<out kotlin.String>
       BLOCK_BODY
         DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () declared in kotlin.Any'
         INSTANCE_INITIALIZER_CALL classDescriptor='CLASS ANNOTATION_CLASS name:Strings modality:OPEN visibility:public superTypes:[kotlin.Annotation]'
     PROPERTY name:value visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<kotlin.String> visibility:private [final]
+      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out kotlin.String> visibility:private [final]
         EXPRESSION_BODY
-          GET_VAR 'value: kotlin.Array<kotlin.String> declared in <root>.Strings.<init>' type=kotlin.Array<kotlin.String> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Strings) returnType:kotlin.Array<kotlin.String>
+          GET_VAR 'value: kotlin.Array<out kotlin.String> declared in <root>.Strings.<init>' type=kotlin.Array<out kotlin.String> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Strings) returnType:kotlin.Array<out kotlin.String>
         correspondingProperty: PROPERTY name:value visibility:public modality:FINAL [val]
         $this: VALUE_PARAMETER name:<this> type:<root>.Strings
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<kotlin.String> declared in <root>.Strings'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<kotlin.String> visibility:private [final]' type=kotlin.Array<kotlin.String> origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<out kotlin.String> declared in <root>.Strings'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out kotlin.String> visibility:private [final]' type=kotlin.Array<out kotlin.String> origin=null
               receiver: GET_VAR '<this>: <root>.Strings declared in <root>.Strings.<get-value>' type=<root>.Strings origin=null
     FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
       overridden:
@@ -192,21 +192,21 @@ FILE fqName:<root> fileName:/C.kt
       $this: VALUE_PARAMETER name:<this> type:kotlin.Any
   CLASS ANNOTATION_CLASS name:Enums modality:OPEN visibility:public superTypes:[kotlin.Annotation]
     $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.Enums
-    CONSTRUCTOR visibility:public <> (value:kotlin.Array<<root>.E>) returnType:<root>.Enums [primary]
-      VALUE_PARAMETER name:value index:0 type:kotlin.Array<<root>.E>
+    CONSTRUCTOR visibility:public <> (value:kotlin.Array<out <root>.E>) returnType:<root>.Enums [primary]
+      VALUE_PARAMETER name:value index:0 type:kotlin.Array<out <root>.E>
       BLOCK_BODY
         DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () declared in kotlin.Any'
         INSTANCE_INITIALIZER_CALL classDescriptor='CLASS ANNOTATION_CLASS name:Enums modality:OPEN visibility:public superTypes:[kotlin.Annotation]'
     PROPERTY name:value visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<<root>.E> visibility:private [final]
+      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out <root>.E> visibility:private [final]
         EXPRESSION_BODY
-          GET_VAR 'value: kotlin.Array<<root>.E> declared in <root>.Enums.<init>' type=kotlin.Array<<root>.E> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Enums) returnType:kotlin.Array<<root>.E>
+          GET_VAR 'value: kotlin.Array<out <root>.E> declared in <root>.Enums.<init>' type=kotlin.Array<out <root>.E> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Enums) returnType:kotlin.Array<out <root>.E>
         correspondingProperty: PROPERTY name:value visibility:public modality:FINAL [val]
         $this: VALUE_PARAMETER name:<this> type:<root>.Enums
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<<root>.E> declared in <root>.Enums'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<<root>.E> visibility:private [final]' type=kotlin.Array<<root>.E> origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<out <root>.E> declared in <root>.Enums'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out <root>.E> visibility:private [final]' type=kotlin.Array<out <root>.E> origin=null
               receiver: GET_VAR '<this>: <root>.Enums declared in <root>.Enums.<get-value>' type=<root>.Enums origin=null
     FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
       overridden:
@@ -223,21 +223,21 @@ FILE fqName:<root> fileName:/C.kt
       $this: VALUE_PARAMETER name:<this> type:kotlin.Any
   CLASS ANNOTATION_CLASS name:Classes modality:OPEN visibility:public superTypes:[kotlin.Annotation]
     $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.Classes
-    CONSTRUCTOR visibility:public <> (value:kotlin.Array<kotlin.reflect.KClass<*>>) returnType:<root>.Classes [primary]
-      VALUE_PARAMETER name:value index:0 type:kotlin.Array<kotlin.reflect.KClass<*>>
+    CONSTRUCTOR visibility:public <> (value:kotlin.Array<out kotlin.reflect.KClass<*>>) returnType:<root>.Classes [primary]
+      VALUE_PARAMETER name:value index:0 type:kotlin.Array<out kotlin.reflect.KClass<*>>
       BLOCK_BODY
         DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () declared in kotlin.Any'
         INSTANCE_INITIALIZER_CALL classDescriptor='CLASS ANNOTATION_CLASS name:Classes modality:OPEN visibility:public superTypes:[kotlin.Annotation]'
     PROPERTY name:value visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<kotlin.reflect.KClass<*>> visibility:private [final]
+      FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out kotlin.reflect.KClass<*>> visibility:private [final]
         EXPRESSION_BODY
-          GET_VAR 'value: kotlin.Array<kotlin.reflect.KClass<*>> declared in <root>.Classes.<init>' type=kotlin.Array<kotlin.reflect.KClass<*>> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Classes) returnType:kotlin.Array<kotlin.reflect.KClass<*>>
+          GET_VAR 'value: kotlin.Array<out kotlin.reflect.KClass<*>> declared in <root>.Classes.<init>' type=kotlin.Array<out kotlin.reflect.KClass<*>> origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-value> visibility:public modality:FINAL <> ($this:<root>.Classes) returnType:kotlin.Array<out kotlin.reflect.KClass<*>>
         correspondingProperty: PROPERTY name:value visibility:public modality:FINAL [val]
         $this: VALUE_PARAMETER name:<this> type:<root>.Classes
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<kotlin.reflect.KClass<*>> declared in <root>.Classes'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<kotlin.reflect.KClass<*>> visibility:private [final]' type=kotlin.Array<kotlin.reflect.KClass<*>> origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-value> (): kotlin.Array<out kotlin.reflect.KClass<*>> declared in <root>.Classes'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:value type:kotlin.Array<out kotlin.reflect.KClass<*>> visibility:private [final]' type=kotlin.Array<out kotlin.reflect.KClass<*>> origin=null
               receiver: GET_VAR '<this>: <root>.Classes declared in <root>.Classes.<get-value>' type=<root>.Classes origin=null
     FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
       overridden:

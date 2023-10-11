@@ -1,11 +1,11 @@
 FILE: annotationArgumentKClassLiteralTypeError.kt
     public final annotation class Ann : R|kotlin/Annotation| {
-        public constructor(a: R|kotlin/Array<kotlin/reflect/KClass<*>>|): R|Ann| {
+        public constructor(a: R|kotlin/Array<out kotlin/reflect/KClass<*>>|): R|Ann| {
             super<R|kotlin/Any|>()
         }
 
-        public final val a: R|kotlin/Array<kotlin/reflect/KClass<*>>| = R|<local>/a|
-            public get(): R|kotlin/Array<kotlin/reflect/KClass<*>>|
+        public final val a: R|kotlin/Array<out kotlin/reflect/KClass<*>>| = R|<local>/a|
+            public get(): R|kotlin/Array<out kotlin/reflect/KClass<*>>|
 
     }
     public final val <reified T> R|T|.test: R|kotlin/Any|

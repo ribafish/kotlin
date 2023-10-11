@@ -1,11 +1,11 @@
 FILE: nonConstValInAnnotationArgument.kt
     public final annotation class Ann : R|kotlin/Annotation| {
-        public constructor(a: R|kotlin/Array<kotlin/String>|): R|Ann| {
+        public constructor(a: R|kotlin/Array<out kotlin/String>|): R|Ann| {
             super<R|kotlin/Any|>()
         }
 
-        public final val a: R|kotlin/Array<kotlin/String>| = R|<local>/a|
-            public get(): R|kotlin/Array<kotlin/String>|
+        public final val a: R|kotlin/Array<out kotlin/String>| = R|<local>/a|
+            public get(): R|kotlin/Array<out kotlin/String>|
 
     }
     public final val foo: R|kotlin/String| = String()
