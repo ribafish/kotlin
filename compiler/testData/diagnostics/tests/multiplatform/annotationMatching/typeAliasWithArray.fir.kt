@@ -7,7 +7,7 @@
     Throughput, AverageTime
 }<!>
 
-<!INCOMPATIBLE_MATCHING{JVM}!>expect annotation class BenchmarkMode(<!INCOMPATIBLE_MATCHING{JVM}!>vararg val value: Mode<!>)<!>
+expect annotation class BenchmarkMode(vararg val value: Mode)
 
 // MODULE: m1-jvm()()(m1-common)
 // FILE: jvm.kt

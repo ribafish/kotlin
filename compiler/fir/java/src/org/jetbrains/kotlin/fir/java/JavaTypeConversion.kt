@@ -35,10 +35,8 @@ private fun ClassId.toConeFlexibleType(
 }
 
 enum class FirJavaTypeConversionMode {
-    DEFAULT, ANNOTATION_MEMBER, ANNOTATION_CONSTRUCTOR_PARAMETER, SUPERTYPE,
-    TYPE_PARAMETER_BOUND_FIRST_ROUND, TYPE_PARAMETER_BOUND_AFTER_FIRST_ROUND;
-
-    val insideAnnotation: Boolean get() = this == ANNOTATION_MEMBER || this == ANNOTATION_CONSTRUCTOR_PARAMETER
+    DEFAULT, ANNOTATION_MEMBER, SUPERTYPE,
+    TYPE_PARAMETER_BOUND_FIRST_ROUND, TYPE_PARAMETER_BOUND_AFTER_FIRST_ROUND
 }
 
 fun FirTypeRef.resolveIfJavaType(
@@ -105,7 +103,7 @@ private fun JavaType?.toConeTypeProjection(
     return when (this) {
         is JavaClassifierType -> {
             val lowerBound = toConeKotlinTypeForFlexibleBound(session, javaTypeParameterStack, mode, attributes)
-            if (mode.insideAnnotation) {
+            if (mode == FirJavaTypeConversionMode.ANNOTATION_MEMBER) {
                 return lowerBound
             }
             val upperBound = toConeKotlinTypeForFlexibleBound(session, javaTypeParameterStack, mode, attributes, lowerBound)
@@ -134,13 +132,10 @@ private fun JavaType?.toConeTypeProjection(
                     StandardClassIds.Array to arrayOf(componentType.toConeKotlinType(session, javaTypeParameterStack, mode))
             }
             val argumentsWithOutProjection = Array(arguments.size) { ConeKotlinTypeProjectionOut(arguments[it]) }
-            when (mode) {
-                FirJavaTypeConversionMode.ANNOTATION_CONSTRUCTOR_PARAMETER ->
-                    classId.constructClassLikeType(argumentsWithOutProjection, isNullable = false, attributes)
-                FirJavaTypeConversionMode.ANNOTATION_MEMBER ->
-                    classId.constructClassLikeType(arguments, isNullable = false, attributes)
-                else ->
-                    classId.toConeFlexibleType(arguments, typeArgumentsForUpper = argumentsWithOutProjection, attributes)
+            if (mode == FirJavaTypeConversionMode.ANNOTATION_MEMBER) {
+                classId.constructClassLikeType(argumentsWithOutProjection, isNullable = false, attributes)
+            } else {
+                classId.toConeFlexibleType(arguments, typeArgumentsForUpper = argumentsWithOutProjection, attributes)
             }
         }
 
@@ -178,7 +173,7 @@ private fun JavaClassifierType.toConeKotlinTypeForFlexibleBound(
 ): ConeLookupTagBasedType {
     return when (val classifier = classifier) {
         is JavaClass -> {
-            var classId = if (mode.insideAnnotation) {
+            var classId = if (mode == FirJavaTypeConversionMode.ANNOTATION_MEMBER) {
                 JavaToKotlinClassMap.mapJavaToKotlinIncludingClassMapping(classifier.fqName!!)
             } else {
                 JavaToKotlinClassMap.mapJavaToKotlin(classifier.fqName!!)
@@ -198,8 +193,8 @@ private fun JavaClassifierType.toConeKotlinTypeForFlexibleBound(
                         lookupTag.takeIf { lowerBound == null && mode != FirJavaTypeConversionMode.TYPE_PARAMETER_BOUND_FIRST_ROUND }
                             ?.toFirRegularClassSymbol(session)?.typeParameterSymbols
                     // Given `C<T : X>`, `C` -> `C<X>..C<*>?`.
-                    when {
-                        mode.insideAnnotation -> Array(classifier.allTypeParametersNumber()) { ConeStarProjection }
+                    when (mode) {
+                        FirJavaTypeConversionMode.ANNOTATION_MEMBER -> Array(classifier.allTypeParametersNumber()) { ConeStarProjection }
                         else -> typeParameterSymbols?.getProjectionsForRawType(session)
                             ?: Array(classifier.allTypeParametersNumber()) { ConeStarProjection }
                     }
@@ -211,7 +206,7 @@ private fun JavaClassifierType.toConeKotlinTypeForFlexibleBound(
                             ?.toFirRegularClassSymbol(session)?.typeParameterSymbols
                     Array(typeArguments.size) { index ->
                         // TODO: check this
-                        val newMode = if (mode.insideAnnotation) FirJavaTypeConversionMode.DEFAULT else mode
+                        val newMode = if (mode == FirJavaTypeConversionMode.ANNOTATION_MEMBER) FirJavaTypeConversionMode.DEFAULT else mode
                         val argument = typeArguments[index]
                         val variance = typeParameterSymbols?.getOrNull(index)?.fir?.variance ?: Variance.INVARIANT
                         argument.toConeTypeProjection(session, javaTypeParameterStack, variance, newMode)

@@ -673,14 +673,7 @@ class FirSignatureEnhancement(
     ): FirResolvedTypeRef {
         val typeRef = typeInSignature.getTypeRef(this)
         val typeRefsFromOverridden = overriddenMembers.map { typeInSignature.getTypeRef(it) }
-        val mode = when {
-            !forAnnotationMember ->
-                FirJavaTypeConversionMode.DEFAULT
-            containerApplicabilityType == AnnotationQualifierApplicabilityType.VALUE_PARAMETER ->
-                FirJavaTypeConversionMode.ANNOTATION_CONSTRUCTOR_PARAMETER
-            else ->
-                FirJavaTypeConversionMode.ANNOTATION_MEMBER
-        }
+        val mode = if (forAnnotationMember) FirJavaTypeConversionMode.ANNOTATION_MEMBER else FirJavaTypeConversionMode.DEFAULT
         return EnhancementSignatureParts(
             session, typeQualifierResolver, typeContainer, isCovariant, forceOnlyHeadTypeConstructor = false,
             containerApplicabilityType, containerQualifiers
