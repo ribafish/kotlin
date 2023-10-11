@@ -31,7 +31,7 @@ import kotlin.io.path.deleteRecursively
     supportedOn = [OS.MAC, OS.LINUX], enabledOnCI = [OS.MAC, OS.LINUX]
 )
 @DisplayName("Tests for K/N builds with native downloading and platform libs")
-@NativeGradlePluginTests
+@NativeGradleNewPluginTests
 class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
 
     companion object {

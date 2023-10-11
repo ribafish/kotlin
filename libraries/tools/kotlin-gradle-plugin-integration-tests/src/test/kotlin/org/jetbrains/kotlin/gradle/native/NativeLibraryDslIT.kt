@@ -9,15 +9,24 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.stream.Collectors
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.appendText
 
 @DisplayName("Tests for K/N library dsl builds")
-@NativeGradlePluginTests
 class NativeLibraryDslIT : KGPBaseTest() {
 
     @DisplayName("K/N project with custom registered gradle tasks")
     @GradleTest
+    @NativeGradleNewPluginTests
     fun shouldSharedAndLibRegisteredTasks(gradleVersion: GradleVersion) {
+        val files = Files.walk(konanDir, 1)
+            .map { path -> path.toAbsolutePath().normalize().absolutePathString() + "\n" }
+            .collect(Collectors.toList())
+        println("Here is downloaded artifacts from previous build:\n $files")
+        println("Here is passed System.property(\"kotlinNativeVersion\"): ${System.getProperty("kotlinNativeVersion")}")
         nativeProject("new-kn-library-dsl", gradleVersion) {
             buildAndAssertAllTasks(
                 listOf(
@@ -38,6 +47,7 @@ class NativeLibraryDslIT : KGPBaseTest() {
 
     @DisplayName("Link shared libraries from two gradle modules")
     @GradleTest
+    @NativeGradlePluginTests
     fun shouldLinkSharedLibrariesFromTwoModules(gradleVersion: GradleVersion) {
         nativeProject("new-kn-library-dsl", gradleVersion) {
             build(":shared:assembleMyslibDebugSharedLibraryLinuxX64") {
@@ -54,6 +64,7 @@ class NativeLibraryDslIT : KGPBaseTest() {
 
     @DisplayName("Link shared library from single gradle module")
     @GradleTest
+    @NativeGradlePluginTests
     fun shouldLinkSharedLibrariesFromSingleModule(gradleVersion: GradleVersion) {
         nativeProject("new-kn-library-dsl", gradleVersion) {
             build(":shared:assembleMylibDebugSharedLibraryLinuxX64") {
@@ -76,6 +87,7 @@ class NativeLibraryDslIT : KGPBaseTest() {
 
     @DisplayName("Links shared library from single gradle module with additional link args")
     @GradleTest
+    @NativeGradlePluginTests
     fun shouldLinkSharedLibrariesFromSingleModuleWithAdditionalLinkArgs(gradleVersion: GradleVersion) {
         nativeProject("new-kn-library-dsl", gradleVersion) {
             gradleProperties.appendText("\nkotlin.native.linkArgs=-Xfoo=bar -Xbaz=qux")
@@ -99,6 +111,7 @@ class NativeLibraryDslIT : KGPBaseTest() {
     @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
     @DisplayName("Links release XCFramework from two gradle modules")
     @GradleTest
+    @NativeGradlePluginTests
     fun shouldLinkXCFrameworkFromTwoModules(gradleVersion: GradleVersion) {
         nativeProject("new-kn-library-dsl", gradleVersion) {
             build(":shared:assembleSharedReleaseXCFramework") {

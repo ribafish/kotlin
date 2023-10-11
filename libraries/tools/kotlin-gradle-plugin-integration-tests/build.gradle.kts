@@ -275,12 +275,44 @@ val jsTestsTask = tasks.register<Test>("kgpJsTests") {
     }
 }
 
+val newNativeTestsTask = tasks.register<Test>("kgpNativeTests") {
+    group = KGP_TEST_TASKS_GROUP
+    description = "Run tests for new Kotlin/Native part of Gradle plugin"
+    maxParallelForks = maxParallelTestForks
+    useJUnitPlatform {
+        includeTags("NativeKGPNew")
+        excludeTags("NativeKGP", "JvmKGP", "JsKGP", "DaemonsKGP", "OtherKGP", "MppKGP", "AndroidKGP")
+        includeEngines("junit-jupiter")
+    }
+
+    if (project.kotlinBuildProperties.isKotlinNativeEnabled && !project.kotlinBuildProperties.isTeamcityBuild) {
+        dependsOn(":kotlin-gradle-plugin-integration-tests:prepareNativeBundleForGradleIT")
+    }
+
+    doFirst {
+        if (kotlinNativeFromMasterEnabled) {
+            project.kotlinBuildProperties.defaultSnapshotVersion?.let { systemProperty("kotlinNativeVersion", it) }
+            System.getProperty("konanDataDirForIntegrationTests")?.let {
+                systemProperty("konanDataDirForIntegrationTests", it)
+            }
+        }
+        if (project.kotlinBuildProperties.isTeamcityBuild) {
+            System.getProperty("kotlinNativeVersionForGradleIT")?.let {
+                systemProperty("kotlinNativeVersion", it)
+            }
+            System.getProperty("konanDataDirForIntegrationTests")?.let {
+                systemProperty("konanDataDirForIntegrationTests", it)
+            }
+        }
+    }
+}
+
 // TODO(Dmitrii Krasnov):
 //  change project.kotlinBuildProperties.isKotlinNativeEnabled
 //  to project.findProperty("kotlin.native.from.master.enabled")
 //  when MR new version with kotlin-build-gradle-plugin will be pushed
 val kotlinNativeFromMasterEnabled = project.kotlinBuildProperties.isKotlinNativeEnabled
-val nativeTestsTask = tasks.register<Test>("kgpNativeTests") {
+val nativeTestsTask = tasks.register<Test>("kgpNativeOld") {
     group = KGP_TEST_TASKS_GROUP
     description = "Run tests for Kotlin/Native part of Gradle plugin"
     maxParallelForks = maxParallelTestForks
@@ -297,6 +329,14 @@ val nativeTestsTask = tasks.register<Test>("kgpNativeTests") {
     doFirst {
         if (kotlinNativeFromMasterEnabled) {
             project.kotlinBuildProperties.defaultSnapshotVersion?.let { systemProperty("kotlinNativeVersion", it) }
+            System.getProperty("konanDataDirForIntegrationTests")?.let {
+                systemProperty("konanDataDirForIntegrationTests", it)
+            }
+        }
+        if (project.kotlinBuildProperties.isTeamcityBuild) {
+            System.getProperty("kotlinNativeVersionForGradleIT")?.let {
+                systemProperty("kotlinNativeVersion", it)
+            }
             System.getProperty("konanDataDirForIntegrationTests")?.let {
                 systemProperty("konanDataDirForIntegrationTests", it)
             }
@@ -337,6 +377,14 @@ val otherPluginsTestTask = tasks.register<Test>("kgpOtherTests") {
                 systemProperty("konanDataDirForIntegrationTests", it)
             }
         }
+        if (project.kotlinBuildProperties.isTeamcityBuild) {
+            System.getProperty("kotlinNativeVersionForGradleIT")?.let {
+                systemProperty("kotlinNativeVersion", it)
+            }
+            System.getProperty("konanDataDirForIntegrationTests")?.let {
+                systemProperty("konanDataDirForIntegrationTests", it)
+            }
+        }
     }
 }
 
@@ -360,6 +408,17 @@ val mppTestsTask = tasks.register<Test>("kgpMppTests") {
     doFirst {
         if (kotlinNativeFromMasterEnabled) {
             project.kotlinBuildProperties.defaultSnapshotVersion?.let { systemProperty("kotlinNativeVersion", it) }
+            System.getProperty("konanDataDirForIntegrationTests")?.let {
+                systemProperty("konanDataDirForIntegrationTests", it)
+            }
+        }
+        if (project.kotlinBuildProperties.isTeamcityBuild) {
+            System.getProperty("kotlinNativeVersionForGradleIT")?.let {
+                systemProperty("kotlinNativeVersion", it)
+            }
+            System.getProperty("konanDataDirForIntegrationTests")?.let {
+                systemProperty("konanDataDirForIntegrationTests", it)
+            }
         }
     }
 }

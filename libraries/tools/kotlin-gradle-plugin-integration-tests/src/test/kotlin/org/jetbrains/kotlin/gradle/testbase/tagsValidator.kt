@@ -58,6 +58,8 @@ class TagsCountValidatorInterceptor : InvocationInterceptor {
                 it is NativeGradlePluginTests ||
                 it is MppGradlePluginTests ||
                 it is AndroidGradlePluginTests ||
-                it is OtherGradlePluginTests
+                it is OtherGradlePluginTests ||
+                it is NativeGradleNewPluginTests
+
     }
 }
