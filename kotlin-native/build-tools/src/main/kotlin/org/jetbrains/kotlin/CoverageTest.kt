@@ -52,11 +52,11 @@ open class CoverageTest : DefaultTask() {
 
     @get:Internal
     val profrawFile: String by lazy {
-        "${project.buildDir.absolutePath}/$binaryName.profraw"
+        project.layout.buildDirectory.file("$binaryName.profraw").get().asFile.absolutePath
     }
 
     private val profdataFile: String by lazy {
-        "${project.buildDir.absolutePath}/$binaryName.profdata"
+        project.layout.buildDirectory.file("$binaryName.profdata").get().asFile.absolutePath
     }
 
     private val outputDir: String by lazy {
