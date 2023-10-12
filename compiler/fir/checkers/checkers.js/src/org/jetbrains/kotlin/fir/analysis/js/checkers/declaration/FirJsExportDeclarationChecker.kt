@@ -223,6 +223,12 @@ object FirJsExportDeclarationChecker : FirBasicDeclarationChecker() {
                 || isPrimitiveNumberOrNullableType && !isLong
                 || isNothingOrNullableNothing
                 || isArrayType
+                || isList
+                || isMutableList
+                || isSet
+                || isMutableSet
+                || isMap
+                || isMutableMap
 
     private fun validateDeclarationOnConsumableName(
         declaration: FirMemberDeclaration,
