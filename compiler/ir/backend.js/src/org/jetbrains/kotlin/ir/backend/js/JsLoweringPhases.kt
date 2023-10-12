@@ -51,7 +51,7 @@ private val collectClassDefaultConstructorsPhase = makeIrModulePhase(
 private val prepareCollectionsToExportLowering = makeIrModulePhase(
     ::PrepareCollectionsToExportLowering,
     name = "PrepareCollectionsToExportLowering",
-    description = "Add @JsImplicitExport to exportable collections all the  declarations which we don't want to export such as `Enum.entries` or `DataClass::componentN`",
+    description = "Add @JsImplicitExport to exportable collections all the declarations which we don't want to export such as `Enum.entries` or `DataClass::componentN`",
 )
 
 private val preventExportOfSyntheticDeclarationsLowering = makeIrModulePhase(
