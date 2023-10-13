@@ -47,3 +47,14 @@ fun test_4() {
         )
     }
 }
+
+fun test_5() {
+    var x: String? = null
+    if (x != null) {
+        foo(
+            <!DEBUG_INFO_SMARTCAST!>x<!>.length, // stable smartcast
+            myRun { x = null },
+            <!SMARTCAST_IMPOSSIBLE!>x<!>.length  // either unstable or not a smartcast
+        )
+    }
+}

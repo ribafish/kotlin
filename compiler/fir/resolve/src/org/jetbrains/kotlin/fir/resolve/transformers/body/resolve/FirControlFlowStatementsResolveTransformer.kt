@@ -107,7 +107,7 @@ class FirControlFlowStatementsResolveTransformer(transformer: FirAbstractBodyRes
                     )
                     whenExpression = completionResult
                 }
-                dataFlowAnalyzer.exitWhenExpression(whenExpression, data.forceFullCompletion)
+                dataFlowAnalyzer.exitWhenExpression(whenExpression)
                 whenExpression = whenExpression.replaceReturnTypeIfNotExhaustive()
                 whenExpression
             }
@@ -166,7 +166,7 @@ class FirControlFlowStatementsResolveTransformer(transformer: FirAbstractBodyRes
             result = result.transformFinallyBlock(transformer, ResolutionMode.ContextIndependent)
             dataFlowAnalyzer.exitFinallyBlock()
         }
-        dataFlowAnalyzer.exitTryExpression(data.forceFullCompletion)
+        dataFlowAnalyzer.exitTryExpression()
         return result
     }
 
@@ -182,7 +182,7 @@ class FirControlFlowStatementsResolveTransformer(transformer: FirAbstractBodyRes
     // ------------------------------- Jumps -------------------------------
 
     override fun <E : FirTargetElement> transformJump(jump: FirJump<E>, data: ResolutionMode): FirStatement {
-        dataFlowAnalyzer.enterJump(jump)
+        dataFlowAnalyzer.enterJump()
         val result = transformer.transformExpression(jump, data)
         dataFlowAnalyzer.exitJump(jump)
         return result
@@ -280,7 +280,7 @@ class FirControlFlowStatementsResolveTransformer(transformer: FirAbstractBodyRes
             }
         }
 
-        dataFlowAnalyzer.exitElvis(elvisExpression, isLhsNotNull, data.forceFullCompletion)
+        dataFlowAnalyzer.exitElvis(elvisExpression, isLhsNotNull)
         return result
     }
 }

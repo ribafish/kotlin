@@ -12,7 +12,7 @@ fun test1(x: String?) {
     foo(
         id(run { x as String; n() }),
         1,
-        run { x<!UNSAFE_CALL!>.<!>length; 123 } // Bad (resolution order undefined)
+        run { x.length; 123 } // Bad (resolution order undefined)
     )
     x.length // OK (x as String unconditional)
 }
@@ -21,7 +21,7 @@ fun test2(x: String?) {
     foo(
         id(run { x as String; n() }),
         someCompletedCall(1),
-        run { x<!UNSAFE_CALL!>.<!>length; 123 } // Bad (resolution order undefined)
+        run { x.length; 123 } // Bad (resolution order undefined)
     )
     x.length // OK (x as String unconditional)
 }
@@ -30,7 +30,7 @@ fun test3(x: String?) {
     foo(
         id(run { x as String; n() }),
         if (true) 1 else 2,
-        run { x<!UNSAFE_CALL!>.<!>length; 123 } // Bad (resolution order undefined)
+        run { x.length; 123 } // Bad (resolution order undefined)
     )
     x.length // OK (x as String unconditional)
 }
@@ -41,7 +41,7 @@ fun test4(x: String?) {
         foo(
             id(if (true) run { p = null; n() } else run { n() }),
             1,
-            run { <!SMARTCAST_IMPOSSIBLE!>p<!>.length; 123 } // Bad (p = null possible)
+            run { p<!UNSAFE_CALL!>.<!>length; 123 } // Bad (p = null possible)
         )
         p<!UNSAFE_CALL!>.<!>length // Bad (p = null possible)
     }
@@ -60,9 +60,9 @@ fun test6(x: String?) {
     foo(
         id(if (true) run { x as String; n() } else run { x as String; n() }),
         1,
-        run { x<!UNSAFE_CALL!>.<!>length; 123 } // Bad (resolution order undefined)
+        run { x.length; 123 } // Bad (resolution order undefined)
     )
-    x<!UNSAFE_CALL!>.<!>length // OK (x as String in both branches)
+    x.length // OK (x as String in both branches)
 }
 
 fun test7(x: String?) {
@@ -71,7 +71,7 @@ fun test7(x: String?) {
         foo(
             id(run { p = null; n() }),
             1,
-            run { <!SMARTCAST_IMPOSSIBLE!>p<!>.length; 123 } // Bad (p = null)
+            run { p<!UNSAFE_CALL!>.<!>length; 123 } // Bad (p = null)
         )
         p<!UNSAFE_CALL!>.<!>length // Bad (p = null)
     }

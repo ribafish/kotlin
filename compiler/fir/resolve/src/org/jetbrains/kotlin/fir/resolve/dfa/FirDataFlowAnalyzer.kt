@@ -588,8 +588,8 @@ abstract class FirDataFlowAnalyzer(
 
     // ----------------------------------- Jump -----------------------------------
 
-    fun enterJump(jump: FirJump<*>) {
-        graphBuilder.enterJump(jump)
+    fun enterJump() {
+        graphBuilder.enterJump()
     }
 
     fun exitJump(jump: FirJump<*>) {
@@ -602,8 +602,8 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.enterCall()
     }
 
-    fun exitCheckNotNullCall(checkNotNullCall: FirCheckNotNullCall, callCompleted: Boolean) {
-        graphBuilder.exitCheckNotNullCall(checkNotNullCall, callCompleted).mergeIncomingFlow { _, flow ->
+    fun exitCheckNotNullCall(checkNotNullCall: FirCheckNotNullCall) {
+        graphBuilder.exitCheckNotNullCall(checkNotNullCall).mergeIncomingFlow { _, flow ->
             val argumentVariable = variableStorage.getOrCreateIfReal(flow, checkNotNullCall.argument) ?: return@mergeIncomingFlow
             flow.commitOperationStatement(argumentVariable notEq null)
         }
@@ -643,8 +643,8 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.exitWhenBranchResult(whenBranch).mergeIncomingFlow()
     }
 
-    fun exitWhenExpression(whenExpression: FirWhenExpression, callCompleted: Boolean) {
-        val (whenExitNode, syntheticElseNode) = graphBuilder.exitWhenExpression(whenExpression, callCompleted)
+    fun exitWhenExpression(whenExpression: FirWhenExpression) {
+        val (whenExitNode, syntheticElseNode) = graphBuilder.exitWhenExpression(whenExpression)
         syntheticElseNode?.mergeWhenBranchEntryFlow()
         whenExitNode.mergeIncomingFlow()
     }
@@ -790,8 +790,8 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.exitFinallyBlock().mergeIncomingFlow()
     }
 
-    fun exitTryExpression(callCompleted: Boolean) {
-        graphBuilder.exitTryExpression(callCompleted).mergeIncomingFlow()
+    fun exitTryExpression() {
+        graphBuilder.exitTryExpression().mergeIncomingFlow()
     }
 
     // ----------------------------------- Resolvable call -----------------------------------
@@ -853,7 +853,7 @@ abstract class FirDataFlowAnalyzer(
 
     fun exitDelegatedConstructorCall(call: FirDelegatedConstructorCall, callCompleted: Boolean) {
         context.variableAssignmentAnalyzer.exitFunctionCall(callCompleted)
-        graphBuilder.exitDelegatedConstructorCall(call, callCompleted).mergeIncomingFlow()
+        graphBuilder.exitDelegatedConstructorCall(call).mergeIncomingFlow()
     }
 
     fun enterStringConcatenationCall() {
@@ -1166,8 +1166,8 @@ abstract class FirDataFlowAnalyzer(
         }
     }
 
-    fun exitElvis(elvisExpression: FirElvisExpression, isLhsNotNull: Boolean, callCompleted: Boolean) {
-        val node = graphBuilder.exitElvis(isLhsNotNull, callCompleted)
+    fun exitElvis(elvisExpression: FirElvisExpression, isLhsNotNull: Boolean) {
+        val node = graphBuilder.exitElvis(isLhsNotNull)
         node.mergeIncomingFlow { path, flow ->
             // If LHS is never null, then the edge from RHS is dead and this node's flow already contains
             // all statements from LHS unconditionally.
@@ -1230,7 +1230,9 @@ abstract class FirDataFlowAnalyzer(
 
             // `MergePostponedLambdaExitsNode` nodes form a parallel data flow graph. We never compute
             // data flow for any of them until reaching a completed call.
-            if (node is MergePostponedLambdaExitsNode && !node.flowInitialized) node.mergeIncomingFlow()
+            if (!node.flowInitialized) {
+                node.mergeIncomingFlow()
+            }
 
             // For CFGNodes that are the end of alternate flows, use the alternate flow associated with the edge label.
             if (node is FinallyBlockExitNode) {
@@ -1284,6 +1286,10 @@ abstract class FirDataFlowAnalyzer(
     private fun CFGNode<*>.mergeIncomingFlow(
         builder: (FlowPath, MutableFlow) -> Unit = { _, _ -> },
     ) {
+        if (flowInitialized) {
+            return
+        }
+
         // Always build the default flow path for all nodes.
         val mutableDefaultFlow = buildDefaultFlow(builder)
         val defaultFlow = mutableDefaultFlow.freeze().also { this.flow = it }

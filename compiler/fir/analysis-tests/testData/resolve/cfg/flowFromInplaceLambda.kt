@@ -39,7 +39,7 @@ fun completedCallExactlyOnce(x: Any?, y: Any?) {
         // The value of the type argument is known, so the call is complete and the data can flow.
         id(exactlyOnce { y.<!UNRESOLVED_REFERENCE!>inc<!>(); x as Int }),
         y as Int,
-        exactlyOnce { x.<!UNRESOLVED_REFERENCE!>inc<!>(); y.inc(); 1 }
+        exactlyOnce { x.inc(); y.inc(); 1 }
     ).inc() // OK
     x.inc() // OK
     y.inc() // OK
@@ -49,7 +49,7 @@ fun completedCallAtLeastOnce(x: Any?, y: Any?) {
     select(
         id(atLeastOnce { y.<!UNRESOLVED_REFERENCE!>inc<!>(); x as Int }),
         y as Int,
-        atLeastOnce { x.<!UNRESOLVED_REFERENCE!>inc<!>(); y.inc(); 1 }
+        atLeastOnce { x.inc(); y.inc(); 1 }
     ).inc() // OK
     x.inc() // OK
     y.inc() // OK
@@ -89,7 +89,7 @@ fun incompleteCallExactlyOnce(x: Any, y: Any) {
     select(
         // The type argument is uninferred, so the two lambdas are concurrent by data flow.
         id(exactlyOnce { x as Int; y.<!UNRESOLVED_REFERENCE!>inc<!>(); x.inc(); materialize() }),
-        exactlyOnce { y as Int; x.<!UNRESOLVED_REFERENCE!>inc<!>(); y.inc(); 1 }
+        exactlyOnce { y as Int; x.inc(); y.inc(); 1 }
     ).inc() // OK
     x.inc() // OK
     y.inc() // OK
@@ -98,7 +98,7 @@ fun incompleteCallExactlyOnce(x: Any, y: Any) {
 fun incompleteCallAtLeastOnce(x: Any, y: Any) {
     select(
         id(atLeastOnce { x as Int; y.<!UNRESOLVED_REFERENCE!>inc<!>(); x.inc(); materialize() }),
-        atLeastOnce { y as Int; x.<!UNRESOLVED_REFERENCE!>inc<!>(); y.inc(); 1 }
+        atLeastOnce { y as Int; x.inc(); y.inc(); 1 }
     ).inc() // OK
     x.inc() // OK
     y.inc() // OK

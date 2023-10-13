@@ -949,7 +949,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             components.syntheticCallGenerator.generateCalleeForCheckNotNullCall(checkNotNullCall, resolutionContext), data
         )
 
-        dataFlowAnalyzer.exitCheckNotNullCall(result, data.forceFullCompletion)
+        dataFlowAnalyzer.exitCheckNotNullCall(result)
         return result
     }
 

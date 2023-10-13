@@ -43,6 +43,17 @@ fun test_4() {
         foo(
             x.length, // stable smartcast
             run { x = null },
+            x<!UNSAFE_CALL!>.<!>length  // either unstable or not a smartcast
+        )
+    }
+}
+
+fun test_5() {
+    var x: String? = null
+    if (x != null) {
+        foo(
+            x.length, // stable smartcast
+            myRun { x = null },
             <!SMARTCAST_IMPOSSIBLE!>x<!>.length  // either unstable or not a smartcast
         )
     }
