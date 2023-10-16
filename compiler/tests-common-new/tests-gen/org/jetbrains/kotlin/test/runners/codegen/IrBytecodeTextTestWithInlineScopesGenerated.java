@@ -40,7 +40,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
 
     @Test
     public void testAllFilesPresentInBytecodeText() throws Exception {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
     }
 
     @Test
@@ -577,7 +577,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ArgumentOrder {
         @Test
         public void testAllFilesPresentInArgumentOrder() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/argumentOrder"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/argumentOrder"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -599,7 +599,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Assert {
         @Test
         public void testAllFilesPresentInAssert() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/assert"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/assert"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -639,7 +639,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Boxing {
         @Test
         public void testAllFilesPresentInBoxing() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/boxing"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/boxing"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -667,7 +667,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class BoxingOptimization {
         @Test
         public void testAllFilesPresentInBoxingOptimization() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/boxingOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/boxingOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -851,7 +851,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class BuiltinFunctions {
         @Test
         public void testAllFilesPresentInBuiltinFunctions() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/builtinFunctions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/builtinFunctions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -890,7 +890,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
 
             @Test
             public void testAllFilesPresentInGenericParameterBridge() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/builtinFunctions/genericParameterBridge"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/builtinFunctions/genericParameterBridge"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -937,7 +937,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class CallableReference {
         @Test
         public void testAllFilesPresentInCallableReference() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/callableReference"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/callableReference"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1007,7 +1007,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class CapturedVarsOptimization {
         @Test
         public void testAllFilesPresentInCapturedVarsOptimization() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/capturedVarsOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/capturedVarsOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1083,7 +1083,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Checkcast {
         @Test
         public void testAllFilesPresentInCheckcast() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/checkcast"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/checkcast"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1135,7 +1135,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class CoercionToUnitOptimization {
         @Test
         public void testAllFilesPresentInCoercionToUnitOptimization() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coercionToUnitOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coercionToUnitOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1199,7 +1199,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Companion {
         @Test
         public void testAllFilesPresentInCompanion() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/companion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/companion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1293,7 +1293,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Conditions {
         @Test
         public void testAllFilesPresentInConditions() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/conditions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/conditions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1471,7 +1471,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ConstProperty {
         @Test
         public void testAllFilesPresentInConstProperty() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constProperty"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constProperty"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1499,7 +1499,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ConstantConditions {
         @Test
         public void testAllFilesPresentInConstantConditions() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constantConditions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constantConditions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1539,7 +1539,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Constants {
         @Test
         public void testAllFilesPresentInConstants() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constants"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constants"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1621,7 +1621,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Constructors {
         @Test
         public void testAllFilesPresentInConstructors() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constructors"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/constructors"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1691,7 +1691,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ControlStructures {
         @Test
         public void testAllFilesPresentInControlStructures() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/controlStructures"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/controlStructures"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1713,7 +1713,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Coroutines {
         @Test
         public void testAllFilesPresentInCoroutines() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -1788,7 +1788,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class Debug {
             @Test
             public void testAllFilesPresentInDebug() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/debug"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/debug"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -1828,7 +1828,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class DestructuringInLambda {
             @Test
             public void testAllFilesPresentInDestructuringInLambda() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/destructuringInLambda"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/destructuringInLambda"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -1844,7 +1844,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class InlineClasses {
             @Test
             public void testAllFilesPresentInInlineClasses() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/inlineClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/inlineClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -1896,7 +1896,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class IntLikeVarSpilling {
             @Test
             public void testAllFilesPresentInIntLikeVarSpilling() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/intLikeVarSpilling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/intLikeVarSpilling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -1966,7 +1966,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class StateMachine {
             @Test
             public void testAllFilesPresentInStateMachine() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/stateMachine"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/coroutines/stateMachine"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -1989,7 +1989,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class DeadCodeElimination {
         @Test
         public void testAllFilesPresentInDeadCodeElimination() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/deadCodeElimination"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/deadCodeElimination"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2065,7 +2065,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class DefaultArguments {
         @Test
         public void testAllFilesPresentInDefaultArguments() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/defaultArguments"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/defaultArguments"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2135,7 +2135,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class DirectInvoke {
         @Test
         public void testAllFilesPresentInDirectInvoke() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/directInvoke"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/directInvoke"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2163,7 +2163,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class DisabledOptimizations {
         @Test
         public void testAllFilesPresentInDisabledOptimizations() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/disabledOptimizations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/disabledOptimizations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2209,7 +2209,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Enum {
         @Test
         public void testAllFilesPresentInEnum() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/enum"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/enum"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2255,6 +2255,12 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         }
 
         @Test
+        @TestMetadata("enumEntriesNoMapping.kt")
+        public void testEnumEntriesNoMapping() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/enum/enumEntriesNoMapping.kt");
+        }
+
+        @Test
         @TestMetadata("kt18731.kt")
         public void testKt18731() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/enum/kt18731.kt");
@@ -2285,7 +2291,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ExclExcl {
         @Test
         public void testAllFilesPresentInExclExcl() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/exclExcl"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/exclExcl"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2307,7 +2313,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class FieldsForCapturedValues {
         @Test
         public void testAllFilesPresentInFieldsForCapturedValues() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/fieldsForCapturedValues"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/fieldsForCapturedValues"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2377,7 +2383,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ForLoop {
         @Test
         public void testAllFilesPresentInForLoop() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -2542,7 +2548,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInArrayWithIndex {
             @Test
             public void testAllFilesPresentInForInArrayWithIndex() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInArrayWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInArrayWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -2582,7 +2588,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInCharSequenceWithIndex {
             @Test
             public void testAllFilesPresentInForInCharSequenceWithIndex() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInCharSequenceWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInCharSequenceWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -2628,7 +2634,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInIndices {
             @Test
             public void testAllFilesPresentInForInIndices() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInIndices"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInIndices"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -2692,7 +2698,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInIterableWithIndex {
             @Test
             public void testAllFilesPresentInForInIterableWithIndex() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInIterableWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInIterableWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -2738,7 +2744,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInProgressionWithIndex {
             @Test
             public void testAllFilesPresentInForInProgressionWithIndex() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInProgressionWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInProgressionWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -2820,7 +2826,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInRangeUntil {
             @Test
             public void testAllFilesPresentInForInRangeUntil() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInRangeUntil"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInRangeUntil"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -2884,7 +2890,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInRangeWithUpperBoundMinus1 {
             @Test
             public void testAllFilesPresentInForInRangeWithUpperBoundMinus1() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInRangeWithUpperBoundMinus1"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInRangeWithUpperBoundMinus1"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3008,7 +3014,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInReversed {
             @Test
             public void testAllFilesPresentInForInReversed() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInReversed"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInReversed"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3096,7 +3102,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInSequenceWithIndex {
             @Test
             public void testAllFilesPresentInForInSequenceWithIndex() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInSequenceWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInSequenceWithIndex"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3148,7 +3154,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class ForInUntil {
             @Test
             public void testAllFilesPresentInForInUntil() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInUntil"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/forInUntil"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3212,7 +3218,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class Stepped {
             @Test
             public void testAllFilesPresentInStepped() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/stepped"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/stepped"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3306,7 +3312,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class Unsigned {
             @Test
             public void testAllFilesPresentInUnsigned() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/unsigned"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/forLoop/unsigned"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3431,7 +3437,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class HashCode {
         @Test
         public void testAllFilesPresentInHashCode() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/hashCode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/hashCode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -3453,7 +3459,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Ieee754 {
         @Test
         public void testAllFilesPresentInIeee754() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/ieee754"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/ieee754"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -3511,7 +3517,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Inline {
         @Test
         public void testAllFilesPresentInInline() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -3670,7 +3676,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class Property {
             @Test
             public void testAllFilesPresentInProperty() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inline/property"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inline/property"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -3687,7 +3693,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class InlineArgsInPlace {
         @Test
         public void testAllFilesPresentInInlineArgsInPlace() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inlineArgsInPlace"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inlineArgsInPlace"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -3715,7 +3721,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class InlineClasses {
         @Test
         public void testAllFilesPresentInInlineClasses() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inlineClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inlineClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4151,7 +4157,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class InnerClasses {
         @Test
         public void testAllFilesPresentInInnerClasses() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/innerClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/innerClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4203,7 +4209,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
 
         @Test
         public void testAllFilesPresentInInterfaces() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/interfaces"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/interfaces"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4243,7 +4249,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Intrinsics {
         @Test
         public void testAllFilesPresentInIntrinsics() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/intrinsics"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/intrinsics"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4271,7 +4277,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class IntrinsicsCompare {
         @Test
         public void testAllFilesPresentInIntrinsicsCompare() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/intrinsicsCompare"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/intrinsicsCompare"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4341,7 +4347,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class IntrinsicsTrim {
         @Test
         public void testAllFilesPresentInIntrinsicsTrim() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/intrinsicsTrim"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/intrinsicsTrim"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4375,7 +4381,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Invokedynamic {
         @Test
         public void testAllFilesPresentInInvokedynamic() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/invokedynamic"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/invokedynamic"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4409,7 +4415,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Jvm8 {
         @Test
         public void testAllFilesPresentInJvm8() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Nested
@@ -4418,7 +4424,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class HashCode {
             @Test
             public void testAllFilesPresentInHashCode() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8/hashCode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8/hashCode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -4440,7 +4446,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class JvmDefault {
             @Test
             public void testAllFilesPresentInJvmDefault() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8/jvmDefault"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8/jvmDefault"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Nested
@@ -4449,7 +4455,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
             public class AllCompatibility {
                 @Test
                 public void testAllFilesPresentInAllCompatibility() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8/jvmDefault/allCompatibility"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvm8/jvmDefault/allCompatibility"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
                 }
 
                 @Test
@@ -4491,7 +4497,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class LazyCodegen {
         @Test
         public void testAllFilesPresentInLazyCodegen() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/lazyCodegen"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/lazyCodegen"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4537,7 +4543,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class LineNumbers {
         @Test
         public void testAllFilesPresentInLineNumbers() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/lineNumbers"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/lineNumbers"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4631,7 +4637,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class LocalInitializationLVT {
         @Test
         public void testAllFilesPresentInLocalInitializationLVT() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/localInitializationLVT"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/localInitializationLVT"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4755,7 +4761,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Mangling {
         @Test
         public void testAllFilesPresentInMangling() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/mangling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/mangling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4777,7 +4783,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class MultifileClasses {
         @Test
         public void testAllFilesPresentInMultifileClasses() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/multifileClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/multifileClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4805,7 +4811,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class NotNullAssertions {
         @Test
         public void testAllFilesPresentInNotNullAssertions() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/notNullAssertions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/notNullAssertions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -4887,7 +4893,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class NullCheckOptimization {
         @Test
         public void testAllFilesPresentInNullCheckOptimization() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/nullCheckOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/nullCheckOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5046,7 +5052,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class LocalLateinit {
             @Test
             public void testAllFilesPresentInLocalLateinit() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/nullCheckOptimization/localLateinit"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/nullCheckOptimization/localLateinit"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -5075,7 +5081,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class OptimizedDelegatedProperties {
         @Test
         public void testAllFilesPresentInOptimizedDelegatedProperties() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/optimizedDelegatedProperties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/optimizedDelegatedProperties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5115,7 +5121,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class OuterClass {
         @Test
         public void testAllFilesPresentInOuterClass() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/outerClass"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/outerClass"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5131,7 +5137,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ParameterlessMain {
         @Test
         public void testAllFilesPresentInParameterlessMain() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/parameterlessMain"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/parameterlessMain"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5189,7 +5195,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Properties {
         @Test
         public void testAllFilesPresentInProperties() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/properties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/properties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5210,7 +5216,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
         public class Lateinit {
             @Test
             public void testAllFilesPresentInLateinit() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/properties/lateinit"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/properties/lateinit"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
@@ -5233,7 +5239,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Ranges {
         @Test
         public void testAllFilesPresentInRanges() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/ranges"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/ranges"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5321,7 +5327,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Sam {
         @Test
         public void testAllFilesPresentInSam() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/sam"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/sam"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5373,7 +5379,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Statements {
         @Test
         public void testAllFilesPresentInStatements() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/statements"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/statements"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5431,7 +5437,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class StaticFields {
         @Test
         public void testAllFilesPresentInStaticFields() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/staticFields"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/staticFields"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5453,7 +5459,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class StoreStackBeforeInline {
         @Test
         public void testAllFilesPresentInStoreStackBeforeInline() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/storeStackBeforeInline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/storeStackBeforeInline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5499,7 +5505,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class StringOperations {
         @Test
         public void testAllFilesPresentInStringOperations() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/stringOperations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/stringOperations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5719,7 +5725,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class TemporaryVals {
         @Test
         public void testAllFilesPresentInTemporaryVals() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/temporaryVals"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/temporaryVals"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5789,7 +5795,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ToArray {
         @Test
         public void testAllFilesPresentInToArray() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/toArray"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/toArray"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5805,7 +5811,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class UnsignedTypes {
         @Test
         public void testAllFilesPresentInUnsignedTypes() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/unsignedTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/unsignedTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5875,7 +5881,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class ValueClasses {
         @Test
         public void testAllFilesPresentInValueClasses() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5927,7 +5933,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class Varargs {
         @Test
         public void testAllFilesPresentInVarargs() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/varargs"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/varargs"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -5943,7 +5949,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class When {
         @Test
         public void testAllFilesPresentInWhen() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/when"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/when"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -6103,7 +6109,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class WhenEnumOptimization {
         @Test
         public void testAllFilesPresentInWhenEnumOptimization() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/whenEnumOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/whenEnumOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -6209,7 +6215,7 @@ public class IrBytecodeTextTestWithInlineScopesGenerated extends AbstractIrBytec
     public class WhenStringOptimization {
         @Test
         public void testAllFilesPresentInWhenStringOptimization() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/whenStringOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/whenStringOptimization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test

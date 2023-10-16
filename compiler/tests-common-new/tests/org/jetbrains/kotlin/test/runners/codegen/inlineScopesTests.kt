@@ -23,13 +23,6 @@ open class AbstractIrBlackBoxInlineCodegenWithIrInlinerTestWithInlineScopes : Ab
     }
 }
 
-open class AbstractBytecodeTextTestWithInlineScopes : AbstractBytecodeTextTest(TargetBackend.JVM_WITH_INLINE_SCOPES) {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-    }
-}
-
 open class AbstractCompileKotlinAgainstInlineKotlinTestWithInlineScopes : AbstractCompileKotlinAgainstInlineKotlinTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
@@ -148,6 +141,16 @@ open class AbstractJvmOldAgainstIrBoxTestWithInlineScopes : AbstractJvmOldAgains
 }
 
 open class AbstractSteppingTestWithInlineScopes : AbstractSteppingTest() {
+    override fun configure(builder: TestConfigurationBuilder) {
+        super.configure(builder)
+        builder.useInlineScopesNumbers()
+    }
+}
+
+open class AbstractModularIrLocalVariableBytecodeInlinerTestWithInlineScopes : AbstractIrLocalVariableBytecodeInlinerTest()
+
+open class AbstractModularIrLocalVariableBytecodeInlinerTestWithInlineScopesAndFlagEnabled : AbstractIrLocalVariableBytecodeInlinerTest() {
+    override val targetBackend = TargetBackend.JVM_IR_WITH_INLINE_SCOPES
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineScopesNumbers()

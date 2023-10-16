@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class IrLocalVariableBytecodeInlinerTestWithInlineScopesGenerated extends AbstractIrLocalVariableBytecodeInlinerTestWithInlineScopes {
     @Test
     public void testAllFilesPresentInLocalVariables() throws Exception {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
     }
 
     @Test
@@ -235,7 +235,7 @@ public class IrLocalVariableBytecodeInlinerTestWithInlineScopesGenerated extends
     public class Constructors {
         @Test
         public void testAllFilesPresentInConstructors() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/constructors"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/constructors"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -257,7 +257,7 @@ public class IrLocalVariableBytecodeInlinerTestWithInlineScopesGenerated extends
     public class Destructuring {
         @Test
         public void testAllFilesPresentInDestructuring() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/destructuring"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/destructuring"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -345,7 +345,7 @@ public class IrLocalVariableBytecodeInlinerTestWithInlineScopesGenerated extends
     public class ReceiverMangling {
         @Test
         public void testAllFilesPresentInReceiverMangling() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/receiverMangling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/receiverMangling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -403,7 +403,7 @@ public class IrLocalVariableBytecodeInlinerTestWithInlineScopesGenerated extends
     public class Suspend {
         @Test
         public void testAllFilesPresentInSuspend() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/suspend"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/suspend"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
         }
 
         @Test
@@ -460,7 +460,7 @@ public class IrLocalVariableBytecodeInlinerTestWithInlineScopesGenerated extends
         public class Completion {
             @Test
             public void testAllFilesPresentInCompletion() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/suspend/completion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/debug/localVariables/suspend/completion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_WITH_INLINE_SCOPES, true);
             }
 
             @Test
