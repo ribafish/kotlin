@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.extensions.FirSwitchableExtensionDeclarationsSym
 import org.jetbrains.kotlin.fir.java.FirCliSession
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.resolve.providers.DEPENDENCIES_SYMBOL_PROVIDER_QUALIFIED_KEY
+import org.jetbrains.kotlin.fir.resolve.providers.FirNotFoundClassesStorage
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider
@@ -74,6 +75,7 @@ abstract class FirAbstractSessionFactory {
             val symbolProvider = FirCachingCompositeSymbolProvider(this, providers)
             register(FirSymbolProvider::class, symbolProvider)
             register(FirProvider::class, FirLibrarySessionProvider(symbolProvider))
+            register(FirNotFoundClassesStorage::class, FirNotFoundClassesStorage(this))
         }
     }
 

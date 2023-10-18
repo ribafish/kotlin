@@ -71,7 +71,7 @@ sealed class FirClassSymbol<C : FirClass>(classId: ClassId) : FirClassLikeSymbol
         get() = fir.classKind
 }
 
-class FirRegularClassSymbol(classId: ClassId) : FirClassSymbol<FirRegularClass>(classId), RegularClassSymbolMarker {
+open class FirRegularClassSymbol(classId: ClassId) : FirClassSymbol<FirRegularClass>(classId), RegularClassSymbolMarker {
     val companionObjectSymbol: FirRegularClassSymbol?
         get() = fir.companionObjectSymbol
 

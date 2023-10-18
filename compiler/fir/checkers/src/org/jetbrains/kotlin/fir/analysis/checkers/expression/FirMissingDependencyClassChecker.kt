@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.references.isError
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDiagnosticWithSingleCandidate
+import org.jetbrains.kotlin.fir.resolve.providers.FirNotFoundClassesStorage
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -35,7 +36,10 @@ object FirMissingDependencyClassChecker : FirQualifiedAccessExpressionChecker() 
             type.forEachClassLikeType {
                 when (it) {
                     is ConeErrorType -> hasError = true
-                    else -> hasMissingClass = hasMissingClass || it.lookupTag.toSymbol(context.session) == null
+                    else -> {
+                        val symbol = it.lookupTag.toSymbol(context.session)
+                        hasMissingClass = hasMissingClass || symbol == null || symbol is FirNotFoundClassesStorage.Symbol
+                    }
                 }
             }
 

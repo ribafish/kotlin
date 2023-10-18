@@ -19042,6 +19042,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("errorTypeForTransitiveDependency.kt")
+        public void testErrorTypeForTransitiveDependency() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/errorTypeForTransitiveDependency.kt");
+        }
+
+        @Test
         @TestMetadata("ExtensionAlias.kt")
         public void testExtensionAlias() throws Exception {
             runTest("compiler/testData/codegen/box/fir/ExtensionAlias.kt");

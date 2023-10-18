@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSessionComponent
 import org.jetbrains.kotlin.fir.ThreadSafeMutableState
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
+import org.jetbrains.kotlin.fir.resolve.providers.FirNotFoundClassesStorage
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 
 @ThreadSafeMutableState
@@ -24,9 +25,16 @@ class FirMissingDependencyStorage(private val session: FirSession) : FirSessionC
 
     private fun findMissingSuperTypes(declaration: FirClassSymbol<*>): Set<ConeKotlinType> {
         return declaration.collectSuperTypes(session)
-            .filterTo(mutableSetOf()) {
-                // Ignore types which are already errors.
-                it !is ConeErrorType && it !is ConeDynamicType && it.toSymbol(session) == null
+            .filterTo(mutableSetOf()) { type ->
+                when {
+                    // Ignore types which are already errors.
+                    type is ConeErrorType -> false
+                    type is ConeDynamicType -> false
+                    else -> {
+                        val symbol = type.toSymbol(session)
+                        symbol == null || symbol is FirNotFoundClassesStorage.Symbol
+                    }
+                }
             }
     }
 

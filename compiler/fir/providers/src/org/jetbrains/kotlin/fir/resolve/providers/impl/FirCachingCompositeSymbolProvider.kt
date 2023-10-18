@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolNamesProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirSyntheticFunctionInterfaceProviderBase.Companion.isNameForFunctionClass
+import org.jetbrains.kotlin.fir.resolve.providers.notFoundClassesStorage
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
@@ -38,6 +39,10 @@ class FirCachingCompositeSymbolProvider(
     private val topLevelFunctionCache = session.firCachesFactory.createCache(::computeTopLevelFunctions)
     private val topLevelPropertyCache = session.firCachesFactory.createCache(::computeTopLevelProperties)
     private val packageCache = session.firCachesFactory.createCache(::computePackage)
+
+    private val librarySession: FirSession? = providers.firstNotNullOfOrNull { provider ->
+        provider.session.takeIf { it.kind == FirSession.Kind.Library }
+    }
 
     override val symbolNamesProvider: FirSymbolNamesProvider = object : FirCompositeCachedSymbolNamesProvider(
         session,
@@ -105,7 +110,9 @@ class FirCachingCompositeSymbolProvider(
     }
 
     override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? {
-        if (!symbolNamesProvider.mayHaveTopLevelClassifier(classId)) return null
+        if (!symbolNamesProvider.mayHaveTopLevelClassifier(classId)) {
+            return librarySession?.notFoundClassesStorage?.getExistingNotFoundClassSymbol(classId)
+        }
         return classLikeCache.getValue(classId)
     }
 

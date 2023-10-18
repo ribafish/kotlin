@@ -143,11 +143,7 @@ class TypeDeserializer(
     private fun typeConstructor(proto: ProtoBuf.Type): TypeConstructor {
         fun notFoundClass(classIdIndex: Int): ClassDescriptor {
             val classId = c.nameResolver.getClassId(classIdIndex)
-            val typeParametersCount = generateSequence(proto) { it.outerType(c.typeTable) }.map { it.argumentCount }.toMutableList()
-            val classNestingLevel = generateSequence(classId, ClassId::outerClassId).count()
-            while (typeParametersCount.size < classNestingLevel) {
-                typeParametersCount.add(0)
-            }
+            val typeParametersCount = typeParametersCountForNotFoundClass(proto, classId, c.typeTable)
             return c.components.notFoundClasses.getClass(classId, typeParametersCount)
         }
 

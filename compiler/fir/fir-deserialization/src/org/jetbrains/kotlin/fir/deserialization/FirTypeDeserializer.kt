@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.fir.declarations.builder.FirTypeParameterBuilder
 import org.jetbrains.kotlin.fir.declarations.utils.addDefaultBoundIfNecessary
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.resolve.providers.FirNotFoundClassesStorage
+import org.jetbrains.kotlin.fir.resolve.providers.notFoundClassesStorage
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeClassifierLookupTag
@@ -28,12 +31,14 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.metadata.ProtoBuf
+import org.jetbrains.kotlin.metadata.ProtoBuf.Type
 import org.jetbrains.kotlin.metadata.deserialization.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.serialization.deserialization.ProtoEnumFlags
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.jetbrains.kotlin.serialization.deserialization.getName
+import org.jetbrains.kotlin.serialization.deserialization.typeParametersCountForNotFoundClass
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.shouldIjPlatformExceptionBeRethrown
 
@@ -96,12 +101,20 @@ class FirTypeDeserializer(
         }
     }
 
-    private fun computeClassifier(fqNameIndex: Int): ConeClassLikeLookupTag {
+    private fun computeClassifier(proto: Type, isClass: Boolean): ConeClassLikeLookupTag {
+        val fqNameIndex = if (isClass) proto.className else proto.typeAliasName
         try {
             // We can't just load local types as is, because later we will get an exception
             // while trying to get corresponding FIR class
-            val id = nameResolver.getClassId(fqNameIndex).takeIf { !it.isLocal } ?: StandardClassIds.Any
-            return id.toLookupTag()
+            val classId = nameResolver.getClassId(fqNameIndex).takeIf { !it.isLocal } ?: StandardClassIds.Any
+            if (isClass && !moduleData.session.symbolProvider.symbolNamesProvider.mayHaveTopLevelClassifier(classId)) {
+                val typeParametersCount = typeParametersCountForNotFoundClass(proto, classId, typeTable)
+                val notFoundClass = moduleData.session.notFoundClassesStorage.getOrCreateNotFoundClass(
+                    classId, moduleData, typeParametersCount
+                )
+                return notFoundClass.symbol.toLookupTag()
+            }
+            return classId.toLookupTag()
         } catch (e: Throwable) {
             if (shouldIjPlatformExceptionBeRethrown(e)) throw e
             throw RuntimeException("Looking up for ${nameResolver.getClassId(fqNameIndex)}", e)
@@ -267,8 +280,8 @@ class FirTypeDeserializer(
 
     private fun typeSymbol(proto: ProtoBuf.Type): ConeClassifierLookupTag? {
         return when {
-            proto.hasClassName() -> computeClassifier(proto.className)
-            proto.hasTypeAliasName() -> computeClassifier(proto.typeAliasName)
+            proto.hasClassName() -> computeClassifier(proto, isClass = true)
+            proto.hasTypeAliasName() -> computeClassifier(proto, isClass = false)
             proto.hasTypeParameter() -> typeParameterSymbol(proto.typeParameter)
             proto.hasTypeParameterName() -> {
                 val name = nameResolver.getString(proto.typeParameterName)

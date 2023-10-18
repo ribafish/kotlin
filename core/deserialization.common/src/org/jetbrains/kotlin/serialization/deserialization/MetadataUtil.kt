@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.builtins.BuiltInsBinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.NameResolverImpl
+import org.jetbrains.kotlin.metadata.deserialization.TypeTable
+import org.jetbrains.kotlin.metadata.deserialization.outerType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import java.io.InputStream
@@ -41,4 +43,13 @@ fun readProto(stream: InputStream): Triple<ProtoBuf.PackageFragment, NameResolve
     val message = ProtoBuf.PackageFragment.parseFrom(stream, BuiltInSerializerProtocol.extensionRegistry)
     val nameResolver = NameResolverImpl(message.strings, message.qualifiedNames)
     return Triple(message, nameResolver, version)
+}
+
+fun typeParametersCountForNotFoundClass(proto: ProtoBuf.Type, classId: ClassId, typeTable: TypeTable): List<Int> {
+    val typeParametersCount = generateSequence(proto) { it.outerType(typeTable) }.map { it.argumentCount }.toMutableList()
+    val classNestingLevel = generateSequence(classId, ClassId::outerClassId).count()
+    while (typeParametersCount.size < classNestingLevel) {
+        typeParametersCount.add(0)
+    }
+    return typeParametersCount
 }
