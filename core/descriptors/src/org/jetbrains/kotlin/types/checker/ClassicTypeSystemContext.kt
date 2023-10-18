@@ -300,6 +300,11 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         return c1 == c2
     }
 
+    override fun TypeConstructorMarker.isExistingClassLike(): Boolean {
+        require(this is TypeConstructor, this::errorMessage)
+        return declarationDescriptor is ClassDescriptor
+    }
+
     override fun TypeConstructorMarker.isClassTypeConstructor(): Boolean {
         require(this is TypeConstructor, this::errorMessage)
         return declarationDescriptor is ClassDescriptor

@@ -434,7 +434,7 @@ abstract class AbstractTypeApproximator(
     ): SimpleTypeMarker? {
         val typeConstructor = type.typeConstructor()
         if (typeConstructor.parametersCount() != type.argumentsCount()) {
-            return if (conf.errorType) {
+            return if (typeConstructor.isExistingClassLike() && conf.errorType) {
                 createErrorType("Inconsistent type: $type (parameters.size = ${typeConstructor.parametersCount()}, arguments.size = ${type.argumentsCount()})")
             } else type.defaultResult(toSuper)
         }

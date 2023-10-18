@@ -311,6 +311,10 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this is ConeIntersectionType
     }
 
+    override fun TypeConstructorMarker.isExistingClassLike(): Boolean {
+        return this is ConeClassLikeLookupTag && toSymbol(session) != null
+    }
+
     override fun TypeConstructorMarker.isClassTypeConstructor(): Boolean {
         return this is ConeClassLikeLookupTag
     }

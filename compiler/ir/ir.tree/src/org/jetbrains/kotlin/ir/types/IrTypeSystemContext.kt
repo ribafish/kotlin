@@ -175,6 +175,8 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
 
     override fun TypeConstructorMarker.isIntersection() = false
 
+    override fun TypeConstructorMarker.isExistingClassLike(): Boolean = this is IrClassSymbol
+
     override fun TypeConstructorMarker.isClassTypeConstructor() = this is IrClassSymbol
 
     override fun TypeConstructorMarker.isInterface(): Boolean {
