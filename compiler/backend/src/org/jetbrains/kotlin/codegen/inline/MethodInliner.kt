@@ -492,10 +492,7 @@ class MethodInliner(
             node.signature, node.exceptions?.toTypedArray()
         )
 
-        val inlineScopesGenerator = inliningContext.inlineScopesGenerator
-        if (inlineScopesGenerator != null && node.localVariables?.isNotEmpty() == true && !isRegeneratingAnonymousObject()) {
-            inlineScopesGenerator.addInlineScopesInfo(node)
-        }
+        inliningContext.inlineScopesGenerator?.addInlineScopesInfo(node, isRegeneratingAnonymousObject())
 
         val transformationVisitor = object : InlineMethodInstructionAdapter(transformedNode) {
             private val GENERATE_DEBUG_INFO = GENERATE_SMAP && !isInlineOnlyMethod

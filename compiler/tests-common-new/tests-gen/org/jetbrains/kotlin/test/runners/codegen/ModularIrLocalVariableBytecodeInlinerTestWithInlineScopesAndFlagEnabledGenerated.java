@@ -32,6 +32,12 @@ public class ModularIrLocalVariableBytecodeInlinerTestWithInlineScopesAndFlagEna
     }
 
     @Test
+    @TestMetadata("inlineScopes10.kt")
+    public void testInlineScopes10() throws Exception {
+        runTest("compiler/testData/inlineScopes/inlineScopes10.kt");
+    }
+
+    @Test
     @TestMetadata("inlineScopes2.kt")
     public void testInlineScopes2() throws Exception {
         runTest("compiler/testData/inlineScopes/inlineScopes2.kt");
