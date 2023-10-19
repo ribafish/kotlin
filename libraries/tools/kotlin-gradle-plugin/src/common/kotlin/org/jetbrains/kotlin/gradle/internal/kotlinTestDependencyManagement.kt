@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.gradle.utils.forAllTargets
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 
 private val Dependency.isKotlinTestRootDependency: Boolean
-    get() = group == KOTLIN_MODULE_GROUP && name == KOTLIN_TEST_ROOT_MODULE_NAME
+    get() = group == KOTLIN_MODULE_GROUP && (name == KOTLIN_TEST_ROOT_MODULE_NAME || name == "kotlin-test-mpp")
 
 private val kotlin150Version = SemVer(1.toBigInteger(), 5.toBigInteger(), 0.toBigInteger())
 
@@ -116,7 +116,7 @@ private fun Configuration.maybeAddTestDependencyCapability(
                 dependencies.addLater(
                     testCapability.map { capability ->
                         dependencyHandler
-                            .kotlinDependency(KOTLIN_TEST_ROOT_MODULE_NAME, depVersion)
+                            .kotlinDependency(testRootDependency.name, depVersion)
                             .apply {
                                 (this as ExternalDependency).capabilities {
                                     it.requireCapability(capability)
