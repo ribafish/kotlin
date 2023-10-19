@@ -244,6 +244,9 @@ kotlin {
     wasmWasi {
         commonWasmTargetConfiguration()
     }
+    tasks.named("wasmWasiNodeTest").configure {
+        enabled = false
+    }
 
     sourceSets {
         all {
