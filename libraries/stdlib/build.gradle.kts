@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinTargetWithNodeJsDsl
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWasmTargetDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.tasks.UsesKotlinJavaToolchain
 import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
@@ -175,6 +176,9 @@ kotlin {
                         // This is needed for JavaTypeTest; typeOf for non-reified type parameters doesn't work otherwise, for implementation reasons.
                         freeCompilerArgs -= "-Xno-optimized-callable-references"
                     }
+                    doFirst {
+                        (this as KotlinJvmCompile).libraries.forEach(::println)
+                    }
                 }
             }
             val longRunningTest by creating {
@@ -291,8 +295,9 @@ kotlin {
         commonTest {
             dependencies {
                 // TODO: use project dependency when kotlin-test is migrated
-                compileOnly("org.jetbrains.kotlin:kotlin-test-common:$bootstrapKotlinVersion")
-                compileOnly("org.jetbrains.kotlin:kotlin-test-annotations-common:$bootstrapKotlinVersion")
+                api(project(":kotlin-test:kotlin-test-mpp"))
+//                compileOnly("org.jetbrains.kotlin:kotlin-test-common:$bootstrapKotlinVersion")
+//                compileOnly("org.jetbrains.kotlin:kotlin-test-annotations-common:$bootstrapKotlinVersion")
 //                compileOnly(project(":kotlin-test:kotlin-test-common"))
 //                compileOnly(project(":kotlin-test:kotlin-test-annotations-common"))
             }
@@ -331,7 +336,7 @@ kotlin {
                 optIn("kotlin.io.path.ExperimentalPathApi")
             }
             dependencies {
-                api(project(":kotlin-test:kotlin-test-junit"))
+                api(project(":kotlin-test:kotlin-test-mpp", configuration = "jvmJUnitRuntimeElements"))
             }
             kotlin.srcDir("jvm/test")
             kotlin.srcDir("jdk7/test")
@@ -340,7 +345,8 @@ kotlin {
 
         val jvmLongRunningTest by getting {
             dependencies {
-                api(project(":kotlin-test:kotlin-test-junit"))
+                api(project(":kotlin-test:kotlin-test-mpp", configuration = "jvmJUnitRuntimeElements"))
+//                api(project(":kotlin-test:kotlin-test-junit"))
             }
             kotlin.srcDir("jvm/testLongRunning")
         }
@@ -408,7 +414,7 @@ kotlin {
         }
         val jsTest by getting {
             dependencies {
-                api(project(":kotlin-test:kotlin-test-js-ir"))
+//                api(project(":kotlin-test:kotlin-test-js-ir"))
             }
             kotlin.srcDir("${jsDir}/test")
         }
@@ -485,7 +491,7 @@ kotlin {
         val wasmJsTest by getting {
             dependsOn(wasmCommonTest)
             dependencies {
-                api(project(":kotlin-test:kotlin-test-wasm-js"))
+//                api(project(":kotlin-test:kotlin-test-wasm-js"))
             }
             kotlin {
                 srcDir("wasm/js/test")
@@ -504,7 +510,7 @@ kotlin {
         val wasmWasiTest by getting {
             dependsOn(wasmCommonTest)
             dependencies {
-                api(project(":kotlin-test:kotlin-test-wasm-wasi"))
+//                api(project(":kotlin-test:kotlin-test-wasm-wasi"))
             }
             kotlin {
                 srcDir("wasm/wasi/test")
@@ -715,6 +721,7 @@ tasks {
     }
 
     val jvmLongRunningTest by registering(Test::class) {
+        group = "verification"
         val compilation = kotlin.jvm().compilations["longRunningTest"]
         classpath = compilation.compileDependencyFiles + compilation.runtimeDependencyFiles + compilation.output.allOutputs
         testClassesDirs = compilation.output.classesDirs
