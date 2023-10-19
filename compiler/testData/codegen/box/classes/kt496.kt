@@ -1,3 +1,5 @@
+// IGNORE_BACKEND_K2: NATIVE
+// (see KT-62878 for details)
 fun test1() : Boolean {
     try {
         return true
