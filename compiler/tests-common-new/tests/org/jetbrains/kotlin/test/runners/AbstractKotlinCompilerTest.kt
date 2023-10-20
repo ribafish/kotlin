@@ -50,7 +50,7 @@ abstract class AbstractKotlinCompilerTest {
         }
     }
 
-    protected val configuration: TestConfigurationBuilder.() -> Unit = {
+    val configuration: TestConfigurationBuilder.() -> Unit = {
         defaultConfiguration()
         useAdditionalService { createApplicationDisposableProvider() }
         useAdditionalService { createKotlinStandardLibrariesPathProvider() }

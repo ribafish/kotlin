@@ -6,8 +6,10 @@ plugins {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
 
     testImplementation(projectTests(":compiler:tests-common-new"))
+    testImplementation(projectTests(":compiler:fir:analysis-tests"))
     testImplementation(projectTests(":generators:test-generator"))
 
     testImplementation(project(":compiler:fir:checkers"))
