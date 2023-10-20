@@ -144,3 +144,5 @@ class AmbiguousValuesForContextReceiverParameter(
 ) : ResolutionDiagnostic(INAPPLICABLE)
 
 object ResolutionResultOverridesOtherToPreserveCompatibility : ResolutionDiagnostic(RESOLVED)
+
+class AmbiguousInterceptedSymbol(val pluginNames: List<String>) : ResolutionDiagnostic(INAPPLICABLE)

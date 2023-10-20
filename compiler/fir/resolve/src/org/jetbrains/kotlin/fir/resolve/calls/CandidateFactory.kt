@@ -65,6 +65,7 @@ class CandidateFactory private constructor(
         objectsByName: Boolean = false,
         isFromOriginalTypeInPresenceOfSmartCast: Boolean = false,
     ): Candidate {
+        var pluginAmbiguity: AmbiguousInterceptedSymbol? = null
         @Suppress("NAME_SHADOWING")
         val symbol: FirBasedSymbol<*> = if (callRefinementExtensions != null && callInfo.callKind == CallKind.Function) {
             if (callRefinementExtensions.size == 1) {
@@ -92,7 +93,8 @@ class CandidateFactory private constructor(
                         symbol
                     }
                     else -> {
-                        // report error here or save it and report later, at transform
+                        pluginAmbiguity =
+                            AmbiguousInterceptedSymbol(variants.map { it.second::class.qualifiedName ?: it.second.javaClass.name })
                         symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
                     }
                 }
@@ -119,6 +121,10 @@ class CandidateFactory private constructor(
             },
             isFromOriginalTypeInPresenceOfSmartCast,
         )
+
+        if (pluginAmbiguity != null) {
+            result.addDiagnostic(pluginAmbiguity)
+        }
 
         // The counterpart in FE 1.0 checks if the given descriptor is VariableDescriptor yet not PropertyDescriptor.
         // Here, we explicitly check if the referred declaration/symbol is value parameter, local variable, enum entry, or backing field.

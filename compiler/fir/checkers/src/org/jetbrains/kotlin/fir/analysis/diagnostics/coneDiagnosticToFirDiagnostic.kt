@@ -350,6 +350,8 @@ private fun mapInapplicableCandidateError(
                 isError = rootCause.isError
             )
 
+            is AmbiguousInterceptedSymbol -> FirErrors.PLUGIN_AMBIGUOUS_INTERCEPTED_SYMBOL.createOn(source, rootCause.pluginNames)
+
             else -> genericDiagnostic
         }
     }.distinct()
