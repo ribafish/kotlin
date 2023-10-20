@@ -10111,6 +10111,7 @@ public open class ArrayList<E> : kotlin.collections.AbstractMutableList<E>, kotl
 
     public open override fun addAll(elements: kotlin.collections.Collection<E>): kotlin.Boolean
 
+    @kotlin.js.ExperimentalJsExport
     public open override fun asJsArrayMutableView(): kotlin.collections.JsMutableArray<E>
 
     public open override fun clear(): kotlin.Unit
@@ -10312,6 +10313,7 @@ public open class LinkedHashSet<E> : kotlin.collections.HashSet<E>, kotlin.colle
 public interface List<out E> : kotlin.collections.Collection<E> {
     public abstract override val size: kotlin.Int { get; }
 
+    @kotlin.js.ExperimentalJsExport
     public open fun asJsArrayView(): kotlin.collections.JsImmutableArray<E>
 
     public abstract override operator fun contains(element: E): kotlin.Boolean
@@ -10366,6 +10368,7 @@ public interface Map<K, out V> {
 
     public abstract val values: kotlin.collections.Collection<V> { get; }
 
+    @kotlin.js.ExperimentalJsExport
     public open fun asJsMapView(): kotlin.collections.JsImmutableMap<K, V>
 
     public abstract fun containsKey(key: K): kotlin.Boolean
@@ -10416,6 +10419,7 @@ public interface MutableList<E> : kotlin.collections.List<E>, kotlin.collections
 
     public abstract override fun addAll(elements: kotlin.collections.Collection<E>): kotlin.Boolean
 
+    @kotlin.js.ExperimentalJsExport
     public open fun asJsArrayMutableView(): kotlin.collections.JsMutableArray<E>
 
     public abstract override fun clear(): kotlin.Unit
@@ -10456,6 +10460,7 @@ public interface MutableMap<K, V> : kotlin.collections.Map<K, V> {
 
     public abstract override val values: kotlin.collections.MutableCollection<V> { get; }
 
+    @kotlin.js.ExperimentalJsExport
     public open fun asJsMapMutableView(): kotlin.collections.JsMutableMap<K, V>
 
     public abstract fun clear(): kotlin.Unit
@@ -10476,6 +10481,7 @@ public interface MutableSet<E> : kotlin.collections.Set<E>, kotlin.collections.M
 
     public abstract override fun addAll(elements: kotlin.collections.Collection<E>): kotlin.Boolean
 
+    @kotlin.js.ExperimentalJsExport
     public open fun asJsSetMutableView(): kotlin.collections.JsMutableSet<E>
 
     public abstract override fun clear(): kotlin.Unit
@@ -10495,6 +10501,7 @@ public interface RandomAccess {
 public interface Set<out E> : kotlin.collections.Collection<E> {
     public abstract override val size: kotlin.Int { get; }
 
+    @kotlin.js.ExperimentalJsExport
     public open fun asJsSetView(): kotlin.collections.JsImmutableSet<E>
 
     public abstract override operator fun contains(element: E): kotlin.Boolean
