@@ -17,7 +17,9 @@ abstract class AbstractCodeFragmentCollectDiagnosticsTest : AbstractCollectDiagn
     override fun doTestByFileStructure(ktFile: KtFile, module: TestModule, testServices: TestServices) {
         val contextElement = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtElement>(ktFile)
 
-        val fragmentText = module.files.single().originalFile
+        val originalFile = module.files.single().originalFile
+            ?: error("Checking .fragment. requires a real test file")
+        val fragmentText = originalFile
             .run { File(parent, "$nameWithoutExtension.fragment.$extension") }
             .readText()
 

@@ -92,7 +92,6 @@ class JsDebugRunner(testServices: TestServices, private val localVariables: Bool
         sourceMap: SourceMap,
         mainModule: TestModule,
     ) {
-        val originalFile = mainModule.files.first { !it.isAdditional }.originalFile
         val debuggerFacade = NodeJsDebuggerFacade(jsFilePath, localVariables)
 
         val jsFile = File(jsFilePath)
@@ -136,12 +135,14 @@ class JsDebugRunner(testServices: TestServices, private val localVariables: Bool
             debugger.resume()
             waitForResumeEvent()
         }
-        checkSteppingTestResult(
-            mainModule.frontendKind,
-            mainModule.targetBackend ?: TargetBackend.JS_IR,
-            originalFile,
-            loggedItems
-        )
+
+        val targetBackend = mainModule.targetBackend ?: TargetBackend.JS_IR
+        val testFile = mainModule.files.first { !it.isAdditional }
+
+        when (val file = testFile.originalFile) {
+            null -> checkSteppingTestResult(mainModule.frontendKind, targetBackend, testFile.originalContent, loggedItems)
+            else -> checkSteppingTestResult(mainModule.frontendKind, targetBackend, file, loggedItems)
+        }
     }
 
     private suspend fun NodeJsDebuggerFacade.Context.addCallFrameInfoToLoggedItems(
@@ -179,7 +180,7 @@ class JsDebugRunner(testServices: TestServices, private val localVariables: Bool
         val originalFile = File(originalFilePath)
         return testServices.moduleStructure.modules.asSequence().flatMap { module -> module.files.asSequence().filter { !it.isAdditional } }
             .findLast {
-                it.originalFile.absolutePath == originalFile.absolutePath && it.startLineNumberInOriginalFile <= originalFileLineNumber
+                it.originalFile?.absolutePath == originalFile.absolutePath && it.startLineNumberInOriginalFile <= originalFileLineNumber
             }?.name
     }
 }

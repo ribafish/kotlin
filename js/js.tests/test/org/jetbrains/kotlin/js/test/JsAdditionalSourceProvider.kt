@@ -20,7 +20,8 @@ import java.io.FileFilter
 class JsAdditionalSourceProvider(testServices: TestServices) : AdditionalSourceProvider(testServices) {
     override fun produceAdditionalFiles(globalDirectives: RegisteredDirectives, module: TestModule): List<TestFile> {
         if (JsEnvironmentConfigurationDirectives.NO_COMMON_FILES in module.directives) return emptyList()
-        return getAdditionalKotlinFiles(module.files.first().originalFile.parent).map { it.toTestFile() }
+        val originalFile = module.files.first().originalFile ?: return emptyList()
+        return getAdditionalKotlinFiles(originalFile.parent).map { it.toTestFile() }
     }
 
     companion object {

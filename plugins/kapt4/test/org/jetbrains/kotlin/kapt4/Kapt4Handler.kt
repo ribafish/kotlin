@@ -158,7 +158,7 @@ internal class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4C
 }
 
 fun Assertions.checkTxt(module: TestModule, actual: String) {
-    val testDataFile = module.files.first().originalFile
+    val testDataFile = module.files.first().originalFile ?: error("Checking txt requires a real test file")
     val firFile = testDataFile.withExtension("fir.txt")
     val irFile = testDataFile.withExtension("ir.txt")
     val txtFile = testDataFile.withExtension("txt")

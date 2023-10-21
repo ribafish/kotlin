@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.test.utils.withSuffixAndExtension
 
 fun Assertions.checkTxtAccordingToBackend(module: TestModule, actual: String, fileSuffix: String = "") {
-    val testDataFile = module.files.first().originalFile
+    val testDataFile = module.files.first().originalFile ?: error("Checking txt requires a real test file")
     val txtFile = testDataFile.withExtension("$fileSuffix.txt")
     val irTxtFile = testDataFile.withSuffixAndExtension("$fileSuffix.ir", ".txt")
     val isIr = module.targetBackend?.isIR == true

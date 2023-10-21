@@ -88,10 +88,15 @@ fun BinaryArtifactHandler<*>.checkFullDiagnosticRender(module: TestModule) {
         }
     }
 
-    testServices.assertions.assertEqualsToFile(
-        File(FileUtil.getNameWithoutExtension(module.files.first().originalFile.absolutePath) + ".diag.txt"),
-        reportedDiagnostics.joinToString(separator = "\n\n", postfix = "\n")
-    )
+    val result = reportedDiagnostics.joinToString(separator = "\n\n", postfix = "\n")
+    val testFile = module.files.first()
+
+    when (val file = testFile.originalFile) {
+        null -> testServices.assertions.assertEquals(testFile.originalContent, result)
+        else -> testServices.assertions.assertEqualsToFile(
+            File(FileUtil.getNameWithoutExtension(file.absolutePath) + ".diag.txt"), result
+        )
+    }
 }
 
 private fun renderDiagnosticMessage(fileName: String, severity: Severity, message: String?, line: Int, column: Int): String {
