@@ -251,26 +251,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
             field = value
         }
 
-    @Argument(
-        value = "-Xeffect-system",
-        description = "Enable experimental language feature: effect system"
-    )
-    var effectSystem = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xread-deserialized-contracts",
-        description = "Enable reading of contracts from metadata"
-    )
-    var readDeserializedContracts = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
     @IDEAPluginsCompatibilityAPI(
         IDEAPlatforms._212, // maybe 211 AS used it too
         IDEAPlatforms._213,
@@ -286,16 +266,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         plugins = "Android"
     )
     var useExperimental: Array<String>? = null
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xproper-ieee754-comparisons",
-        description = "Generate proper IEEE 754 comparisons in all cases if values are statically known to be of primitive numeric types"
-    )
-    var properIeee754Comparisons = false
         set(value) {
             checkFrozen()
             field = value
@@ -537,16 +507,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         description = "Generate fake overrides via IR. See KT-61514"
     )
     var useIrFakeOverrideBuilder = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xuse-mixed-named-arguments",
-        description = "Enable Support named arguments in their own position even if the result appears as mixed"
-    )
-    var useMixedNamedArguments = false
         set(value) {
             checkFrozen()
             field = value
@@ -838,23 +798,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
 
             if (legacySmartCastAfterTry) {
                 put(LanguageFeature.SoundSmartCastsAfterTry, LanguageFeature.State.DISABLED)
-            }
-
-            if (effectSystem) {
-                put(LanguageFeature.UseCallsInPlaceEffect, LanguageFeature.State.ENABLED)
-                put(LanguageFeature.UseReturnsEffect, LanguageFeature.State.ENABLED)
-            }
-
-            if (readDeserializedContracts) {
-                put(LanguageFeature.ReadDeserializedContracts, LanguageFeature.State.ENABLED)
-            }
-
-            if (properIeee754Comparisons) {
-                put(LanguageFeature.ProperIeee754Comparisons, LanguageFeature.State.ENABLED)
-            }
-
-            if (useMixedNamedArguments) {
-                put(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition, LanguageFeature.State.ENABLED)
             }
 
             if (inferenceCompatibility) {
