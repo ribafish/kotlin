@@ -866,7 +866,6 @@ Also sets `-jvm-target` value equal to the selected JDK version"""
         result[JvmAnalysisFlags.suppressMissingBuiltinsError] = suppressMissingBuiltinsError
         result[JvmAnalysisFlags.enableJvmPreview] = enableJvmPreview
         result[AnalysisFlags.allowUnstableDependencies] = allowUnstableDependencies || useK2 || languageVersion.usesK2
-        result[JvmAnalysisFlags.disableUltraLightClasses] = disableUltraLightClasses
         result[JvmAnalysisFlags.useIR] = !useOldBackend
         return result
     }

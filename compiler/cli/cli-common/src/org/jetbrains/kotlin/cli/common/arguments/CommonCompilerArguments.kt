@@ -543,16 +543,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         }
 
     @Argument(
-        value = "-Xdisable-ultra-light-classes",
-        description = "Do not use the ultra light classes implementation"
-    )
-    var disableUltraLightClasses = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xuse-mixed-named-arguments",
         description = "Enable Support named arguments in their own position even if the result appears as mixed"
     )
