@@ -574,16 +574,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         }
 
     @Argument(
-        value = "-Xbuiltins-from-sources",
-        description = "Compile builtIns from sources"
-    )
-    var builtInsFromSources = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xexpect-actual-classes",
         description = "'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta.\n" +
                 "Kotlin reports a warning every time you use them. You can use this flag to mute the warning."
@@ -756,7 +746,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
             )
             put(AnalysisFlags.extendedCompilerChecks, extendedCompilerChecks)
             put(AnalysisFlags.allowKotlinPackage, allowKotlinPackage)
-            put(AnalysisFlags.builtInsFromSources, builtInsFromSources)
             put(AnalysisFlags.muteExpectActualClassesWarning, expectActualClasses)
             put(AnalysisFlags.allowFullyQualifiedNameInKClass, true)
             put(AnalysisFlags.dontWarnOnErrorSuppression, dontWarnOnErrorSuppression)
