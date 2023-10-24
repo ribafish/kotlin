@@ -41,7 +41,7 @@ class JsSimpleObjectPropertiesProvider(session: FirSession) : FirExtensionSessio
             }
 
             classSymbol
-                .declaredMemberScope(session)
+                .declaredMemberScope(session, null)
                 .processAllProperties {
                     addIfNotNull(it as? FirPropertySymbol)
                 }

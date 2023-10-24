@@ -95,13 +95,15 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
     private fun createJsObjectFactoryFunction(callableId: CallableId, jsSimpleObjectInterface: FirRegularClassSymbol): FirSimpleFunction {
         val jsSimpleObjectProperties = session.jsObjectPropertiesProvider.getJsObjectPropertiesForClass(jsSimpleObjectInterface)
         val functionTarget = FirFunctionTarget(null, isLambda = false)
+        val jsSimpleObjectInterfaceDefaultType = jsSimpleObjectInterface.defaultType()
+
         return buildSimpleFunction {
             moduleData = jsSimpleObjectInterface.moduleData
             resolvePhase = FirResolvePhase.BODY_RESOLVE
             origin = JsSimpleObjectPluginKey.origin
             symbol = FirNamedFunctionSymbol(callableId)
             name = callableId.callableName
-            returnTypeRef = jsSimpleObjectInterface.defaultType().toFirResolvedTypeRef()
+            returnTypeRef = jsSimpleObjectInterfaceDefaultType.toFirResolvedTypeRef()
 
             status = FirResolvedDeclarationStatusImpl(
                 jsSimpleObjectInterface.visibility,
@@ -139,12 +141,20 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
                             }
                             append('}')
                         }
+                        coneTypeOrNull = jsSimpleObjectInterfaceDefaultType
                         calleeReference = buildResolvedNamedReference {
                             name = jsFunction.name
                             resolvedSymbol = jsFunction
                         }
                         argumentList = buildResolvedArgumentList(
-                            linkedMapOf(buildConstExpression(null, ConstantValueKind.String, propertiesObject) to jsFunction.valueParameterSymbols.first().fir)
+                            linkedMapOf(
+                                buildConstExpression(
+                                    null,
+                                    ConstantValueKind.String,
+                                    propertiesObject,
+                                    setType = true
+                                ) to jsFunction.valueParameterSymbols.first().fir
+                            )
                         )
                     }
                 }

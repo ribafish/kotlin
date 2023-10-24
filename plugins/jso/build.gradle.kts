@@ -35,7 +35,9 @@ dependencies {
     testImplementation(projectTests(":js:js.tests"))
     testImplementation(projectTests(":generators:test-generator"))
 
-    testApiJUnit5()
+    testApi(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 
     jsoIrRuntimeForTests(project(":kotlinx-jso-runtime")) { isTransitive = false }
 
@@ -75,33 +77,7 @@ projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5) {
     doFirst {
         systemProperty("jso.runtime.path", jsoIrRuntimeForTests.asPath)
     }
-    setUpJsIrBoxTests()
+    useJsIrBoxTests(version = version, buildDir = "$buildDir/")
 }
 
 val generateTests by generator("org.jetbrains.kotlinx.jso.TestGeneratorKt")
-
-val d8Plugin = D8RootPlugin.apply(rootProject)
-d8Plugin.version = v8Version
-
-fun Test.setupV8() {
-    dependsOn(d8Plugin.setupTaskProvider)
-    val v8ExecutablePath = d8Plugin.requireConfigured().executablePath.absolutePath
-    doFirst {
-        systemProperty("javascript.engine.path.V8", v8ExecutablePath)
-    }
-}
-
-fun Test.setUpJsIrBoxTests() {
-    setupV8()
-
-    dependsOn(":dist")
-    dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
-    systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
-    dependsOn(":kotlin-stdlib-js-ir-minimal-for-test:compileKotlinJs")
-    systemProperty("kotlin.js.reduced.stdlib.path", "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main")
-    dependsOn(":kotlin-test:kotlin-test-js-ir:compileKotlinJs")
-    systemProperty("kotlin.js.kotlin.test.path", "libraries/kotlin.test/js-ir/build/classes/kotlin/js/main")
-    systemProperty("kotlin.js.kotlin.test.path", "libraries/kotlin.test/js-ir/build/classes/kotlin/js/main")
-    systemProperty("kotlin.js.test.root.out.dir", "$buildDir/")
-
-}
