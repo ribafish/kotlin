@@ -23,7 +23,8 @@ val testJsRuntime by configurations.creating {
     }
 }
 
-val atomicfuJsClasspath by configurations.creating { attributes {
+val atomicfuJsClasspath by configurations.creating {
+    attributes {
         attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
         attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir)
     }

@@ -14,9 +14,9 @@ import org.jetbrains.kotlin.fir.extensions.predicate.LookupPredicate
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.plugin.createTopLevelFunction
 import org.jetbrains.kotlin.fir.plugin.fqn
+import org.jetbrains.kotlin.fir.types.constructStarProjectedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.fir.types.constructStarProjectedType
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -58,7 +58,6 @@ class TopLevelDeclarationsGenerator(session: FirSession) : FirDeclarationGenerat
     override fun getTopLevelCallableIds(): Set<CallableId> {
         return matchedClasses.mapTo(mutableSetOf()) {
             val classId = it.classId
-            it.classKind
             CallableId(classId.packageFqName, Name.identifier(classId.toDummyCallableName()))
         }
     }
