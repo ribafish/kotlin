@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.CommonMainOrTestW
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.DeprecatedKotlinNativeTargetsChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.DisabledCinteropCommonizationInHmppProjectChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.DisabledNativeTargetsChecker
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.DuplicateSourceSetChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.ExperimentalK2UsageChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.InternalGradlePropertiesUsageChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.JsEnvironmentChecker
@@ -107,6 +108,7 @@ internal fun Project.registerKotlinPluginExtensions() {
         register(project, KotlinTargetAlreadyDeclaredChecker)
         register(project, InternalGradlePropertiesUsageChecker)
         register(project, WasmSourceSetsNotFoundChecker)
+        register(project, DuplicateSourceSetChecker)
 
         if (isMultiplatform) {
             register(project, KotlinMultiplatformAndroidGradlePluginCompatibilityChecker)
