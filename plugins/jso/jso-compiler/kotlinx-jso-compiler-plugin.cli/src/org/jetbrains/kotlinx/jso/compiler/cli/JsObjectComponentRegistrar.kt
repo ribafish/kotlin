@@ -5,10 +5,12 @@
 
 package org.jetbrains.kotlinx.jso.compiler.cli
 
+import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
+import org.jetbrains.kotlinx.jso.compiler.backend.JsObjectLoweringExtension
 import org.jetbrains.kotlinx.jso.compiler.fir.JsObjectExtensionRegistrar
 
 @OptIn(ExperimentalCompilerApi::class)
@@ -22,6 +24,7 @@ class JsObjectComponentRegistrar : CompilerPluginRegistrar() {
     companion object {
         fun registerExtensions(extensionStorage: ExtensionStorage) = with(extensionStorage) {
             FirExtensionRegistrarAdapter.registerExtension(JsObjectExtensionRegistrar())
+            IrGenerationExtension.registerExtension(JsObjectLoweringExtension())
         }
     }
 }

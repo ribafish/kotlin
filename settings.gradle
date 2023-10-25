@@ -282,6 +282,7 @@ include ":kotlinx-jso-compiler-plugin",
         ":kotlinx-jso-compiler-plugin.cli",
         ":kotlinx-jso-compiler-plugin.k2",
         ":kotlinx-jso-compiler-plugin.common",
+        ":kotlinx-jso-compiler-plugin.backend",
         ":kotlinx-jso-runtime",
         ":kotlinx-jso"
 
@@ -836,6 +837,7 @@ project(':kotlin-atomicfu-compiler-plugin-embeddable').projectDir = file("$rootD
 project(':kotlinx-atomicfu-runtime').projectDir = file("$rootDir/plugins/atomicfu/atomicfu-runtime")
 project(':atomicfu').projectDir = file("$rootDir/libraries/tools/atomicfu")
 
+project(':kotlinx-jso-compiler-plugin.backend').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.backend" as File
 project(':kotlinx-jso-compiler-plugin.cli').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.cli" as File
 project(':kotlinx-jso-compiler-plugin.k2').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.k2" as File
 project(':kotlinx-jso-compiler-plugin.common').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.common" as File

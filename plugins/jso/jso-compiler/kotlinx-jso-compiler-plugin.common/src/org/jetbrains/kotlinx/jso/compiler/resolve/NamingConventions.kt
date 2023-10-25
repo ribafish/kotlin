@@ -17,3 +17,8 @@ object StandardIds {
 object JsObjectAnnotations {
     val jsSimpleObjectAnnotationFqName = FqName("kotlinx.jso.JsSimpleObject")
 }
+
+object SpecialNames {
+    val DEFAULT_NAME_FOR_COMPANION_OBJECT = Name.identifier("Companion")
+    val INVOKE_OPERATOR_NAME = Name.identifier("invoke")
+}

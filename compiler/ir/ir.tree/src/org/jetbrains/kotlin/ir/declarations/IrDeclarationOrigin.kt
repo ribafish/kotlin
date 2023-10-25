@@ -100,7 +100,7 @@ interface IrDeclarationOrigin {
     /**
      * [pluginKey] may be null if declaration with this origin was deserialized from klib
      */
-    class GeneratedByPlugin private constructor(val pluginId: String, val pluginKey: GeneratedDeclarationKey?) : IrDeclarationOriginImpl("GENERATED[${pluginKey}]") {
+    class GeneratedByPlugin private constructor(val pluginId: String, val pluginKey: GeneratedDeclarationKey?) : IrDeclarationOrigin {
         constructor(pluginKey: GeneratedDeclarationKey) : this(pluginKey::class.qualifiedName!!, pluginKey)
 
         companion object {
