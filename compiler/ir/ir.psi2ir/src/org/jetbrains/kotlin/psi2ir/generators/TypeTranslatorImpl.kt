@@ -29,9 +29,17 @@ class TypeTranslatorImpl(
 
     private val typeApproximatorForNI = TypeApproximator(moduleDescriptor.builtIns, languageVersionSettings)
 
+    private val typeApproximatorConfiguration =
+        object : TypeApproximatorConfiguration.AllFlexibleSameValue() {
+            override val allFlexible: Boolean get() = true
+            override val errorType: Boolean get() = true
+            override val integerLiteralConstantType: Boolean get() = true
+            override val intersectionTypesInContravariantPositions: Boolean get() = true
+        }
+
     override fun approximateType(type: KotlinType): KotlinType =
         substituteAlternativesInPublicType(type).let {
-            typeApproximatorForNI.approximateToSuperType(it, TypeApproximatorConfiguration.FrontendToBackendTypesApproximation) ?: it
+            typeApproximatorForNI.approximateToSuperType(it, typeApproximatorConfiguration) ?: it
         }
 
     override fun commonSupertype(types: Collection<KotlinType>): KotlinType =

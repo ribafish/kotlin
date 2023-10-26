@@ -234,11 +234,8 @@ class Fir2IrTypeConverter(
                 original.toIrType(typeOrigin).makeNotNull()
             }
             is ConeIntersectionType -> {
-                val approximated = session.typeApproximator.approximateToSuperType(
-                    this,
-                    TypeApproximatorConfiguration.FrontendToBackendTypesApproximation
-                )!!
-                approximated.toIrType(typeOrigin)
+                // TODO: add intersectionTypeApproximation
+                intersectedTypes.first().toIrType(typeOrigin)
             }
             is ConeStubType -> createErrorType()
             is ConeIntegerLiteralType -> createErrorType()
