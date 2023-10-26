@@ -18,7 +18,7 @@ class DuplicateSourceSetCheckerTest {
     fun `target with custom name duplicates defualt name failes build`() {
         val project = buildProjectWithMPP {
             project.multiplatformExtension.applyDefaultHierarchyTemplate()
-            project.multiplatformExtension.macosArm64("macOS")
+            project.multiplatformExtension.linuxX64("linUX")
         }
         assertFails { project.evaluate() }
         project.checkDiagnostics("DuplicateSourceSetChecker")
@@ -28,7 +28,7 @@ class DuplicateSourceSetCheckerTest {
     fun `target with custom name does not produce any diagnostics`() {
         val project = buildProjectWithMPP {
             project.multiplatformExtension.applyDefaultHierarchyTemplate()
-            project.multiplatformExtension.macosArm64("custom")
+            project.multiplatformExtension.linuxX64("custom")
         }
         project.evaluate()
         project.assertNoDiagnostics()
@@ -38,8 +38,8 @@ class DuplicateSourceSetCheckerTest {
     fun `several targets without custom name don't produce any diagnostics`() {
         val project = buildProjectWithMPP {
             project.multiplatformExtension.applyDefaultHierarchyTemplate()
-            project.multiplatformExtension.macosArm64()
-            project.multiplatformExtension.macosX64()
+            project.multiplatformExtension.linuxX64()
+            project.multiplatformExtension.mingwX64()
         }
         project.evaluate()
         project.assertNoDiagnostics()
