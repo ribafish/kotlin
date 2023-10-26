@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.symbols.IrSymbolInternals
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -21,7 +21,7 @@ import org.jetbrains.kotlinx.jso.compiler.resolve.JsSimpleObjectPluginKey
 private object MoveExternalInlineFunctionsWithBodiesOutside : BodyLoweringPass {
     private val EXPECTED_ORIGIN = IrDeclarationOrigin.GeneratedByPlugin(JsSimpleObjectPluginKey)
 
-    @OptIn(IrSymbolInternals::class)
+    @OptIn(UnsafeDuringIrConstructionAPI::class)
     override fun lower(irBody: IrBody, container: IrDeclaration) {
         val file = container.file
         val parent = container.parent as? IrClass
