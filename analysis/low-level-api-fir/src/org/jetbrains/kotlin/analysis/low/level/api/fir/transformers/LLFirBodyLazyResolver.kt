@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForClass
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForFile
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.isResolved
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -105,6 +106,9 @@ private class LLFirBodyTargetResolver(
     ) {
         override val preserveCFGForClasses: Boolean get() = false
         override val buildCfgForFiles: Boolean get() = false
+        override fun calculateLazyAnnotations(resolvedTypeRef: FirResolvedTypeRef) {
+            FirLazyBodiesCalculator.calculateAnnotations(resolvedTypeRef, session)
+        }
     }
 
     override fun doResolveWithoutLock(target: FirElementWithResolveState): Boolean {

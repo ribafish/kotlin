@@ -1,24 +1,24 @@
-@R|properties/Anno|(<strcat>(String(parameter1 type: ), constant#))  kotlin/collections/List<@R|properties/Anno|(<strcat>(String(nested parameter1 type: ), constant#))  kotlin/collections/List<@R|properties/Anno|(<strcat>(String(nested nested parameter1 type: ), constant#))  kotlin/Int>>
+@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/Int>>
   context -> FirValueParameterSymbol <local>/property1 from FirNamedFunctionSymbol properties/MyClass.copy
   anchor -> [FirValueParameterSymbol <local>/property1]
 
-@R|properties/Anno|(<strcat>(String(nested parameter1 type: ), constant#))  kotlin/collections/List<@R|properties/Anno|(<strcat>(String(nested nested parameter1 type: ), constant#))  kotlin/Int>
+@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/Int>
   context -> FirValueParameterSymbol <local>/property1 from FirNamedFunctionSymbol properties/MyClass.copy
   anchor -> [FirValueParameterSymbol <local>/property1]
 
-@R|properties/Anno|(<strcat>(String(nested nested parameter1 type: ), constant#))  kotlin/Int
+@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/Int
   context -> FirValueParameterSymbol <local>/property1 from FirNamedFunctionSymbol properties/MyClass.copy
   anchor -> [FirValueParameterSymbol <local>/property1]
 
-@R|properties/Anno|(<strcat>(String(parameter2 type: ), constant#))  kotlin/collections/Collection<@R|properties/Anno|(<strcat>(String(nested parameter2 type: ), constant#))  kotlin/collections/Collection<@R|properties/Anno|(<strcat>(String(nested nested parameter2 type: ), constant#))  kotlin/String>>
+@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirValueParameterSymbol <local>/property2 from FirNamedFunctionSymbol properties/MyClass.copy
   anchor -> [FirValueParameterSymbol <local>/property2]
 
-@R|properties/Anno|(<strcat>(String(nested parameter2 type: ), constant#))  kotlin/collections/Collection<@R|properties/Anno|(<strcat>(String(nested nested parameter2 type: ), constant#))  kotlin/String>
+@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/String>
   context -> FirValueParameterSymbol <local>/property2 from FirNamedFunctionSymbol properties/MyClass.copy
   anchor -> [FirValueParameterSymbol <local>/property2]
 
-@R|properties/Anno|(<strcat>(String(nested nested parameter2 type: ), constant#))  kotlin/String
+@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/String
   context -> FirValueParameterSymbol <local>/property2 from FirNamedFunctionSymbol properties/MyClass.copy
   anchor -> [FirValueParameterSymbol <local>/property2]
 
@@ -49,6 +49,6 @@ FILE: [ResolvedTo(IMPORTS)] generatedCopy.kt
 
         public? final operator [ResolvedTo(RAW_FIR)] fun component2(): @Anno[Unresolved](LAZY_EXPRESSION) Collection<@Anno[Unresolved](LAZY_EXPRESSION) Collection<@Anno[Unresolved](LAZY_EXPRESSION) String>>
 
-        public final [ResolvedTo(TYPES)] fun copy([ResolvedTo(TYPES)] property1: R|@R|properties/Anno|(<strcat>(String(parameter1 type: ), constant#))  kotlin/collections/List<@R|properties/Anno|(<strcat>(String(nested parameter1 type: ), constant#))  kotlin/collections/List<@R|properties/Anno|(<strcat>(String(nested nested parameter1 type: ), constant#))  kotlin/Int>>| = this@R|properties/MyClass|.R|properties/MyClass.property1|, [ResolvedTo(TYPES)] property2: R|@R|properties/Anno|(<strcat>(String(parameter2 type: ), constant#))  kotlin/collections/Collection<@R|properties/Anno|(<strcat>(String(nested parameter2 type: ), constant#))  kotlin/collections/Collection<@R|properties/Anno|(<strcat>(String(nested nested parameter2 type: ), constant#))  kotlin/String>>| = this@R|properties/MyClass|.R|properties/MyClass.property2|): R|properties/MyClass|
+        public final [ResolvedTo(TYPES)] fun copy([ResolvedTo(TYPES)] property1: R|@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/Int>>| = this@R|properties/MyClass|.R|properties/MyClass.property1|, [ResolvedTo(TYPES)] property2: R|@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|properties/Anno|(LAZY_EXPRESSION)  kotlin/String>>| = this@R|properties/MyClass|.R|properties/MyClass.property2|): R|properties/MyClass|
 
     }

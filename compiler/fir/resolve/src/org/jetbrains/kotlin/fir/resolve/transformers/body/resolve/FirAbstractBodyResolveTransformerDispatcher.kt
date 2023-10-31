@@ -77,6 +77,28 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         return (element.transformChildren(this, data) as E)
     }
 
+    /**
+     * This function is required for LL FIR to provide correct calculation of lazy annotations in the case of annotation propagation.
+     * The example:
+     * ```
+     * @Target(AnnotationTarget.TYPE)
+     * annotation class Anno(val message: String)
+     *
+     * val nullablePropertyWithAnnotatedType: @Anno("outer") List<@Anno("middle") List<@Anno("inner") Int>>?
+     *     get() = null
+     *
+     * val propertyToResolve: String
+     *     get() = nullablePropertyWithAnnotatedType?.let { " ($it)" } ?: ""
+     * ```
+     *
+     * Type annotations from `nullablePropertyWithAnnotatedType` will be propagated into an anonymous function
+     * inside the body of propertyToResolve property getter and will have lazy annotations if the original
+     * function were not resolved yet
+     *
+     * @see org.jetbrains.kotlin.fir.types.independentInstance
+     */
+    open fun calculateLazyAnnotations(resolvedTypeRef: FirResolvedTypeRef) {}
+
     override fun transformTypeRef(typeRef: FirTypeRef, data: ResolutionMode): FirResolvedTypeRef {
         val resolvedTypeRef = if (typeRef is FirResolvedTypeRef) {
             typeRef
@@ -87,11 +109,14 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
                     ScopeClassDeclaration(
                         components.createCurrentScopeList(),
                         context.containingClassDeclarations,
-                        context.containers.lastOrNull { it is FirTypeParameterRefsOwner && it !is FirAnonymousFunction }
+                        context.containers.lastOrNull { it is FirTypeParameterRefsOwner && it !is FirAnonymousFunction },
                     )
                 )
             }
         }
+
+        if (implicitTypeOnly) return resolvedTypeRef
+        calculateLazyAnnotations(resolvedTypeRef)
 
         resolvedTypeRef.coneType.forEachType {
             it.type.attributes.customAnnotations.forEach { typeArgumentAnnotation ->
