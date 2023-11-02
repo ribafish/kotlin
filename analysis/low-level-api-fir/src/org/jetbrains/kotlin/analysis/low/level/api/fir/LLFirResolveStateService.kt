@@ -55,7 +55,7 @@ class LLFirResolveSessionService(project: Project) {
             is KtLibraryModule, is KtLibrarySourceModule -> LLLibraryModuleResolutionStrategyProvider(module)
             is KtScriptModule -> LLScriptModuleResolutionStrategyProvider(module)
             is KtCodeFragmentModule -> {
-                val contextElement = module.codeFragment.context
+                val contextElement = module.codeFragment?.context
                 if (contextElement != null) {
                     val contextModule = moduleProvider.getModule(contextElement)
                     val contextResolutionStrategyProvider = createResolutionStrategyProvider(contextModule, moduleProvider)

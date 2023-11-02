@@ -222,7 +222,7 @@ public interface KtCodeFragmentModule : KtModule {
     /**
      * A code fragment PSI.
      */
-    public val codeFragment: KtCodeFragment
+    public val codeFragment: KtCodeFragment?
 
     /**
      * Module of the context element.

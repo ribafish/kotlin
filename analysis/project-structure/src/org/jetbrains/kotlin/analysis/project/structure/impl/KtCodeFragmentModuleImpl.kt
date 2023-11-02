@@ -11,13 +11,19 @@ import org.jetbrains.kotlin.analysis.project.structure.KtCodeFragmentModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.util.Objects
 
 public class KtCodeFragmentModuleImpl(
-    override val codeFragment: KtCodeFragment,
+    codeFragment: KtCodeFragment,
     override val contextModule: KtModule
 ) : KtCodeFragmentModule {
+    private val codeFragmentRef = codeFragment.createSmartPointer()
+
+    override val codeFragment: KtCodeFragment?
+        get() = codeFragmentRef.element
+
     override val project: Project
         get() = contextModule.project
 
@@ -28,7 +34,7 @@ public class KtCodeFragmentModuleImpl(
         get() = contextModule.analyzerServices
 
     override val contentScope: GlobalSearchScope
-        get() = GlobalSearchScope.fileScope(codeFragment)
+        get() = codeFragment?.let(GlobalSearchScope::fileScope) ?: GlobalSearchScope.EMPTY_SCOPE
 
     override val directRegularDependencies: List<KtModule>
         get() = contextModule.directRegularDependencies
@@ -46,7 +52,8 @@ public class KtCodeFragmentModuleImpl(
         if (this === other) return true
 
         if (other is KtCodeFragmentModuleImpl) {
-            return codeFragment == other.codeFragment && contextModule == other.contextModule
+            val codeFragment = this.codeFragment
+            return codeFragment != null && codeFragment == other.codeFragment && contextModule == other.contextModule
         }
 
         return false

@@ -483,7 +483,8 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 components,
                 canContainKotlinPackage = true,
             ) { scope ->
-                scope.createScopedDeclarationProviderForFile(module.codeFragment)
+                val codeFragment = module.codeFragment
+                if (codeFragment != null) scope.createScopedDeclarationProviderForFile(codeFragment) else null
             }
 
             register(FirProvider::class, firProvider)
