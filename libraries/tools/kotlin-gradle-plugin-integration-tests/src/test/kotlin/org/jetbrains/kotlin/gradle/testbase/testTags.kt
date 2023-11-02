@@ -52,8 +52,13 @@ annotation class JsGradlePluginTests
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-@Tag("NativeKGP")
+@Tag("NativeKGPold")
 annotation class NativeGradlePluginTests
+
+@Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@Tag("NativeKGP")
+annotation class NativeGradlePluginTestsNew
 
 /**
  * Add it to tests covering Kotlin Multiplatform Gradle plugin.

@@ -16,7 +16,7 @@ import kotlin.io.path.deleteRecursively
 
 @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
 @DisplayName("Tests for K/N with apple XCFramework")
-@NativeGradlePluginTests
+@NativeGradlePluginTestsNew
 class XCFrameworkIT : KGPBaseTest() {
 
     @DisplayName("Assembling shared debug XCFramework for all available ios and watchos targets ")
