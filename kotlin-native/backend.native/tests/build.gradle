@@ -1540,6 +1540,26 @@ tasks.register("bridges_test18", KonanLocalTest) {
     source = "codegen/bridges/test18.kt"
 }
 
+tasks.register("bridges_test19", KonanLocalTest) {
+    useGoldenData = true
+    source = "codegen/bridges/test19.kt"
+}
+
+tasks.register("bridges_test20", KonanLocalTest) {
+    useGoldenData = true
+    source = "codegen/bridges/test20.kt"
+}
+
+tasks.register("bridges_test21", KonanLocalTest) {
+    useGoldenData = true
+    source = "codegen/bridges/test21.kt"
+}
+
+tasks.register("bridges_test22", KonanLocalTest) {
+    useGoldenData = true
+    source = "codegen/bridges/test22.kt"
+}
+
 linkTest("bridges_linkTest") {
     useGoldenData = true
     source = "codegen/bridges/linkTest_main.kt"
