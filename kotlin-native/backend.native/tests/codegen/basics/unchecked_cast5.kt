@@ -3,18 +3,18 @@
  * that can be found in the LICENSE file.
  */
 
-package codegen.basics.unchecked_cast2
+package codegen.basics.unchecked_cast5
 
 import kotlin.test.*
 
+class Data(val x: Int)
+
 @Test
 fun runTest() {
+    val arr = arrayOf("zzz")
     try {
-        val x = cast<String>(Any())
-        println(x.length)
+        println((arr as Array<Data>)[0].x)
     } catch (e: ClassCastException) {
         println("Ok")
     }
 }
-
-fun <T> cast(x: Any?) = x as T
