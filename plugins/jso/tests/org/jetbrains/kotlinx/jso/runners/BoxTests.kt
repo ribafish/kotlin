@@ -6,9 +6,20 @@
 package org.jetbrains.kotlinx.jso.runners
 
 import org.jetbrains.kotlin.js.test.fir.AbstractFirJsTest
+import org.jetbrains.kotlin.js.test.ir.AbstractJsIrTest
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 
-open class AbstractJsObjectIrJsBoxTest : AbstractFirJsTest(
+open class AbstractFirJsObjectIrJsBoxTest : AbstractFirJsTest(
+    pathToTestDir = "plugins/kotlinx-serialization/testData/boxIr/",
+    testGroupOutputDirPrefix = "codegen/serializationBoxIr/"
+) {
+    override fun configure(builder: TestConfigurationBuilder) {
+        super.configure(builder)
+        builder.configureForKotlinxJsObject()
+    }
+}
+
+open class AbstractPsiJsObjectIrJsBoxTest : AbstractJsIrTest(
     pathToTestDir = "plugins/kotlinx-serialization/testData/boxIr/",
     testGroupOutputDirPrefix = "codegen/serializationBoxIr/"
 ) {

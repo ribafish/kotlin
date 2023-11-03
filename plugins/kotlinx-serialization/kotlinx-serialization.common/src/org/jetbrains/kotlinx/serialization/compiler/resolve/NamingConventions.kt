@@ -247,7 +247,8 @@ fun findStandardKotlinTypeSerializerName(typeName: String?): String? {
         "kotlin.Pair" -> "PairSerializer"
         "kotlin.Triple" -> "TripleSerializer"
         "kotlin.collections.Collection", "kotlin.collections.List",
-        "kotlin.collections.ArrayList", "kotlin.collections.MutableList" -> "ArrayListSerializer"
+        "kotlin.collections.ArrayList", "kotlin.collections.MutableList",
+        -> "ArrayListSerializer"
         "kotlin.collections.Set", "kotlin.collections.LinkedHashSet", "kotlin.collections.MutableSet" -> "LinkedHashSetSerializer"
         "kotlin.collections.HashSet" -> "HashSetSerializer"
         "kotlin.collections.Map", "kotlin.collections.LinkedHashMap", "kotlin.collections.MutableMap" -> "LinkedHashMapSerializer"

@@ -4,49 +4,68 @@
  */
 package org.jetbrains.kotlinx.jso.compiler.backend
 
-import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.DeclarationTransformer
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.IrBody
-import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
-import org.jetbrains.kotlin.ir.util.file
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
-import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlinx.jso.compiler.resolve.JsObjectAnnotations
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsSimpleObjectPluginKey
+import org.jetbrains.kotlinx.jso.compiler.resolve.StandardIds
 
-private object MoveExternalInlineFunctionsWithBodiesOutside : BodyLoweringPass {
+private class MoveExternalInlineFunctionsWithBodiesOutside(private val context: IrPluginContext) : DeclarationTransformer {
+    private val jsFunction = context.referenceFunctions(StandardIds.JS_FUNCTION_ID).single()
     private val EXPECTED_ORIGIN = IrDeclarationOrigin.GeneratedByPlugin(JsSimpleObjectPluginKey)
 
     @OptIn(UnsafeDuringIrConstructionAPI::class)
-    override fun lower(irBody: IrBody, container: IrDeclaration) {
-        val file = container.file
-        val parent = container.parent as? IrClass
+    override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
+        val file = declaration.file
+        val parent = declaration.parentClassOrNull
 
-        if (parent != null && container is IrSimpleFunction && container.origin == EXPECTED_ORIGIN) {
-            container.dispatchReceiverParameter = null
-            container.isExternal = false
-            container.parent = file
-            parent.declarations.remove(container)
-            file.declarations.add(container)
+        if (parent == null || declaration !is IrSimpleFunction || declaration.origin != EXPECTED_ORIGIN) return null
+
+        declaration.isExternal = false
+        declaration.parent = file
+        file.declarations.add(declaration)
+        declaration.body = context.irFactory.createBlockBody(declaration.startOffset, declaration.endOffset).apply {
+            statements += IrReturnImpl(
+                declaration.startOffset,
+                declaration.endOffset,
+                declaration.returnType,
+                declaration.symbol,
+                IrCallImpl(
+                    declaration.startOffset,
+                    declaration.endOffset,
+                    declaration.returnType,
+                    jsFunction,
+                    0,
+                    1,
+                ).apply {
+                    val jsObject = buildString {
+                        append('{')
+                        declaration.valueParameters.forEachIndexed { i, it ->
+                            append(it.name.identifier)
+                            append(':')
+                            append(it.name.identifier)
+                            if (i != declaration.valueParameters.lastIndex) append(',')
+                        }
+                        append('}')
+                    }
+                    putValueArgument(0, jsObject.toIrConst(context.irBuiltIns.stringType))
+                }
+            )
         }
 
-        irBody.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitCall(expression: IrCall): IrExpression {
-                if (expression.symbol.owner.origin == EXPECTED_ORIGIN) {
-                    expression.dispatchReceiver = null
-                }
-                return super.visitCall(expression)
-            }
-        })
+        return emptyList()
     }
 }
 
 open class JsObjectLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-        MoveExternalInlineFunctionsWithBodiesOutside.lower(moduleFragment)
+        MoveExternalInlineFunctionsWithBodiesOutside(pluginContext).lower(moduleFragment)
     }
 }

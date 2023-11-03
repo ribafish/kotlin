@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("all")
 @TestMetadata("plugins/jso/testData/box")
 @TestDataPath("$PROJECT_ROOT")
-public class JsObjectIrJsBoxTestGenerated extends AbstractJsObjectIrJsBoxTest {
+public class PsiJsObjectIrJsBoxTestGenerated extends AbstractPsiJsObjectIrJsBoxTest {
     @Test
     public void testAllFilesPresentInBox() throws Exception {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/jso/testData/box"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);

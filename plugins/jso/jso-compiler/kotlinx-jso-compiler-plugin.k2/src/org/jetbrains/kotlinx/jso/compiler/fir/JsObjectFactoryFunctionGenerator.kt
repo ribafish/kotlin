@@ -20,20 +20,18 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusIm
 import org.jetbrains.kotlin.fir.declarations.origin
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
-import org.jetbrains.kotlin.fir.expressions.buildResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.extensions.NestedClassGenerationContext
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
-import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.defaultType
-import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.kotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
+import org.jetbrains.kotlin.fir.types.isNullable
 import org.jetbrains.kotlin.fir.types.toFirResolvedTypeRef
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -41,16 +39,9 @@ import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlinx.jso.compiler.fir.services.jsObjectPropertiesProvider
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsSimpleObjectPluginKey
 import org.jetbrains.kotlinx.jso.compiler.resolve.SpecialNames
-import org.jetbrains.kotlinx.jso.compiler.resolve.StandardIds
 
 class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     private val predicateBasedProvider = session.predicateBasedProvider
-
-    private val jsFunction by lazy {
-        session.symbolProvider
-            .getTopLevelFunctionSymbols(StandardIds.JS_FUNCTION_ID.packageName, StandardIds.JS_FUNCTION_ID.callableName)
-            .single()
-    }
 
     private val matchedInterfaces by lazy {
         predicateBasedProvider.getSymbolsByPredicate(JsObjectPredicates.AnnotatedWithJsSimpleObject.LOOKUP)
@@ -174,48 +165,24 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
             dispatchReceiverType = parentObject.defaultType()
             jsSimpleObjectInterface.typeParameterSymbols.mapTo(typeParameters) { it.fir }
             jsSimpleObjectProperties.mapTo(valueParameters) {
+                val typeRef = it.resolvedReturnTypeRef
                 buildValueParameter {
                     moduleData = session.moduleData
                     origin = JsSimpleObjectPluginKey.origin
-                    returnTypeRef = it.resolvedReturnTypeRef
+                    returnTypeRef = typeRef
                     name = it.name
                     symbol = FirValueParameterSymbol(it.name)
                     isCrossinline = false
-                    isNoinline = false
+                    isNoinline = true
                     isVararg = false
                     resolvePhase = FirResolvePhase.BODY_RESOLVE
                     containingFunctionSymbol = this@buildSimpleFunction.symbol
-                }
-            }
-
-            body = buildBlock {
-                statements += buildReturnExpression {
-                    target = functionTarget
-                    result = buildFunctionCall {
-                        val propertiesObject = buildString {
-                            append('{')
-                            jsSimpleObjectProperties.forEachIndexed { i, it ->
-                                append(it.name.identifier)
-                                append(':')
-                                append(it.name.identifier)
-                                if (i != jsSimpleObjectProperties.lastIndex) append(',')
-                            }
-                            append('}')
-                        }
-                        coneTypeOrNull = jsSimpleObjectInterfaceDefaultType
-                        calleeReference = buildResolvedNamedReference {
-                            name = jsFunction.name
-                            resolvedSymbol = jsFunction
-                        }
-                        argumentList = buildResolvedArgumentList(
-                            linkedMapOf(
-                                buildConstExpression(
-                                    null,
-                                    ConstantValueKind.String,
-                                    propertiesObject,
-                                    setType = true
-                                ) to jsFunction.valueParameterSymbols.first().fir
-                            )
+                    if (typeRef.type.isNullable) {
+                        defaultValue = buildConstExpression(
+                            source = null,
+                            value = null,
+                            kind = ConstantValueKind.Null,
+                            setType = false
                         )
                     }
                 }
