@@ -446,6 +446,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     internal val lazyIrForCaches: Boolean get() = configuration.get(KonanConfigKeys.LAZY_IR_FOR_CACHES)!!
 
+    internal val genericSafeCasts: Boolean get() = configuration.get(KonanConfigKeys.GENERIC_SAFE_CASTS)!!
+
     internal val entryPointName: String by lazy {
         if (target.family == Family.ANDROID) {
             val androidProgramType = configuration.get(BinaryOptions.androidProgramType)

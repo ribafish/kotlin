@@ -273,6 +273,15 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
             false
         }
     })
+    put(GENERIC_SAFE_CASTS, when (arguments.genericSafeCasts) {
+        null -> !arguments.optimization // Disable for optimized compilation due to performance penalty.
+        "enable" -> true
+        "disable" -> false
+        else -> {
+            report(ERROR, "Expected 'enable' or 'disable' for safe casts for generic type materialization")
+            false
+        }
+    })
 
     arguments.externalDependencies?.let { put(EXTERNAL_DEPENDENCIES, it) }
     putIfNotNull(LLVM_VARIANT, when (val variant = arguments.llvmVariant) {
