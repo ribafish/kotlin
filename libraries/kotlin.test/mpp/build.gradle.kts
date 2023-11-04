@@ -313,7 +313,7 @@ publishing {
                 configureKotlinPomAttributes(project, "Kotlin Test Library")
                 artifact(emptyJavadocJar)
             }
-            variant("metadataApiElements")
+            variant("metadataApiElements") { suppressPomMetadataWarnings() }
             variant("jvmApiElements")
             variant("jvmRuntimeElements")
             variant("jvmSourcesElements")
@@ -342,9 +342,9 @@ publishing {
                     artifactId = "$artifactBaseName-${framework.lowercase()}"
                     configureKotlinPomAttributes(project, "Kotlin Test Library for ${framework}")
                 }
-                variant("jvm${framework}ApiElements")
-                variant("jvm${framework}RuntimeElements")
-                variant("jvm${framework}SourcesElements")
+                variant("jvm${framework}ApiElements") { suppressPomMetadataWarnings() }
+                variant("jvm${framework}RuntimeElements") { suppressPomMetadataWarnings() }
+                variant("jvm${framework}SourcesElements") { suppressPomMetadataWarnings() }
             }
         }
 
@@ -398,6 +398,9 @@ class MultiModuleMavenPublishingConfiguration() {
             fun configureVariantDetails(code: ConfigurationVariantDetails.() -> Unit) {
                 variantDetailsConfigurations += code
             }
+
+            var suppressPomMetadataWarnings: Boolean = false
+            fun suppressPomMetadataWarnings() { suppressPomMetadataWarnings = true }
         }
 
         val mavenPublicationConfigurations = mutableListOf<MavenPublication.() -> Unit>()
@@ -451,6 +454,9 @@ fun configureMultiModuleMavenPublishing(code: MultiModuleMavenPublishingConfigur
             from(component)
             val module = publishingConfiguration.modules[componentName]!!
             module.mavenPublicationConfigurations.forEach { configure -> configure() }
+            module.variants.values.filter { it.suppressPomMetadataWarnings }.forEach {
+                suppressPomMetadataWarningsFor(it.name)
+            }
         }
     }
 }
