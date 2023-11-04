@@ -3,6 +3,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.internal.component.UsageContext
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import plugins.configureDefaultPublishing
@@ -140,9 +141,19 @@ kotlin {
 
 
 tasks {
+    val allMetadataJar by existing(Jar::class) {
+        archiveClassifier = "all"
+    }
     val jvmJar by existing(Jar::class) {
         archiveAppendix = null
         manifestAttributes(manifest, "Test")
+    }
+    val jvmSourcesJar by existing(Jar::class) {
+        kotlin.sourceSets["annotationsCommonMain"].let { sourceSet ->
+            into(sourceSet.name) {
+                from(sourceSet.kotlin)
+            }
+        }
     }
     val jvmJarTasks = jvmTestFrameworks.map { framework ->
         register("jvm${framework}Jar", Jar::class) {
@@ -302,35 +313,10 @@ publishing {
                 configureKotlinPomAttributes(project, "Kotlin Test Library")
                 artifact(emptyJavadocJar)
             }
-//
-//            // creates a variant from existing configuration or creates new one
-
             variant("metadataApiElements")
-//            variant("commonMainMetadataElementsWithClassifier") {
-//                name = "commonMainMetadataElements"
-//                configuration {
-//                    isCanBeConsumed = false
-//                }
-//                attributes {
-//                    copyAttributes(from = project.configurations["commonMainMetadataElements"].attributes, to = this)
-//                }
-//                artifact(tasks["metadataJar"]) {
-//                    classifier = "common"
-//                }
-//            }
-//            variant("metadataSourcesElementsFromJvm") {
-//                name = "metadataSourcesElements"
-//                configuration {
-//                    // to avoid clash in Gradle 8+ with metadataSourcesElements configuration with the same attributes
-//                    isCanBeConsumed = false
-//                }
-//                attributes {
-//                    copyAttributes(from = project.configurations["metadataSourcesElements"].attributes, to = this)
-//                }
-//                artifact(tasks["sourcesJar"]) {
-//                    classifier = "common-sources"
-//                }
-//            }
+            variant("jvmApiElements")
+            variant("jvmRuntimeElements")
+            variant("jvmSourcesElements")
             variant("nativeApiElements") {
                 attributes {
                     attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
@@ -341,25 +327,6 @@ publishing {
             }
         }
 
-        // we cannot publish legacy common artifact with metadata in kotlin-stdlib-common
-        // because it will cause problems in explicitly configured stdlib dependencies in project
-//        val common = module("commonModule") {
-//            mavenPublication {
-//                artifactId = "$artifactBaseName-common"
-//                configureKotlinPomAttributes(project, "Kotlin Common Standard Library (for compatibility with legacy multiplatform)")
-//                artifact(tasks["sourcesJar"]) // publish sources.jar just for maven, without including it in Gradle metadata
-//            }
-//            variant("commonMainMetadataElements")
-//        }
-        val jvm = module("jvmModule") {
-            mavenPublication {
-                artifactId = "$artifactBaseName-jvm"
-                configureKotlinPomAttributes(project, "Kotlin Test Library for JVM")
-            }
-            variant("jvmApiElements")
-            variant("jvmRuntimeElements")
-            variant("jvmSourcesElements")
-        }
         val js = module("jsModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-js"
@@ -383,7 +350,7 @@ publishing {
 
 
         // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, jvm, *frameworkModules.toTypedArray())
+        rootModule.include(js, *frameworkModules.toTypedArray())
     }
 
 //    publications {
