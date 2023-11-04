@@ -207,72 +207,56 @@ configurations {
     for (framework in jvmTestFrameworks) {
         val frameworkCapability = "$group:kotlin-test-framework-${framework.lowercase()}:$version"
         for (usage in listOf(KotlinUsages.KOTLIN_API, KotlinUsages.KOTLIN_RUNTIME, KotlinUsages.KOTLIN_SOURCES)) {
-            for (isInRoot in listOf(true, false)) {
-                if (isInRoot && usage == KotlinUsages.KOTLIN_SOURCES) continue
-                val name = "jvm$framework${usage.substringAfter("kotlin-").replaceFirstChar { it.uppercase() }}${if (isInRoot) "Elements" else "Elements-published"}"
-                create(name) {
-                    isCanBeResolved = false
-                    isCanBeConsumed = true
-                    if (isInRoot) {
-                        outgoing.capability(baseCapability)
-                        outgoing.capability(frameworkCapability)
-                    } else {
-//                        attributes {
-//                            attribute(Attribute.of("disambiguation", String::class.java), framework)
-//                        }
-                        outgoing.capability("$group:${base.archivesName.get()}-${framework.lowercase()}:$version")
-                        outgoing.capability(implCapability)
-                    }
-                    attributes {
-                        attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment.STANDARD_JVM))
-                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
-                        attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-                        attribute(
-                            Usage.USAGE_ATTRIBUTE, objects.named(
-                                when (usage) {
-                                    KotlinUsages.KOTLIN_API -> Usage.JAVA_API
-                                    KotlinUsages.KOTLIN_RUNTIME -> Usage.JAVA_RUNTIME
-                                    KotlinUsages.KOTLIN_SOURCES -> Usage.JAVA_RUNTIME
-                                    else -> error(usage)
-                                }
-                            )
-                        )
-                        when (usage) {
-                            KotlinUsages.KOTLIN_SOURCES -> {
-                                attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
-                                attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.SOURCES))
-                                attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.EXTERNAL))
-                            }
-                            KotlinUsages.KOTLIN_API -> {
-                                attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
-                                if (!isInRoot) extendsFrom(getByName("jvm${framework}Api"))
-                            }
-                            KotlinUsages.KOTLIN_RUNTIME -> {
-                                attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
-                                if (!isInRoot) extendsFrom(getByName("jvm${framework}Api"))
-                                if (!isInRoot) extendsFrom(getByName("jvm${framework}RuntimeOnly"))
-                            }
-                            else -> error(usage)
-                        }
-                    }
-                }
-                if (usage != KotlinUsages.KOTLIN_SOURCES) {
-                    dependencies {
-                        if (isInRoot) add(name, "$group:${base.archivesName.get()}-${framework.lowercase()}:$version")
-                        if (!isInRoot) add(name, project)
-                    }
-                    artifacts {
-                        if (!isInRoot) add(name, tasks.named<Jar>("jvm${framework}Jar"))
-                    }
-                } else {
-                    artifacts {
-                        add(name, tasks.named<Jar>("jvm${framework}SourcesJar"))
-                    }
-                }
-            }
-            metadataApiElements {
+            val name = "jvm$framework${usage.substringAfter("kotlin-").replaceFirstChar { it.uppercase() }}Elements"
+            create(name) {
+                isCanBeResolved = false
+                isCanBeConsumed = true
+                outgoing.capability(baseCapability)
                 outgoing.capability(frameworkCapability)
+                attributes {
+                    attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment.STANDARD_JVM))
+                    attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+                    attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+                    attribute(Usage.USAGE_ATTRIBUTE, objects.named(when (usage) {
+                        KotlinUsages.KOTLIN_API -> Usage.JAVA_API
+                        KotlinUsages.KOTLIN_RUNTIME -> Usage.JAVA_RUNTIME
+                        KotlinUsages.KOTLIN_SOURCES -> Usage.JAVA_RUNTIME
+                        else -> error(usage)
+                    }))
+                    when (usage) {
+                        KotlinUsages.KOTLIN_SOURCES -> {
+                            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
+                            attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.SOURCES))
+                            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.EXTERNAL))
+                        }
+                        KotlinUsages.KOTLIN_API -> {
+                            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+                            extendsFrom(getByName("jvm${framework}Api"))
+                        }
+                        KotlinUsages.KOTLIN_RUNTIME -> {
+                            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+                            extendsFrom(getByName("jvm${framework}Api"))
+                            extendsFrom(getByName("jvm${framework}RuntimeOnly"))
+                        }
+                        else -> error(usage)
+                    }
+                }
             }
+            if (usage != KotlinUsages.KOTLIN_SOURCES) {
+                dependencies {
+                    add(name, project)
+                }
+                artifacts {
+                    add(name, tasks.named<Jar>("jvm${framework}Jar"))
+                }
+            } else {
+                artifacts {
+                    add(name, tasks.named<Jar>("jvm${framework}SourcesJar"))
+                }
+            }
+        }
+        metadataApiElements {
+            outgoing.capability(frameworkCapability)
         }
     }
     all {
@@ -331,10 +315,6 @@ publishing {
 //                    classifier = "common-sources"
 //                }
 //            }
-            jvmTestFrameworks.forEach { framework ->
-                variant("jvm${framework}ApiElements")
-                variant("jvm${framework}RuntimeElements")
-            }
             variant("nativeApiElements") {
                 attributes {
                     attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
@@ -378,17 +358,16 @@ publishing {
                 mavenPublication {
                     artifactId = "$artifactBaseName-${framework.lowercase()}"
                     configureKotlinPomAttributes(project, "Kotlin Test Library for ${framework}")
-                    (this as PublicationInternal<*>).isAlias = true
                 }
-                variant("jvm${framework}ApiElements-published")
-                variant("jvm${framework}RuntimeElements-published")
-                variant("jvm${framework}SourcesElements-published")
+                variant("jvm${framework}ApiElements")
+                variant("jvm${framework}RuntimeElements")
+                variant("jvm${framework}SourcesElements")
             }
         }
 
 
         // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, jvm)
+        rootModule.include(js, jvm, *frameworkModules.toTypedArray())
     }
 
 //    publications {
@@ -565,10 +544,10 @@ private class ComponentWithExternalVariants(
 
 // endregion
 
-//tasks.withType<GenerateModuleMetadata> {
-//        // temporary disable Gradle metadata in kotlin-test-junit artifact
-//        // until we find a solution for duplicated capabilities
-//        if (listOf("junit", "junit5").any { it in (publication.get() as MavenPublication).artifactId }) {
-//            enabled = false
-//        }
-//    }
+tasks.withType<GenerateModuleMetadata> {
+    // temporary disable Gradle metadata in kotlin-test-junit artifact
+    // until we find a solution for duplicated capabilities
+    if (jvmTestFrameworks.map { it.lowercase() }.any { it in (publication.get() as MavenPublication).artifactId }) {
+        enabled = false
+    }
+}
