@@ -201,12 +201,14 @@ tasks {
 }
 
 configurations {
-    val metadataApiElements by getting {
-        outgoing.capability(kotlinTestCapability)
-    }
+    val metadataApiElements by getting
+    metadataApiElements.outgoing.capability(kotlinTestCapability)
+
     for (framework in jvmTestFrameworks) {
         val frameworkCapability = "$group:kotlin-test-framework-${framework.lowercase()}:$version"
-        for (usage in listOf(KotlinUsages.KOTLIN_API, KotlinUsages.KOTLIN_RUNTIME, KotlinUsages.KOTLIN_SOURCES)) {
+        metadataApiElements.outgoing.capability(frameworkCapability)
+
+        val (apiElements, runtimeElements, sourcesElements) = listOf(KotlinUsages.KOTLIN_API, KotlinUsages.KOTLIN_RUNTIME, KotlinUsages.KOTLIN_SOURCES).map { usage ->
             val name = "jvm$framework${usage.substringAfter("kotlin-").replaceFirstChar { it.uppercase() }}Elements"
             create(name) {
                 isCanBeResolved = false
@@ -235,28 +237,30 @@ configurations {
                         }
                         KotlinUsages.KOTLIN_RUNTIME -> {
                             attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
-                            extendsFrom(getByName("jvm${framework}Api"))
+                            extendsFrom(getByName("jvm${framework}Implementation"))
                             extendsFrom(getByName("jvm${framework}RuntimeOnly"))
                         }
                         else -> error(usage)
                     }
                 }
             }
-            if (usage != KotlinUsages.KOTLIN_SOURCES) {
-                dependencies {
-                    add(name, project)
+        }
+        dependencies {
+            apiElements(project)
+            runtimeElements(project)
+            when (framework) {
+                JvmTestFramework.JUnit -> {}
+                JvmTestFramework.JUnit5 -> {
+                    apiElements("org.junit.jupiter:junit-jupiter-api:5.6.3")
+                    runtimeElements("org.junit.jupiter:junit-jupiter-engine:5.6.3")
                 }
-                artifacts {
-                    add(name, tasks.named<Jar>("jvm${framework}Jar"))
-                }
-            } else {
-                artifacts {
-                    add(name, tasks.named<Jar>("jvm${framework}SourcesJar"))
-                }
+                JvmTestFramework.TestNG -> TODO()
             }
         }
-        metadataApiElements {
-            outgoing.capability(frameworkCapability)
+        artifacts {
+            add(apiElements.name, tasks.named<Jar>("jvm${framework}Jar"))
+            add(runtimeElements.name, tasks.named<Jar>("jvm${framework}Jar"))
+            add(sourcesElements.name, tasks.named<Jar>("jvm${framework}SourcesJar"))
         }
     }
     all {
