@@ -30,7 +30,7 @@ enum class JvmTestFramework {
 
     fun lowercase() = name.lowercase()
 }
-val jvmTestFrameworks = JvmTestFramework.values().toList().take(2)
+val jvmTestFrameworks = JvmTestFramework.values().toList()
 
 kotlin {
     jvm {
@@ -115,6 +115,17 @@ kotlin {
             dependencies {
                 runtimeOnly(libs.junit.jupiter.engine)
             }
+        }
+        val jvmTestNG by getting {
+            dependsOn(annotationsCommonMain)
+            kotlin.srcDir("../testng/src/main/kotlin")
+            resources.srcDir("../testng/src/main/resources")
+            dependencies {
+                api("org.testng:testng:6.13.1")
+            }
+        }
+        val jvmTestNGTest by getting {
+            kotlin.srcDir("../testng/src/test/kotlin")
         }
         val jsMain by getting {
             dependsOn(assertionsCommonMain)
@@ -237,6 +248,7 @@ configurations {
                         }
                         KotlinUsages.KOTLIN_RUNTIME -> {
                             attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+                            extendsFrom(getByName("jvm${framework}Api"))
                             extendsFrom(getByName("jvm${framework}Implementation"))
                             extendsFrom(getByName("jvm${framework}RuntimeOnly"))
                         }
@@ -254,7 +266,7 @@ configurations {
                     apiElements("org.junit.jupiter:junit-jupiter-api:5.6.3")
                     runtimeElements("org.junit.jupiter:junit-jupiter-engine:5.6.3")
                 }
-                JvmTestFramework.TestNG -> TODO()
+                JvmTestFramework.TestNG -> {}
             }
         }
         artifacts {
