@@ -23,20 +23,29 @@ val kotlinTestCapability = "$group:${base.archivesName.get()}:$version" // add t
 val baseCapability = "$group:kotlin-test-framework:$version"
 val implCapability = "$group:kotlin-test-framework-impl:$version"
 
-val jvmTestFrameworks = listOf("JUnit", "JUnit5")
+enum class JvmTestFramework {
+    JUnit,
+    JUnit5,
+    TestNG;
+
+    fun lowercase() = name.lowercase()
+}
+val jvmTestFrameworks = JvmTestFramework.values().toList().take(2)
 
 kotlin {
-    lateinit var jvmMainCompilation: KotlinJvmCompilation
     jvm {
         compilations {
-            val main by getting {
-            }
-            jvmMainCompilation = main
+            val main by getting
+            val test by getting
             jvmTestFrameworks.forEach { framework ->
-                create(framework) {
+                val frameworkMain = create("$framework") {
                     associateWith(main)
                 }
+                create("${framework}Test") {
+                    associateWith(frameworkMain)
+                }
             }
+            test.associateWith(getByName("JUnit"))
         }
     }
     js {
@@ -72,33 +81,48 @@ kotlin {
             dependsOn(commonMain)
             kotlin.srcDir("../common/src/main/kotlin")
         }
+        val commonTest by getting {
+            kotlin.srcDir("../common/src/test/kotlin")
+        }
         val jvmMain by getting {
             dependsOn(assertionsCommonMain)
             kotlin.srcDir("../jvm/src/main/kotlin")
+        }
+        val jvmTest by getting {
+            kotlin.srcDir("../jvm/src/test/kotlin")
         }
         val jvmJUnit by getting {
             dependsOn(annotationsCommonMain)
             kotlin.srcDir("../junit/src/main/kotlin")
             resources.srcDir("../junit/src/main/resources")
             dependencies {
-//                api(jvmMainCompilation.output.allOutputs)
                 api("junit:junit:4.13.2")
             }
+        }
+        val jvmJUnitTest by getting {
+            kotlin.srcDir("../junit/src/test/kotlin")
         }
         val jvmJUnit5 by getting {
             dependsOn(annotationsCommonMain)
             kotlin.srcDir("../junit5/src/main/kotlin")
             resources.srcDir("../junit5/src/main/resources")
             dependencies {
-//                api(jvmMainCompilation.output.allOutputs)
                 compileOnly("org.junit.jupiter:junit-jupiter-api:5.0.0")
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.3")
+            }
+        }
+        val jvmJUnit5Test by getting {
+            kotlin.srcDir("../junit5/src/test/kotlin")
+            dependencies {
+                runtimeOnly(libs.junit.jupiter.engine)
             }
         }
         val jsMain by getting {
             dependsOn(assertionsCommonMain)
             dependsOn(annotationsCommonMain)
             kotlin.srcDir("../js/src/main/kotlin")
+        }
+        val jsTest by getting {
+            kotlin.srcDir("../js/src/test/kotlin")
         }
     }
 }
@@ -112,15 +136,15 @@ tasks {
     val jvmJarTasks = jvmTestFrameworks.map { framework ->
         register("jvm${framework}Jar", Jar::class) {
             archiveAppendix = framework.lowercase()
-            from(kotlin.jvm().compilations[framework].output.allOutputs)
+            from(kotlin.jvm().compilations[framework.name].output.allOutputs)
             manifestAttributes(manifest, "Test")
         }
     }
-    val jvmSourcesJarTasks = jvmTestFrameworks.forEach { framework ->
+    val jvmSourcesJarTasks = jvmTestFrameworks.map { framework ->
         register("jvm${framework}SourcesJar", Jar::class) {
             archiveAppendix = framework.lowercase()
             archiveClassifier = "sources"
-            kotlin.jvm().compilations[framework].allKotlinSourceSets.forEach {
+            kotlin.jvm().compilations[framework.name].allKotlinSourceSets.forEach {
                 from(it.kotlin.sourceDirectories) { into(it.name) }
                 from(it.resources.sourceDirectories) { into(it.name) }
             }
@@ -128,6 +152,23 @@ tasks {
     }
     val assemble by existing {
         dependsOn(jvmJarTasks)
+    }
+
+    val jvmTestTasks = jvmTestFrameworks.map { framework ->
+        register("jvm${framework}Test", Test::class) {
+            group = "verification"
+            val compilation = kotlin.jvm().compilations["${framework}Test"]
+            classpath = compilation.runtimeDependencyFiles + compilation.output.allOutputs
+            testClassesDirs = compilation.output.classesDirs
+            when (framework) {
+                JvmTestFramework.JUnit -> useJUnit()
+                JvmTestFramework.JUnit5 -> useJUnitPlatform()
+                JvmTestFramework.TestNG -> useTestNG()
+            }
+        }
+    }
+    val allTests by existing {
+        dependsOn(jvmTestTasks)
     }
 
     val generateProjectStructureMetadata by existing {
