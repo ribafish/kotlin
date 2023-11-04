@@ -1,9 +1,9 @@
 @file:Suppress("UNUSED_VARIABLE", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.internal.component.UsageContext
-import org.gradle.api.publish.internal.PublicationInternal
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
@@ -549,9 +549,19 @@ private class ComponentWithExternalVariants(
 // endregion
 
 tasks.withType<GenerateModuleMetadata> {
-    // temporary disable Gradle metadata in kotlin-test-junit artifact
-    // until we find a solution for duplicated capabilities
-    if (jvmTestFrameworks.map { it.lowercase() }.any { it in (publication.get() as MavenPublication).artifactId }) {
-        enabled = false
+    val publication = publication.get() as MavenPublication
+    // alter capabilities of leaf JVM framework artifacts published by "available-at" coordinates
+    if (jvmTestFrameworks.map { it.lowercase() }.any { publication.artifactId.endsWith(it) }) {
+        doLast {
+            val output = outputFile.get().asFile
+            val gson = GsonBuilder().setPrettyPrinting().create()
+            val moduleJson = output.bufferedReader().use { gson.fromJson(it, JsonObject::class.java) }
+            val variants = moduleJson.getAsJsonArray("variants")
+            variants.forEach { variant ->
+                variant as JsonObject
+                variant.remove("capabilities")
+            }
+            output.bufferedWriter().use { writer -> gson.toJson(moduleJson, writer) }
+        }
     }
 }
