@@ -6,6 +6,7 @@ import org.gradle.api.internal.component.UsageContext
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
 
@@ -54,6 +55,14 @@ kotlin {
             browser {}
         }
         nodejs {}
+    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        nodejs()
+    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmWasi {
+        nodejs()
     }
 
     targets.all {
@@ -136,6 +145,19 @@ kotlin {
         val jsTest by getting {
             kotlin.srcDir("../js/src/test/kotlin")
         }
+        val wasmCommonMain by creating {
+            dependsOn(assertionsCommonMain)
+            dependsOn(annotationsCommonMain)
+            kotlin.srcDir("../wasm/src/main/kotlin")
+        }
+        val wasmJsMain by getting {
+            dependsOn(wasmCommonMain)
+            kotlin.srcDir("../wasm/js/src/main/kotlin")
+        }
+        val wasmWasiMain by getting {
+            dependsOn(wasmCommonMain)
+            kotlin.srcDir("../wasm/wasi/src/main/kotlin")
+        }
     }
 }
 
@@ -171,6 +193,15 @@ tasks {
                 from(it.resources.sourceDirectories) { into(it.name) }
             }
         }
+    }
+    val jsJar by existing(Jar::class) {
+        manifestAttributes(manifest, "Test")
+    }
+    val wasmJsJar by existing(Jar::class) {
+        manifestAttributes(manifest, "Test")
+    }
+    val wasmWasiJar by existing(Jar::class) {
+        manifestAttributes(manifest, "Test")
     }
     val assemble by existing {
         dependsOn(jvmJarTasks)
@@ -347,10 +378,28 @@ publishing {
                 variant("jvm${framework}SourcesElements") { suppressPomMetadataWarnings() }
             }
         }
+        val wasmJs = module("wasmJsModule") {
+            mavenPublication {
+                artifactId = "$artifactBaseName-wasm-js"
+                configureKotlinPomAttributes(project, "Kotlin Test Library for experimental WebAssembly JS platform", packaging = "klib")
+            }
+            variant("wasmJsApiElements")
+            variant("wasmJsRuntimeElements")
+            variant("wasmJsSourcesElements")
+        }
+        val wasmWasi = module("wasmWasiModule") {
+            mavenPublication {
+                artifactId = "$artifactBaseName-wasm-wasi"
+                configureKotlinPomAttributes(project, "Kotlin Test Library for experimental WebAssembly WASI platform", packaging = "klib")
+            }
+            variant("wasmWasiApiElements")
+            variant("wasmWasiRuntimeElements")
+            variant("wasmWasiSourcesElements")
+        }
 
 
         // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, *frameworkModules.toTypedArray())
+        rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi)
     }
 
 //    publications {
