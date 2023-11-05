@@ -39,12 +39,36 @@ kotlin {
         compilations {
             val main by getting
             val test by getting
+            configureJava9Compilation(
+                "kotlin.test",
+                listOf(main.output.allOutputs),
+                main.configurations.compileDependencyConfiguration,
+                project.sourceSets.create("jvmJava9") {
+                    java.srcDir("../jvm/src/java9/java")
+                }.name,
+            )
             jvmTestFrameworks.forEach { framework ->
                 val frameworkMain = create("$framework") {
                     associateWith(main)
                 }
                 create("${framework}Test") {
                     associateWith(frameworkMain)
+                }
+                val frameworkJava9SourceSet = project.sourceSets.create("jvm${framework}Java9") {
+                    java.srcDir("../${framework.lowercase()}/src/java9/java")
+                }
+                configureJava9Compilation(
+                    "kotlin.test.${framework.lowercase()}",
+                    listOf(frameworkMain.output.allOutputs),
+                    frameworkMain.configurations.compileDependencyConfiguration,
+                    frameworkJava9SourceSet.name,
+                )
+                val java9CompileOnly = configurations[frameworkJava9SourceSet.compileOnlyConfigurationName]
+                project.dependencies {
+                    java9CompileOnly(project)
+                    if (framework == JvmTestFramework.TestNG) {
+                        java9CompileOnly("org.testng:testng:7.0.0")
+                    }
                 }
             }
             test.associateWith(getByName("JUnit"))
@@ -177,7 +201,8 @@ tasks {
     }
     val jvmJar by existing(Jar::class) {
         archiveAppendix = null
-        manifestAttributes(manifest, "Test")
+        from(project.sourceSets["jvmJava9"].output)
+        manifestAttributes(manifest, "Test", multiRelease = true)
     }
     val jvmSourcesJar by existing(Jar::class) {
         kotlin.sourceSets["annotationsCommonMain"].let { sourceSet ->
@@ -190,7 +215,8 @@ tasks {
         register("jvm${framework}Jar", Jar::class) {
             archiveAppendix = framework.lowercase()
             from(kotlin.jvm().compilations[framework.name].output.allOutputs)
-            manifestAttributes(manifest, "Test")
+            from(project.sourceSets["jvm${framework}Java9"].output)
+            manifestAttributes(manifest, "Test", multiRelease = true)
         }
     }
     val jvmSourcesJarTasks = jvmTestFrameworks.map { framework ->
