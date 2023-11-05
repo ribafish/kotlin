@@ -48,6 +48,38 @@
           "annotationsCommonMain",
           "commonMain"
         ]
+      },
+      {
+        "name": "wasmJsApiElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
+      },
+      {
+        "name": "wasmJsRuntimeElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
+      },
+      {
+        "name": "wasmWasiApiElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
+      },
+      {
+        "name": "wasmWasiRuntimeElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
       }
     ],
     "sourceSets": [
