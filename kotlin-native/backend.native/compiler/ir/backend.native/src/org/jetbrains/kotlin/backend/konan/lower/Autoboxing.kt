@@ -139,10 +139,6 @@ private class AutoboxingTransformer(val context: Context) : AbstractValueUsageTr
 
     override fun IrExpression.useAsValueArgument(expression: IrFunctionAccessExpression,
                                                  parameter: IrValueParameter): IrExpression {
-
-//        if (currentFunction?.file?.path?.endsWith("z1.kt") == true)
-//            println("QZZ: ${expression.dump()}")
-
         return this.useAsArgument(expression.target.valueParameters[parameter.index])
     }
 
