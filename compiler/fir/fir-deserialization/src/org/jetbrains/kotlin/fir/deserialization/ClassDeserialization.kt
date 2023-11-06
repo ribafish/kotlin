@@ -137,8 +137,10 @@ fun deserializeClassToSymbol(
         classProto.supertypes(context.typeTable).mapTo(superTypeRefs, typeDeserializer::typeRef)
 
         addDeclarations(
-            classProto.functionList.map {
-                classDeserializer.loadFunction(it, classProto, symbol)
+            classProto.functionList.mapNotNull {
+                classDeserializer.loadFunction(it, classProto, symbol).takeIf { function ->
+                    session.deserializationExtension?.isFunctionAvailable(function) != false
+                }
             }
         )
 

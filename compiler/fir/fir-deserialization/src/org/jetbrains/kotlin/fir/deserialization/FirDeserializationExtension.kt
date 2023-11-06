@@ -5,9 +5,12 @@
 
 package org.jetbrains.kotlin.fir.deserialization
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSessionComponent
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.FirRegularClassBuilder
+import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.ClassId
@@ -24,4 +27,7 @@ abstract class FirDeserializationExtension(val session: FirSession) : FirSession
     open fun FirRegularClassBuilder.configureDeserializedClass(classId: ClassId) {}
 
     open fun loadModuleName(classProto: ProtoBuf.Class, nameResolver: NameResolver): String? = null
+
+    open fun isFunctionAvailable(function: FirSimpleFunction): Boolean =
+        !function.hasAnnotation(StandardNames.FqNames.platformDependentClassId, session)
 }

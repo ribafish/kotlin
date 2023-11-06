@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.java.deserialization
 
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsSignatures
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.FirRegularClassBuilder
 import org.jetbrains.kotlin.fir.deserialization.FirConstDeserializer
 import org.jetbrains.kotlin.fir.deserialization.FirDeserializationExtension
@@ -52,6 +53,9 @@ class FirJvmDeserializationExtension(session: FirSession) : FirDeserializationEx
 
     override fun loadModuleName(classProto: ProtoBuf.Class, nameResolver: NameResolver): String? =
         classProto.getExtensionOrNull(JvmProtoBuf.classModuleName)?.let(nameResolver::getString)
+
+    override fun isFunctionAvailable(function: FirSimpleFunction): Boolean =
+        FirJvmPlatformDeclarationFilter.isFunctionAvailable(function, session)
 
     companion object {
         private val JAVA_IO_SERIALIZABLE = ClassId.topLevel(FqName("java.io.Serializable"))
