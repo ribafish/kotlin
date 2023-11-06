@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhileLoopImpl
-import org.jetbrains.kotlin.ir.util.implicitCastIfNeededTo
 
 class IndexedGetLoopHeader(
     headerInfo: IndexedGetHeaderInfo,
@@ -42,7 +41,7 @@ class IndexedGetLoopHeader(
             val get = irCall(indexedGetFun.symbol, indexedGetFun.returnType).apply {
                 dispatchReceiver = irGet(headerInfo.objectVariable)
                 putValueArgument(0, irGet(inductionVariable))
-            }.implicitCastIfNeededTo(loopVariable?.type ?: indexedGetFun.returnType)
+            }
             // The call could be wrapped in an IMPLICIT_NOTNULL type-cast (see comment in ForLoopsLowering.gatherLoopVariableInfo()).
             // Find and replace the call to preserve any type-casts.
             loopVariable?.initializer = loopVariable?.initializer?.transform(InitializerCallReplacer(get), null)
