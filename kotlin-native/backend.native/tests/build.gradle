@@ -1552,22 +1552,27 @@ tasks.register("bridges_test18", KonanLocalTest) {
     source = "codegen/bridges/test18.kt"
 }
 
+// For the next 4 tests the bridges get ignored because of devirtualization.
 tasks.register("bridges_test19", KonanLocalTest) {
+    enabled = !project.globalTestArgs.contains("-opt")
     useGoldenData = true
     source = "codegen/bridges/test19.kt"
 }
 
 tasks.register("bridges_test20", KonanLocalTest) {
+    enabled = !project.globalTestArgs.contains("-opt")
     useGoldenData = true
     source = "codegen/bridges/test20.kt"
 }
 
 tasks.register("bridges_test21", KonanLocalTest) {
+    enabled = !project.globalTestArgs.contains("-opt")
     useGoldenData = true
     source = "codegen/bridges/test21.kt"
 }
 
 tasks.register("bridges_test22", KonanLocalTest) {
+    enabled = !project.globalTestArgs.contains("-opt")
     useGoldenData = true
     source = "codegen/bridges/test22.kt"
 }
