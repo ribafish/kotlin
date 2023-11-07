@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -476,7 +476,9 @@ fun FirCheckedSafeCallSubject.propagateTypeFromOriginalReceiver(
         ?: nullableReceiverExpression.resolvedType
 
     val expandedReceiverType = receiverType.fullyExpandedType(session)
-    val updatedReceiverType = expandedReceiverType.makeConeTypeDefinitelyNotNullOrNotNull(session.typeContext).independentInstance()
+    val updatedReceiverType = expandedReceiverType.makeConeTypeDefinitelyNotNullOrNotNull(session.typeContext)
+        .rebindAnnotations(newContainerSymbol = null)
+
     replaceConeTypeOrNull(updatedReceiverType)
     session.lookupTracker?.recordTypeResolveAsLookup(updatedReceiverType, source, file.source)
 }
@@ -499,7 +501,7 @@ fun FirSafeCallExpression.propagateTypeFromQualifiedAccessAfterNullCheck(
         }
     }
 
-    val independentInstance = resultingType.independentInstance()
+    val independentInstance = resultingType.rebindAnnotations(newContainerSymbol = null)
     replaceConeTypeOrNull(independentInstance)
     session.lookupTracker?.recordTypeResolveAsLookup(independentInstance, source, file.source)
 }

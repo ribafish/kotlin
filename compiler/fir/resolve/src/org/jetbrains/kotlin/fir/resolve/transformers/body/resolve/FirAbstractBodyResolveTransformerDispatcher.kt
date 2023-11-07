@@ -95,7 +95,7 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
      * inside the body of propertyToResolve property getter and will have lazy annotations if the original
      * function were not resolved yet
      *
-     * @see org.jetbrains.kotlin.fir.types.independentInstance
+     * @see org.jetbrains.kotlin.fir.types.rebindAnnotations
      */
     open fun calculateLazyAnnotations(resolvedTypeRef: FirResolvedTypeRef) {}
 

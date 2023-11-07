@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
@@ -133,19 +134,19 @@ fun ConeDynamicType.Companion.create(
  * use the same instance of the type (`FirArgumentListImpl` cannot be cast to `FirResolvedArgumentList`).
  * So we lost here.
  *
- * Right case 2 – The type was "copied" by [independentInstance].
+ * Right case 2 – The type was "copied" by [rebindAnnotations].
  * In this case, `declaration` and `anotherDeclaration` will have different instances of one `@Anno("outer") Int?` type.
  * This means that we can't come to a situation where we can modify a fully resolved annotation from another thread.
  *
  * @return an instance of a type that has no annotations associated with any declaration,
  * so it won't be changed from LL FIR lazy transformers concurrently
  *
- * @see CustomAnnotationTypeAttribute.independentInstance
+ * @see CustomAnnotationTypeAttribute.rebind
  */
 @OptIn(DynamicTypeConstructor::class)
-fun ConeKotlinType.independentInstance(): ConeKotlinType = if (this is ConeFlexibleType) {
-    val newLowerBound = lowerBound.independentInstance() as ConeSimpleKotlinType
-    val newUpperBound = upperBound.independentInstance() as ConeSimpleKotlinType
+fun ConeKotlinType.rebindAnnotations(newContainerSymbol: FirBasedSymbol<*>?): ConeKotlinType = if (this is ConeFlexibleType) {
+    val newLowerBound = lowerBound.rebindAnnotations(newContainerSymbol) as ConeSimpleKotlinType
+    val newUpperBound = upperBound.rebindAnnotations(newContainerSymbol) as ConeSimpleKotlinType
     if (newLowerBound !== lowerBound || newUpperBound !== upperBound) {
         when (this) {
             is ConeRawType -> ConeRawType.create(newLowerBound, newUpperBound)
@@ -156,10 +157,10 @@ fun ConeKotlinType.independentInstance(): ConeKotlinType = if (this is ConeFlexi
         this
     }
 } else {
-    instanceWithIndependentArguments().instanceWithIndependentAnnotations()
+    rebindAnnotationInArguments(newContainerSymbol).rebindAnnotationInAttributes(newContainerSymbol)
 }
 
-private fun ConeKotlinType.instanceWithIndependentArguments(): ConeKotlinType {
+private fun ConeKotlinType.rebindAnnotationInArguments(newContainerSymbol: FirBasedSymbol<*>?): ConeKotlinType {
     val typeProjections = typeArguments
     if (typeProjections.isEmpty()) return this
 
@@ -168,7 +169,7 @@ private fun ConeKotlinType.instanceWithIndependentArguments(): ConeKotlinType {
         if (originalArgument !is ConeKotlinType)
             originalArgument
         else
-            originalArgument.independentInstance().also {
+            originalArgument.rebindAnnotations(newContainerSymbol).also {
                 if (it !== originalArgument) {
                     argumentsChanged = true
                 }
@@ -178,9 +179,9 @@ private fun ConeKotlinType.instanceWithIndependentArguments(): ConeKotlinType {
     return if (argumentsChanged) withArguments(newArguments.toTypedArray()) else this
 }
 
-private fun ConeKotlinType.instanceWithIndependentAnnotations(): ConeKotlinType {
+private fun ConeKotlinType.rebindAnnotationInAttributes(newContainerSymbol: FirBasedSymbol<*>?): ConeKotlinType {
     val custom = attributes.custom ?: return this
-    val newAnnotations = custom.independentInstance()
+    val newAnnotations = custom.rebind(newContainerSymbol)
     if (newAnnotations === custom) {
         return this
     }

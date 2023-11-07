@@ -61,27 +61,32 @@ class CustomAnnotationTypeAttribute(
 
     override val key: KClass<out CustomAnnotationTypeAttribute>
         get() = CustomAnnotationTypeAttribute::class
+
     override val keepInInferredDeclarationType: Boolean
         get() = true
 
     /**
-     * Return an instance of the attribute that is not linked to any [containerSymbols].
+     * Return an instance of the attribute that is not linked to any [containerSymbols] or linked to the new [newContainerSymbol].
      * It is required to avoid concurrent modification of those annotations from the linked
-     * declaration and another call site (e.g., if a type was propagated to an anonymous function).
+     * declaration and another call site (e.g., if a type was propagated to an anonymous function)
+     * or to provide the new anchor declaration for a propagated type.
      *
      * See KT-60387 as an example of a possible concurrent problem.
      */
-    fun independentInstance(): CustomAnnotationTypeAttribute = if (containerSymbols.isEmpty()) {
-        this
-    } else {
-        CustomAnnotationTypeAttribute(
+    fun rebind(newContainerSymbol: FirBasedSymbol<*>?): CustomAnnotationTypeAttribute {
+        if (containerSymbols.isEmpty() || newContainerSymbol != null && containerSymbols.singleOrNull() == newContainerSymbol) {
+            return this
+        }
+
+        return CustomAnnotationTypeAttribute(
             annotations = annotations.map {
                 if (it is FirAnnotationCall) {
                     buildAnnotationCallCopy(it) {}
                 } else {
                     buildAnnotationCopy(it) {}
                 }
-            }
+            },
+            newContainerSymbol,
         )
     }
 }
