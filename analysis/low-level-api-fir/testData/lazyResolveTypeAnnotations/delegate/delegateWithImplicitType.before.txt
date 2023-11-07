@@ -1,26 +1,26 @@
 @R|Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  kotlin/Int>>
   context -> FirNamedFunctionSymbol /Derived.implicitType
-  anchor -> [FirNamedFunctionSymbol /explicitType]
+  anchor -> [FirNamedFunctionSymbol /Derived.implicitType]
 
 @R|Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  kotlin/Int>
   context -> FirNamedFunctionSymbol /Derived.implicitType
-  anchor -> [FirNamedFunctionSymbol /explicitType]
+  anchor -> [FirNamedFunctionSymbol /Derived.implicitType]
 
 @R|Anno|(LAZY_EXPRESSION)  kotlin/Int
   context -> FirNamedFunctionSymbol /Derived.implicitType
-  anchor -> [FirNamedFunctionSymbol /explicitType]
+  anchor -> [FirNamedFunctionSymbol /Derived.implicitType]
 
 @R|Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirNamedFunctionSymbol /Derived.implicitType
-  anchor -> [FirNamedFunctionSymbol /OriginalInterface.implicitType]
+  anchor -> [FirNamedFunctionSymbol /Derived.implicitType]
 
 @R|Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  kotlin/String>
   context -> FirNamedFunctionSymbol /Derived.implicitType
-  anchor -> [FirNamedFunctionSymbol /OriginalInterface.implicitType]
+  anchor -> [FirNamedFunctionSymbol /Derived.implicitType]
 
 @R|Anno|(LAZY_EXPRESSION)  kotlin/String
   context -> FirNamedFunctionSymbol /Derived.implicitType
-  anchor -> [FirNamedFunctionSymbol /OriginalInterface.implicitType]
+  anchor -> [FirNamedFunctionSymbol /Derived.implicitType]
 
 @R|Anno|(LAZY_EXPRESSION)  kotlin/collections/ListIterator<@R|Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirValueParameterSymbol <local>/param from FirNamedFunctionSymbol /Derived.implicitType

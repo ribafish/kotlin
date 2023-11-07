@@ -1,22 +1,22 @@
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass, FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/String
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  ERROR CLASS: Symbol not found for Pair
   context -> FirPropertySymbol second/SubClass.resolveMe
@@ -24,67 +24,67 @@
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass, FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/String
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  F>
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  F
   context -> FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>>
   context -> FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>
   context -> FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass, FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>
   context -> FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/String
   context -> FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>>
   context -> FirValueParameterSymbol <local>/value from FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>
   context -> FirValueParameterSymbol <local>/value from FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>
   context -> FirValueParameterSymbol <local>/value from FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass, FirPropertySymbol second/AbstractClass.resolveMe]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>
   context -> FirValueParameterSymbol <local>/value from FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/String
   context -> FirValueParameterSymbol <local>/value from FirPropertyAccessorSymbol special/accessor from FirPropertySymbol second/SubClass.resolveMe
-  anchor -> [FirRegularClassSymbol second/SubClass]
+  anchor -> [FirPropertySymbol second/SubClass.resolveMe]
 
 @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  @R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/List<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/collections/Collection<@R|second/Anno|(LAZY_EXPRESSION)  kotlin/String>>>>
   context -> FirTypeParameterSymbol F from FirPropertySymbol second/SubClass.resolveMe
