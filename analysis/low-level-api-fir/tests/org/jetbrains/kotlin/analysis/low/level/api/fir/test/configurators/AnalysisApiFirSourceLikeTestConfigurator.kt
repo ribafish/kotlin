@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.configuration.ExternalAnnotationsEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
+import org.jetbrains.kotlin.test.services.configuration.CommonEnvironmentConfigurator
 
 abstract class AnalysisApiFirSourceLikeTestConfigurator(override val analyseInDependentSession: Boolean) : AnalysisApiTestConfigurator() {
     override val frontendKind: FrontendKind get() = FrontendKind.Fir
@@ -32,7 +33,11 @@ abstract class AnalysisApiFirSourceLikeTestConfigurator(override val analyseInDe
             useDirectives(SealedClassesInheritorsCaclulatorPreAnalysisHandler.Directives)
             usePreAnalysisHandlers(::SealedClassesInheritorsCaclulatorPreAnalysisHandler)
             configureOptionalTestCompilerPlugin()
-            useConfigurators(::JvmEnvironmentConfigurator, ::ExternalAnnotationsEnvironmentConfigurator)
+            useConfigurators(
+                ::CommonEnvironmentConfigurator,
+                ::JvmEnvironmentConfigurator,
+                ::ExternalAnnotationsEnvironmentConfigurator
+            )
             useSourcePreprocessor(::ExternalAnnotationsSourcePreprocessor)
         }
     }

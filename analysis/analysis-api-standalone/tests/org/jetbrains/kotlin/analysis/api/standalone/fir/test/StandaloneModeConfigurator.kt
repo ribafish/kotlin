@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.test.preprocessors.ExternalAnnotationsSourcePreproce
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.configuration.ExternalAnnotationsEnvironmentConfigurator
+import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
+import org.jetbrains.kotlin.test.services.configuration.CommonEnvironmentConfigurator
 
 object StandaloneModeConfigurator : AnalysisApiTestConfigurator() {
     override val analyseInDependentSession: Boolean get() = false
@@ -35,7 +37,11 @@ object StandaloneModeConfigurator : AnalysisApiTestConfigurator() {
             useDirectives(SealedClassesInheritorsCaclulatorPreAnalysisHandler.Directives)
             usePreAnalysisHandlers(::SealedClassesInheritorsCaclulatorPreAnalysisHandler)
             configureOptionalTestCompilerPlugin()
-            useConfigurators(::ExternalAnnotationsEnvironmentConfigurator)
+            useConfigurators(
+                ::CommonEnvironmentConfigurator,
+                ::JvmEnvironmentConfigurator,
+                ::ExternalAnnotationsEnvironmentConfigurator
+            )
             useSourcePreprocessor(::ExternalAnnotationsSourcePreprocessor)
         }
     }
