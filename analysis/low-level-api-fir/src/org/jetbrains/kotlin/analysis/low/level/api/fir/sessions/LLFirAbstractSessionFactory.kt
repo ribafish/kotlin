@@ -523,11 +523,16 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
             val syntheticFunctionInterfaceProvider = FirExtensionSyntheticFunctionInterfaceProvider
                 .createIfNeeded(this, moduleData, scopeProvider)
 
+            val switchableExtensionDeclarationsSymbolProvider = FirSwitchableExtensionDeclarationsSymbolProvider
+                .createIfNeeded(this)
+                ?.also { register(FirSwitchableExtensionDeclarationsSymbolProvider::class, it) }
+
             val context = CodeFragmentSessionCreationContext(
                 moduleData,
                 firProvider,
                 dependencyProvider,
-                syntheticFunctionInterfaceProvider
+                syntheticFunctionInterfaceProvider,
+                switchableExtensionDeclarationsSymbolProvider
             )
 
             additionalSessionConfiguration(context, this)
@@ -538,7 +543,8 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         val moduleData: LLFirModuleData,
         val firProvider: LLFirProvider,
         val dependencyProvider: LLFirDependenciesSymbolProvider,
-        val syntheticFunctionInterfaceProvider: FirExtensionSyntheticFunctionInterfaceProvider?
+        val syntheticFunctionInterfaceProvider: FirExtensionSyntheticFunctionInterfaceProvider?,
+        val switchableExtensionDeclarationsSymbolProvider: FirSwitchableExtensionDeclarationsSymbolProvider?,
     )
 
     private fun wrapLanguageVersionSettings(original: LanguageVersionSettings): LanguageVersionSettings {
