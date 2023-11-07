@@ -179,7 +179,12 @@ internal object KDocReferenceResolver {
 
     context(KtAnalysisSession)
     private fun getSymbolsFromPackageScope(fqName: FqName, contextElement: KtElement): Collection<KtDeclarationSymbol> {
-        val packageFqName = contextElement.containingKtFile.packageFqName
+        var containingFile = contextElement.containingKtFile
+        if (containingFile is KtCodeFragment || !containingFile.isPhysical) {
+            //ensure file context is provided for "non-physical" code as well
+            containingFile = (containingFile.context as? KtElement)?.containingKtFile ?: return emptyList()
+        }
+        val packageFqName = containingFile.packageFqName
         val packageSymbol = getPackageSymbolIfPackageExists(packageFqName) ?: return emptyList()
         val packageScope = packageSymbol.getPackageScope()
         return getSymbolsFromMemberScope(fqName, packageScope)
