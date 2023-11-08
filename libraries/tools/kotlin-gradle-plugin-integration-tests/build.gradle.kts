@@ -69,7 +69,7 @@ dependencies {
     testImplementation(project(":kotlin-tooling-metadata"))
     testImplementation(kotlinGradlePluginTest)
     testImplementation(project(":kotlin-gradle-subplugin-example"))
-    testImplementation(project(":kotlin-test:kotlin-test-jvm"))
+    testImplementation(kotlinTest(suffix = "junit"))
     testImplementation(project(":kotlin-util-klib"))
 
     testImplementation(project(":native:kotlin-native-utils"))
@@ -106,9 +106,6 @@ dependencies {
 
     testRuntimeOnly(project(":compiler:tests-mutes"))
 
-    // Workaround for missing transitive import of the common(project `kotlin-test-common`
-    // for `kotlin-test-jvm` into the IDE:
-    testCompileOnly(project(":kotlin-test:kotlin-test-common")) { isTransitive = false }
     testCompileOnly(commonDependency("org.jetbrains.intellij.deps:asm-all"))
 }
 

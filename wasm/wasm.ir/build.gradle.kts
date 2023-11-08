@@ -55,8 +55,7 @@ dependencies {
     implementation(kotlinStdlib())
     implementation(kotlinxCollectionsImmutable())
     testImplementation(libs.junit4)
-    testCompileOnly(project(":kotlin-test:kotlin-test-jvm"))
-    testCompileOnly(project(":kotlin-test:kotlin-test-junit"))
+    testCompileOnly(kotlinTest())
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-serialization-json"))
 

@@ -22,8 +22,7 @@ dependencies {
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 
-    testCompileOnly(project(":kotlin-test:kotlin-test-jvm"))
-    testCompileOnly(project(":kotlin-test:kotlin-test-junit"))
+    testCompileOnly(kotlinTest())
 
     testRuntimeOnly(project(":core:descriptors.runtime"))
 

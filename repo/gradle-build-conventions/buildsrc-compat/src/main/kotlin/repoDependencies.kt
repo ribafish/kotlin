@@ -63,7 +63,9 @@ fun Project.kotlinStdlib(suffix: String? = null, classifier: String? = null): An
 
 @JvmOverloads
 fun Project.kotlinTest(suffix: String? = "junit", classifier: String? = null): Any {
-    return run {
+    return if (kotlinBuildProperties.isJpsBuildEnabled) {
+        kotlinDep(listOfNotNull("test", suffix?.lowercase()).joinToString("-"), bootstrapKotlinVersion, classifier)
+    } else {
         val elementsType = when (classifier) {
             null -> "Runtime"
             "sources" -> "Sources"
