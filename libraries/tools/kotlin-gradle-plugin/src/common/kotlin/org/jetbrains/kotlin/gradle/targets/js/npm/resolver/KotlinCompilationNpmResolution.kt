@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 import org.gradle.api.Action
 import org.gradle.api.logging.Logger
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
@@ -21,12 +22,10 @@ class KotlinCompilationNpmResolution(
     var externalNpmDependencies: Collection<NpmDependencyDeclaration>,
     var fileCollectionDependencies: Collection<FileCollectionExternalGradleDependency>,
     val projectPath: String,
-    val projectPackagesDir: File,
     val rootDir: File,
     val compilationDisambiguatedName: String,
     val npmProjectName: String,
     val npmProjectVersion: String,
-    val npmProjectMain: String,
     val npmProjectPackageJsonFile: File,
     val npmProjectDir: File,
     val tasksRequirements: TasksRequirements,
@@ -128,12 +127,13 @@ class KotlinCompilationNpmResolution(
 
     fun createPackageJson(
         resolution: PreparedKotlinCompilationNpmResolution,
+        npmProjectMain: Provider<String>,
         packageJsonHandlers: ListProperty<Action<PackageJson>>,
     ) {
         val packageJson = packageJson(
             npmProjectName,
             npmProjectVersion,
-            npmProjectMain,
+            npmProjectMain.get(),
             resolution.externalNpmDependencies,
             packageJsonHandlers.get()
         )

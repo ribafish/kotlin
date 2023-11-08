@@ -60,11 +60,6 @@ internal class KotlinJsIrSourceSetProcessor(
                         task.compilerOptions
                     )
 
-                    // Restoring already configured module name
-                    task.compilerOptions.moduleName.convention(
-                        project.provider { compilation.npmProject.name }
-                    )
-
                     task.modeProperty.set(binary.mode)
                     task.dependsOn(kotlinTask)
                 }

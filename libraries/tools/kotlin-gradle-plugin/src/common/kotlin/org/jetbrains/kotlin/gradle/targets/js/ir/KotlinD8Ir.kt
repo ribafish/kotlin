@@ -35,13 +35,7 @@ abstract class KotlinD8Ir @Inject constructor(target: KotlinJsIrTarget) :
             group = taskGroupName
             dependsOn(binary.linkSyncTask)
             inputFileProperty.fileProvider(
-                binary.linkSyncTask.flatMap { linkSyncTask ->
-                    binary.linkTask.flatMap { linkTask ->
-                        linkTask.outputFileProperty.map { file ->
-                            linkSyncTask.destinationDirectory.get().resolve(file.name)
-                        }
-                    }
-                }
+                binary.mainFileSyncPath.map { it.toFile() }
             )
         }
         target.runTask.dependsOn(runTaskHolder)

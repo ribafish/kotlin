@@ -6,12 +6,12 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm
 
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.process.ExecSpec
-import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.disambiguateName
+import org.jetbrains.kotlin.gradle.plugin.mpp.extension
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
@@ -36,12 +36,7 @@ val KotlinJsCompilation.npmProject: NpmProject
 open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Serializable {
     val compilationName = compilation.disambiguatedName
 
-    private val extension by lazy {
-        if (
-            compilation.platformType == KotlinPlatformType.wasm ||
-            compilation.kotlinOptions.moduleKind == JsModuleKind.MODULE_ES.kind
-        ) ".mjs" else ".js"
-    }
+    private val extension: Provider<String> = compilation.extension
 
     val name: String by lazy {
         buildNpmProjectName()
@@ -81,8 +76,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
     val dist: File
         get() = dir.resolve(DIST_FOLDER)
 
-    val main: String
-        get() = "${DIST_FOLDER}/$name$extension"
+    val main: Provider<String> = extension.map { "${DIST_FOLDER}/$name.$it" }
 
     val publicPackageJsonTaskName: String
         get() = compilation.disambiguateName(PublicPackageJsonTask.NAME)

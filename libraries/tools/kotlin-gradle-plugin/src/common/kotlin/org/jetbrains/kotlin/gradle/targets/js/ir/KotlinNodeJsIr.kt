@@ -45,21 +45,13 @@ abstract class KotlinNodeJsIr @Inject constructor(target: KotlinJsIrTarget) :
             val inputFile = if ((compilation.target as KotlinJsIrTarget).wasmTargetType == KotlinWasmTargetType.WASI) {
                 dependsOn(binary.linkTask)
                 sourceMapStackTraces = false
-                binary.linkTask.flatMap { linkTask ->
-                    linkTask.outputFileProperty
-                }
+                binary.mainFilePath
             } else {
                 dependsOn(binary.linkSyncTask)
-                binary.linkSyncTask.flatMap { linkSyncTask ->
-                    binary.linkTask.flatMap { linkTask ->
-                        linkTask.outputFileProperty.map { file ->
-                            linkSyncTask.destinationDirectory.get().resolve(file.name)
-                        }
-                    }
-                }
+                binary.mainFileSyncPath
             }
             inputFileProperty.fileProvider(
-                inputFile
+                inputFile.map { it.toFile() }
             )
         }
         target.runTask.dependsOn(runTaskHolder)

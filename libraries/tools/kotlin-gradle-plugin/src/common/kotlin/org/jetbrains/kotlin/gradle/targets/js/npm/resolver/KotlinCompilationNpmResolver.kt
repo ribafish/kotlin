@@ -16,10 +16,10 @@ import org.gradle.api.attributes.Usage
 import org.gradle.api.internal.artifacts.DefaultProjectComponentIdentifier
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
-import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.plugin.mpp.extension
 import org.jetbrains.kotlin.gradle.plugin.mpp.isMain
 import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
 import org.jetbrains.kotlin.gradle.plugin.sources.compilationDependencyConfigurationByScope
@@ -79,7 +79,7 @@ class KotlinCompilationNpmResolver(
             it.jsIrCompilation.set(true)
             it.npmProjectName.set(npmProject.name)
             it.npmProjectMain.set(npmProject.main)
-            it.esModules.set(compilation.compilerOptions.options.moduleKind.get() == JsModuleKind.MODULE_ES)
+            it.extension.set(compilation.extension)
         }.also { packageJsonTask ->
             project.dependencies.attributesSchema {
                 it.attribute(publicPackageJsonAttribute)
@@ -310,12 +310,10 @@ class KotlinCompilationNpmResolver(
             externalNpmDependencies,
             fileCollectionDependencies,
             projectPath,
-            rootResolver.projectPackagesDir,
             rootResolver.rootProjectDir,
             compilationDisambiguatedName,
             npmProject.name,
             npmVersion,
-            npmProject.main,
             npmProject.packageJsonFile,
             npmProject.dir,
             rootResolver.tasksRequirements
