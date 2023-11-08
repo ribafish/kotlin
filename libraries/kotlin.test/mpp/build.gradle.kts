@@ -55,14 +55,23 @@ kotlin {
             browser {}
         }
         nodejs {}
+        compilations["main"].compilerOptions.configure {
+            freeCompilerArgs.add("-Xir-module-name=kotlin-test")
+        }
     }
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         nodejs()
+        compilations["main"].compilerOptions.configure {
+            freeCompilerArgs.add("-Xir-module-name=kotlin-test")
+        }
     }
     @OptIn(ExperimentalWasmDsl::class)
     wasmWasi {
         nodejs()
+        compilations["main"].compilerOptions.configure {
+            freeCompilerArgs.add("-Xir-module-name=kotlin-test")
+        }
     }
 
     targets.all {
