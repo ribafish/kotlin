@@ -61,6 +61,21 @@ fun Project.kotlinStdlib(suffix: String? = null, classifier: String? = null): An
         dependencies.project(listOfNotNull(":kotlin-stdlib", suffix).joinToString("-"), classifier)
 }
 
+fun Project.kotlinTest(suffix: String? = "junit"): Any {
+    return if (kotlinBuildProperties.isJpsBuildEnabled) {
+        kotlinDep(listOfNotNull("test", suffix?.lowercase()).joinToString("-"), bootstrapKotlinVersion)
+    } else {
+        val configuration = when (suffix?.lowercase()) {
+            null -> null
+            "junit" -> "jvmJUnitRuntimeElements"
+            "junit5" -> "jvmJUnit5RuntimeElements"
+            "testng" -> "jvmTestNGRuntimeElements"
+            else -> error("Unsupported kotlin-test flavor: $suffix")
+        }
+        dependencies.project(":kotlin-test:kotlin-test-mpp", configuration)
+    }
+}
+
 fun Project.kotlinBuiltins(): Any = kotlinBuiltins(forJvm = false)
 
 fun Project.kotlinBuiltins(forJvm: Boolean): Any =
