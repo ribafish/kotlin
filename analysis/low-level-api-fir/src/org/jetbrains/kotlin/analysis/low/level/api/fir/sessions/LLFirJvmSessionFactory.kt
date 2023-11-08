@@ -78,8 +78,8 @@ internal class LLFirJvmSessionFactory(project: Project) : LLFirAbstractSessionFa
         }
     }
 
-    override fun createCodeFragmentSession(module: KtCodeFragmentModule, contextSession: LLFirSession): LLFirSession {
-        return doCreateCodeFragmentSession(module, contextSession) {
+    override fun createDanglingFileSession(module: KtDanglingFileModule, contextSession: LLFirSession): LLFirSession {
+        return doCreateDanglingFileSession(module, contextSession) {
             registerJavaComponents(JavaModuleResolver.getInstance(project))
 
             val javaSymbolProvider = LLFirJavaSymbolProvider(this, moduleData, project, firProvider.searchScope)

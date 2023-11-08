@@ -44,8 +44,6 @@ import org.jetbrains.kotlin.fir.resolve.transformers.FirDummyCompilerLazyDeclara
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.session.*
 import org.jetbrains.kotlin.fir.symbols.FirLazyDeclarationResolver
-import org.jetbrains.kotlin.platform.has
-import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
@@ -455,12 +453,12 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         }
     }
 
-    abstract fun createCodeFragmentSession(module: KtCodeFragmentModule, contextSession: LLFirSession): LLFirSession
+    abstract fun createDanglingFileSession(module: KtDanglingFileModule, contextSession: LLFirSession): LLFirSession
 
-    protected fun doCreateCodeFragmentSession(
-        module: KtCodeFragmentModule,
+    protected fun doCreateDanglingFileSession(
+        module: KtDanglingFileModule,
         contextSession: LLFirSession,
-        additionalSessionConfiguration: context(CodeFragmentSessionCreationContext) LLFirCodeFragmentSession.() -> Unit,
+        additionalSessionConfiguration: context(DanglingFileSessionCreationContext) LLFirDanglingFileSession.() -> Unit,
     ): LLFirSession {
         val platform = module.platform
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
@@ -469,7 +467,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
         val components = LLFirModuleResolveComponents(module, globalResolveComponents, scopeProvider)
 
-        val session = LLFirCodeFragmentSession(module, components, builtinsSession.builtinTypes)
+        val session = LLFirDanglingFileSession(module, components, builtinsSession.builtinTypes)
         components.session = session
 
         val moduleData = createModuleData(session)
@@ -487,8 +485,8 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 components,
                 canContainKotlinPackage = true,
             ) { scope ->
-                val codeFragment = module.codeFragment
-                if (codeFragment != null) scope.createScopedDeclarationProviderForFile(codeFragment) else null
+                val file = module.file
+                if (file != null) scope.createScopedDeclarationProviderForFile(file) else null
             }
 
             register(FirProvider::class, firProvider)
@@ -513,7 +511,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 }
 
                 // Wrap dependencies into a single classpath-filtering provider
-                listOf(LLFirCodeFragmentDependenciesSymbolProvider(FirCompositeSymbolProvider(session, providers)))
+                listOf(LLFirDanglingFileDependenciesSymbolProvider(FirCompositeSymbolProvider(session, providers)))
             }
 
             register(DEPENDENCIES_SYMBOL_PROVIDER_QUALIFIED_KEY, dependencyProvider)
@@ -530,7 +528,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 .createIfNeeded(this)
                 ?.also { register(FirSwitchableExtensionDeclarationsSymbolProvider::class, it) }
 
-            val context = CodeFragmentSessionCreationContext(
+            val context = DanglingFileSessionCreationContext(
                 moduleData,
                 firProvider,
                 dependencyProvider,
@@ -542,7 +540,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         }
     }
 
-    protected class CodeFragmentSessionCreationContext(
+    protected class DanglingFileSessionCreationContext(
         val moduleData: LLFirModuleData,
         val firProvider: LLFirProvider,
         val dependencyProvider: LLFirDependenciesSymbolProvider,
@@ -574,11 +572,10 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         fun getOrCreateSessionForDependency(dependency: KtModule): LLFirSession? = when (dependency) {
             is KtBuiltinsModule -> null // Built-ins are already added
             is KtBinaryModule -> llFirSessionCache.getSession(dependency, preferBinary = true)
-            is KtSourceModule -> llFirSessionCache.getSession(dependency)
+            is KtSourceModule, is KtDanglingFileModule -> llFirSessionCache.getSession(dependency)
 
             is KtScriptModule,
             is KtScriptDependencyModule,
-            is KtCodeFragmentModule,
             is KtNotUnderContentRootModule,
             is KtLibrarySourceModule,
             -> {
