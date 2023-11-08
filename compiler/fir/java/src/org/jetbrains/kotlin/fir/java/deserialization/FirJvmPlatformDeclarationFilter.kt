@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
-import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.scopes.platformClassMapper
@@ -26,16 +25,16 @@ import org.jetbrains.kotlin.name.FqName
 
 internal object FirJvmPlatformDeclarationFilter {
     fun isFunctionAvailable(function: FirSimpleFunction, session: FirSession): Boolean {
+        val matcher = when (function.name.asString()) {
+            "getOrDefault" -> GET_OR_DEFAULT_MATCHER
+            "remove" -> REMOVE_MATCHER
+            else -> return true
+        }
+
         val javaAnalogueClassId =
             session.platformClassMapper.getCorrespondingPlatformClass(function.containingClassLookupTag()?.classId) ?: return true
 
         if (!function.hasAnnotation(StandardNames.FqNames.platformDependentClassId, session)) return true
-
-        val matcher = when (function.name.asString()) {
-            "getOrDefault" -> GET_OR_DEFAULT_MATCHER
-            "remove" -> REMOVE_MATCHER
-            else -> error("Unsupported @PlatformDependent function: ${function.render()}")
-        }
 
         val javaAnalogue = session.symbolProvider.getClassLikeSymbolByClassId(javaAnalogueClassId) as? FirClassSymbol<*> ?: return true
         val scope = session.declaredMemberScope(javaAnalogue, null)
