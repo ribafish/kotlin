@@ -62,6 +62,9 @@ abstract class KotlinPackageJsonTask :
     abstract val packageJsonHandlers: ListProperty<Action<PackageJson>>
 
     @get:Input
+    abstract val packageJsonMain: Property<String>
+
+    @get:Input
     internal val packageJsonInputHandlers: Provider<PackageJson> by lazy {
         packageJsonHandlers.map { packageJsonHandlersList ->
             PackageJson(fakePackageJsonValue, fakePackageJsonValue)
@@ -119,7 +122,7 @@ abstract class KotlinPackageJsonTask :
                 logger = logger
             )
 
-        resolution.createPackageJson(preparedResolution, packageJsonHandlers)
+        resolution.createPackageJson(preparedResolution, packageJsonMain, packageJsonHandlers)
     }
 
     companion object {
@@ -145,6 +148,8 @@ abstract class KotlinPackageJsonTask :
 
                 task.gradleNodeModules.value(gradleNodeModules)
                     .disallowChanges()
+
+                task.packageJsonMain.set(compilation.npmProject.main)
 
                 task.packageJson.set(compilation.npmProject.packageJsonFile)
 

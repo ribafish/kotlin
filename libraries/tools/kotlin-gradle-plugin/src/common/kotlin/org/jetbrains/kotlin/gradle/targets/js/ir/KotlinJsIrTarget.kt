@@ -280,7 +280,7 @@ constructor(
 
             whenNodejsConfigured {
                 testTask {
-                    val name = binary.linkTask.flatMap { it.outputFileProperty.map { it.name } }
+                    val name = binary.mainFileName
                     it.inputFileProperty.fileProvider(
                         binaryenExec.flatMap { it.outputFileProperty.map { it.asFile.parentFile.resolve(name.get()) } }
                     )

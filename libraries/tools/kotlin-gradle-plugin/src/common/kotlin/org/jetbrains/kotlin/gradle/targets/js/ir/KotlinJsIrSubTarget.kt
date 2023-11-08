@@ -124,13 +124,7 @@ abstract class KotlinJsIrSubTarget(
 
             val inputFileProperty = if (target.wasmTargetType != KotlinWasmTargetType.WASI) {
                 testJs.dependsOn(binary.linkSyncTask)
-                binary.linkSyncTask.flatMap { linkSyncTask ->
-                    binary.linkTask.flatMap { linkTask ->
-                        linkTask.outputFileProperty.map { file ->
-                            linkSyncTask.destinationDirectory.get().resolve(file.name)
-                        }
-                    }
-                }
+                binary.mainFileSyncPath.map { it.toFile() }
             } else {
                 if (project.locateTask<BinaryenExec>((binary as ExecutableWasm).optimizeTaskName) != null) {
                     testJs.dependsOn(binary.optimizeTask)
@@ -139,9 +133,7 @@ abstract class KotlinJsIrSubTarget(
                     }
                 } else {
                     testJs.dependsOn(binary.linkTask)
-                    binary.linkTask.flatMap { linkTask ->
-                        linkTask.outputFileProperty
-                    }
+                    binary.mainFilePath.map { it.toFile() }
                 }
             }
 

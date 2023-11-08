@@ -6,10 +6,12 @@
 package org.jetbrains.kotlin.gradle.targets.js.ir
 
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.extension
 import org.jetbrains.kotlin.gradle.targets.js.binaryen.BinaryenExec
 import org.jetbrains.kotlin.gradle.targets.js.dsl.Distribution
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTas
 import org.jetbrains.kotlin.gradle.tasks.IncrementalSyncTask
 import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
+import java.nio.file.Path
 
 interface JsBinary {
     val compilation: KotlinJsCompilation
@@ -30,7 +33,7 @@ interface JsBinary {
 sealed class JsIrBinary(
     final override val compilation: KotlinJsIrCompilation,
     final override val name: String,
-    override val mode: KotlinJsBinaryMode
+    override val mode: KotlinJsBinaryMode,
 ) : JsBinary {
     override val distribution: Distribution =
         createDefaultDistribution(compilation.target.project, compilation.target.targetName, name)
@@ -39,10 +42,31 @@ sealed class JsIrBinary(
 
     var generateTs: Boolean = false
 
-    val linkTask: TaskProvider<KotlinJsIrLink>
-        get() = target.project.tasks
+    val mainFileName: Provider<String> by lazy {
+        linkTask.flatMap {
+            it.compilerOptions.moduleName.zip(compilation.extension) { moduleName, extension ->
+                "$moduleName.$extension"
+            }
+        }
+    }
+
+    val mainFilePath: Provider<Path> by lazy {
+        linkTask.map {
+            it.destinationDirectory.get().asFile.toPath().resolve(mainFileName.get())
+        }
+    }
+
+    val mainFileSyncPath: Provider<Path> by lazy {
+        linkSyncTask.map {
+            it.destinationDirectory.get().toPath().resolve(mainFileName.get())
+        }
+    }
+
+    val linkTask: TaskProvider<KotlinJsIrLink> by lazy {
+        target.project.tasks
             .withType(KotlinJsIrLink::class.java)
             .named(linkTaskName)
+    }
 
     private fun linkTaskName(): String =
         lowerCamelCaseName(
@@ -56,10 +80,11 @@ sealed class JsIrBinary(
 
     val validateGeneratedTsTaskName: String = validateTypeScriptTaskName()
 
-    val linkSyncTask: TaskProvider<IncrementalSyncTask>
-        get() = target.project.tasks
+    val linkSyncTask: TaskProvider<IncrementalSyncTask> by lazy {
+        target.project.tasks
             .withType<IncrementalSyncTask>()
             .named(linkSyncTaskName)
+    }
 
     private fun linkSyncTaskName(): String =
         lowerCamelCaseName(
@@ -87,7 +112,7 @@ sealed class JsIrBinary(
 open class Executable(
     compilation: KotlinJsIrCompilation,
     name: String,
-    mode: KotlinJsBinaryMode
+    mode: KotlinJsBinaryMode,
 ) : JsIrBinary(
     compilation,
     name,
@@ -111,7 +136,7 @@ open class Executable(
 open class ExecutableWasm(
     compilation: KotlinJsIrCompilation,
     name: String,
-    mode: KotlinJsBinaryMode
+    mode: KotlinJsBinaryMode,
 ) : Executable(
     compilation,
     name,
@@ -119,10 +144,11 @@ open class ExecutableWasm(
 ) {
     val optimizeTaskName: String = optimizeTaskName()
 
-    val optimizeTask: TaskProvider<BinaryenExec>
-        get() = target.project.tasks
+    val optimizeTask: TaskProvider<BinaryenExec> by lazy {
+        target.project.tasks
             .withType<BinaryenExec>()
             .named(optimizeTaskName)
+    }
 
     private fun optimizeTaskName(): String =
         "${linkTaskName}Optimize"
@@ -131,26 +157,11 @@ open class ExecutableWasm(
 class Library(
     compilation: KotlinJsIrCompilation,
     name: String,
-    mode: KotlinJsBinaryMode
+    mode: KotlinJsBinaryMode,
 ) : JsIrBinary(
     compilation,
     name,
     mode
-) {
-    val executeTaskBaseName: String =
-        generateBinaryName(
-            compilation,
-            mode,
-            null
-        )
-}
-
-// Hack for legacy
-internal val JsBinary.executeTaskBaseName: String
-    get() = generateBinaryName(
-        compilation,
-        mode,
-        null
-    )
+)
 
 internal const val COMPILE_SYNC = "compileSync"

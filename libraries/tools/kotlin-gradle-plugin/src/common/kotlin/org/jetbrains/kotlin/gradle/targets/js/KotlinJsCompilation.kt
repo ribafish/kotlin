@@ -11,10 +11,13 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.attributes.AttributeContainer
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions
 import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationImpl
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetContainerDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.JsBinary
@@ -24,7 +27,7 @@ import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import javax.inject.Inject
 
 open class KotlinJsCompilation @Inject internal constructor(
-    compilation: KotlinCompilationImpl
+    compilation: KotlinCompilationImpl,
 ) : AbstractKotlinCompilationToRunnableFiles<KotlinJsOptions>(compilation),
     HasBinaries<KotlinJsBinaryContainer> {
 
@@ -100,3 +103,15 @@ open class KotlinJsCompilation @Inject internal constructor(
         }
     }
 }
+
+val KotlinJsCompilation.extension: Provider<String>
+    get() = run {
+        val isWasm = platformType == KotlinPlatformType.wasm
+        compilerOptions.options.moduleKind.map { moduleKind ->
+            if (isWasm || moduleKind == JsModuleKind.MODULE_ES) {
+                "mjs"
+            } else {
+                "js"
+            }
+        }
+    }
