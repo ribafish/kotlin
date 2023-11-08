@@ -217,9 +217,7 @@ class CompilerArgumentsContentProspectorTest {
             K2MetadataCompilerArguments::refinesPaths
         )
         private val k2JSCompilerArgumentsFlagProperties = commonCompilerArgumentsFlagProperties + listOf(
-            K2JSCompilerArguments::noStdlib,
             K2JSCompilerArguments::sourceMap,
-            K2JSCompilerArguments::metaInfo,
             K2JSCompilerArguments::irProduceKlibDir,
             K2JSCompilerArguments::irProduceKlibFile,
             K2JSCompilerArguments::irProduceJs,
@@ -232,7 +230,6 @@ class CompilerArgumentsContentProspectorTest {
             K2JSCompilerArguments::useEsClasses,
             K2JSCompilerArguments::typedArrays,
             K2JSCompilerArguments::friendModulesDisabled,
-            K2JSCompilerArguments::metadataOnly,
             K2JSCompilerArguments::fakeOverrideValidator,
             K2JSCompilerArguments::wasm
         )
@@ -246,8 +243,6 @@ class CompilerArgumentsContentProspectorTest {
             K2JSCompilerArguments::target,
             K2JSCompilerArguments::moduleKind,
             K2JSCompilerArguments::main,
-            K2JSCompilerArguments::outputPrefix,
-            K2JSCompilerArguments::outputPostfix,
             K2JSCompilerArguments::irModuleName,
             K2JSCompilerArguments::includes,
             K2JSCompilerArguments::friendModules,

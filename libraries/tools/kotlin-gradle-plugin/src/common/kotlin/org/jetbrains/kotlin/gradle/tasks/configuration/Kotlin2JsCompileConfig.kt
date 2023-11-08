@@ -46,25 +46,6 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
                 task.moduleName.set(providers.provider { compilation.moduleName })
             }
 
-            task.destinationDirectory
-                .convention(
-                    project.objects.directoryProperty().fileProvider(
-                        task.defaultDestinationDirectory.map {
-                            val freeArgs = task.enhancedFreeCompilerArgs.get()
-                            if (task.compilerOptions.outputFile.orNull != null) {
-                                if (freeArgs.contains(PRODUCE_UNZIPPED_KLIB)) {
-                                    val file = File(task.compilerOptions.outputFile.get())
-                                    if (file.extension == "") file else file.parentFile
-                                } else {
-                                    File(task.compilerOptions.outputFile.get()).parentFile
-                                }
-                            } else {
-                                it.asFile
-                            }
-                        }
-                    )
-                )
-
             task.libraryFilterCacheService.value(libraryFilterCachingService).disallowChanges()
             task.incrementalModuleInfoProvider.value(incrementalModuleInfoProvider).disallowChanges()
         }

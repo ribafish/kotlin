@@ -200,7 +200,7 @@ internal open class GradleCompilerRunner(
                 is K2JSCompilerArguments -> {
                     val args = K2JSCompilerArguments()
                     parseCommandLineArguments(argsArray.toList(), args)
-                    if (!args.isPreIrBackendDisabled() || args.irProduceJs) {
+                    if (args.irProduceJs) {
                         metricsConsumer.report(BooleanMetrics.JS_SOURCE_MAP, args.sourceMap)
                     }
                     if (args.irProduceJs) {
