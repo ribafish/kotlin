@@ -93,6 +93,12 @@ internal abstract class AbstractLocalProcessRunner<R>(protected val checks: Test
     abstract override fun buildResultHandler(runResult: RunResult): LocalResultHandler<R> // ?? Narrow returned type.
 }
 
+private fun RunResult.processOutputAsString(output: TestRunCheck.Output) = when (output) {
+    TestRunCheck.Output.STDOUT -> processOutput.stdOut.filteredOutput
+    TestRunCheck.Output.STDERR -> processOutput.stdErr
+    TestRunCheck.Output.ALL -> processOutput.stdOut.filteredOutput + processOutput.stdErr
+}
+
 internal abstract class LocalResultHandler<R>(
     runResult: RunResult,
     private val visibleProcessName: String,
@@ -136,7 +142,7 @@ internal abstract class LocalResultHandler<R>(
                 }
                 is TestRunCheck.OutputDataFile -> {
                     val expectedOutput = check.file.readText()
-                    val actualFilteredOutput = runResult.processOutput.stdOut.filteredOutput + runResult.processOutput.stdErr
+                    val actualFilteredOutput = runResult.processOutputAsString(check.output)
 
                     // Don't use verifyExpectation(expected, actual) to avoid exposing potentially large test output in exception message
                     // and blowing up test logs.
@@ -146,7 +152,7 @@ internal abstract class LocalResultHandler<R>(
                 }
                 is TestRunCheck.OutputMatcher -> {
                     try {
-                        verifyExpectation(check.match(runResult.processOutput.stdOut.filteredOutput)) {
+                        verifyExpectation(check.match(runResult.processOutputAsString(check.output))) {
                             "Tested process output has not passed validation."
                         }
                     } catch (t: Throwable) {

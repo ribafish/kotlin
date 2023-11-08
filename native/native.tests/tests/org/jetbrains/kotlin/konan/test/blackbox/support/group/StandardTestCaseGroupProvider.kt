@@ -212,6 +212,10 @@ internal class StandardTestCaseGroupProvider : TestCaseGroupProvider {
             )
         else null
 
+        val outputMatcher = lldbSpec?.let {
+            OutputMatcher(Output.STDOUT) { output -> lldbSpec.checkLLDBOutput(output, settings.get()) }
+        } ?: parseOutputRegex(registeredDirectives)
+
         val testCase = TestCase(
             id = TestCaseId.TestDataFile(testDataFile),
             kind = testKind,
@@ -223,7 +227,7 @@ internal class StandardTestCaseGroupProvider : TestCaseGroupProvider {
                 computeExitCodeCheck(testKind, registeredDirectives, location),
                 expectedFailureCheck = null,
                 computeOutputDataFileCheck(testDataFile, registeredDirectives, location),
-                lldbSpec?.let { OutputMatcher { output -> lldbSpec.checkLLDBOutput(output, settings.get()) } },
+                outputMatcher,
                 fileCheckMatcher = null,
             ),
             extras = when (testKind) {
