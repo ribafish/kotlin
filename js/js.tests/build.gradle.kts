@@ -77,7 +77,7 @@ dependencies {
     testRuntimeOnly(kotlinStdlib())
     testJsRuntime(kotlinStdlib())
     if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
-        testJsRuntime(project(":kotlin-test:kotlin-test-js-ir")) // to be sure that kotlin-test-js built before tests run
+        testJsRuntime(project(":kotlin-test:kotlin-test-mpp")) // to be sure that kotlin-test-js built before tests run
     }
     testRuntimeOnly(project(":kotlin-preloader")) // it's required for ant tests
     testRuntimeOnly(project(":compiler:backend-common"))
@@ -266,9 +266,9 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
         systemProperty("kotlin.js.reduced.stdlib.path", "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main")
         inputs.dir(rootDir.resolve("libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main"))
 
-        dependsOn(":kotlin-test:kotlin-test-js-ir:compileKotlinJs")
-        systemProperty("kotlin.js.kotlin.test.path", "libraries/kotlin.test/js-ir/build/classes/kotlin/js/main")
-        inputs.dir(rootDir.resolve("libraries/kotlin.test/js-ir/build/classes/kotlin/js/main"))
+        dependsOn(":kotlin-test:kotlin-test-mpp:compileKotlinJs")
+        systemProperty("kotlin.js.kotlin.test.path", "libraries/kotlin.test/mpp/build/classes/kotlin/js/main")
+        inputs.dir(rootDir.resolve("libraries/kotlin.test/mpp/build/classes/kotlin/js/main"))
     }
 
     exclude("org/jetbrains/kotlin/js/testOld/api/*")

@@ -9,13 +9,13 @@ fun Test.useJsIrBoxTests(
     buildDir: String = "",
     fullStdLib: String = "libraries/stdlib/build/classes/kotlin/js/main",
     reducedStdlibPath: String = "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main",
-    kotlinJsTestPath: String = "libraries/kotlin.test/js-ir/build/classes/kotlin/js/main",
+    kotlinJsTestPath: String = "libraries/kotlin.test/mpp/build/classes/kotlin/js/main",
     domApiCompatPath: String = "libraries/kotlin-dom-api-compat/build/classes/kotlin/main"
 ) {
     setupV8()
     dependsOn(":kotlin-stdlib:jsJar")
     dependsOn(":kotlin-stdlib:jsJarForTests") // TODO: think how to remove dependency on the artifact in this place
-    dependsOn(":kotlin-test:kotlin-test-js-ir:compileKotlinJs")
+    dependsOn(":kotlin-test:kotlin-test-mpp:compileKotlinJs")
     dependsOn(":kotlin-stdlib-js-ir-minimal-for-test:compileKotlinJs")
     dependsOn(":kotlin-dom-api-compat:compileKotlinJs")
 
