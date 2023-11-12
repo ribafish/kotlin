@@ -50,6 +50,9 @@ val libraries by configurations.creating {
 
 val librariesStripVersion by configurations.creating
 
+// for sbom only
+val librariesKotlinTest by configurations.creating
+
 // Compiler plugins should be copied without `kotlin-` prefix
 val compilerPlugins by configurations.creating {
     exclude("org.jetbrains.kotlin", "kotlin-stdlib-common")
@@ -107,10 +110,6 @@ val distLibraryProjects = listOfNotNull(
     ":kotlin-scripting-compiler-impl",
     ":kotlin-scripting-jvm",
     ":js:js.engines",
-    ":kotlin-test:kotlin-test-junit",
-    ":kotlin-test:kotlin-test-junit5",
-    ":kotlin-test:kotlin-test-jvm",
-    ":kotlin-test:kotlin-test-testng",
     ":libraries:tools:mutability-annotations-compat",
     ":plugins:android-extensions-compiler",
     ":plugins:jvm-abi-gen"
@@ -135,9 +134,6 @@ val distCompilerPluginProjectsCompat = listOf(
 val distSourcesProjects = listOfNotNull(
     ":kotlin-annotations-jvm",
     ":kotlin-script-runtime",
-    ":kotlin-test:kotlin-test-junit",
-    ":kotlin-test:kotlin-test-junit5",
-    ":kotlin-test:kotlin-test-testng"
 )
 
 configurations.all {
@@ -164,10 +160,10 @@ dependencies {
         }
 
     libraries(kotlinStdlib("jdk8"))
+    librariesKotlinTest(kotlinTest())
     if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
         libraries(kotlinStdlib(classifier = "distJsJar"))
         libraries(kotlinStdlib(classifier = "distJsKlib"))
-        libraries(project(":kotlin-test:kotlin-test-js-ir", configuration = "jsRuntimeElements"))
     }
 
     librariesStripVersion(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
@@ -207,8 +203,6 @@ dependencies {
         sources(project(":kotlin-stdlib", configuration = "distSources"))
         sources(project(":kotlin-stdlib", configuration = "distJsSourcesJar"))
         sources(project(":kotlin-reflect", configuration = "sources"))
-        sources(project(":kotlin-test", "combinedJvmSourcesJar"))
-        sources(project(":kotlin-test:kotlin-test-js-ir", configuration = "jsSourcesElements"))
 
         distStdlibMinimalForTests(project(":kotlin-stdlib-jvm-minimal-for-test"))
 
@@ -250,13 +244,21 @@ dependencies {
     fatJarContentsStripVersions(commonDependency("one.util:streamex")) { isTransitive = false }
 }
 
+val librariesKotlinTestFiles = files(
+    listOf(null, "junit", "junit5", "testng", "js").map { suffix ->
+        listOf(null, "sources").map { classifier ->
+            configurations.detachedConfiguration(dependencies.create(kotlinTest(suffix, classifier))).apply { isTransitive = false }
+        }
+    }
+)
+
 publish()
 
 // sbom for dist
 val distSbomTask = configureSbom(
     target = "Dist",
     documentName = "Kotlin Compiler Distribution",
-    setOf(configurations.runtimeClasspath.name, libraries.name, librariesStripVersion.name, compilerPlugins.name)
+    setOf(configurations.runtimeClasspath.name, libraries.name, librariesKotlinTest.name, librariesStripVersion.name, compilerPlugins.name)
 )
 
 val packCompiler by task<Jar> {
@@ -399,6 +401,12 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
     into("lib") {
         from(jarFiles) { rename { "$compilerBaseName.jar" } }
         from(librariesFiles)
+        from(librariesKotlinTestFiles) {
+            rename {
+                it.replace("kotlin-test-mpp-jvm", "kotlin-test-mpp")
+                    .replace("kotlin-test-mpp", "kotlin-test")
+            }
+        }
         from(librariesStripVersionFiles) {
             rename {
                 it.replace(Regex("-\\d.*\\.jar\$"), ".jar")
