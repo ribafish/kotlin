@@ -61,15 +61,22 @@ fun Project.kotlinStdlib(suffix: String? = null, classifier: String? = null): An
         dependencies.project(listOfNotNull(":kotlin-stdlib", suffix).joinToString("-"), classifier)
 }
 
-fun Project.kotlinTest(suffix: String? = "junit"): Any {
+@JvmOverloads
+fun Project.kotlinTest(suffix: String? = "junit", classifier: String? = null): Any {
     return if (kotlinBuildProperties.isJpsBuildEnabled) {
-        kotlinDep(listOfNotNull("test", suffix?.lowercase()).joinToString("-"), bootstrapKotlinVersion)
+        kotlinDep(listOfNotNull("test", suffix?.lowercase()).joinToString("-"), bootstrapKotlinVersion, classifier)
     } else {
+        val elementsType = when (classifier) {
+            null -> "Runtime"
+            "sources" -> "Sources"
+            else -> error("Unsupported kotlin-test classifier: $classifier")
+        }
         val configuration = when (suffix?.lowercase()) {
-            null -> null
-            "junit" -> "jvmJUnitRuntimeElements"
-            "junit5" -> "jvmJUnit5RuntimeElements"
-            "testng" -> "jvmTestNGRuntimeElements"
+            null -> classifier?.let { "jvm${elementsType}Elements" }
+            "junit" -> "jvmJUnit${elementsType}Elements"
+            "junit5" -> "jvmJUnit5${elementsType}Elements"
+            "testng" -> "jvmTestNG${elementsType}Elements"
+            "js" -> "js${elementsType}Elements"
             else -> error("Unsupported kotlin-test flavor: $suffix")
         }
         dependencies.project(":kotlin-test:kotlin-test-mpp", configuration)
