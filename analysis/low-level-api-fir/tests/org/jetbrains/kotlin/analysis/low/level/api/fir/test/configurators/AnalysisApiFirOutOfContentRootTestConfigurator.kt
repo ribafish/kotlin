@@ -66,7 +66,7 @@ private class KtOutOfContentRootModuleFactory : KtModuleFactory {
     }
 }
 
-private class KtNotUnderContentRootModuleForTest(
+internal class KtNotUnderContentRootModuleForTest(
     override val name: String,
     override val file: PsiFile,
     override val platform: TargetPlatform
