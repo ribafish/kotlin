@@ -11,13 +11,16 @@ import org.jetbrains.kotlin.fir.FirLoopTarget
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.builder.buildOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.PrivateForInline
+import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 
 class Context<T> {
     lateinit var packageFqName: FqName
@@ -75,6 +78,67 @@ class Context<T> {
             if (!element.isInnerOrLocal) {
                 break
             }
+        }
+    }
+
+    /**
+     * This property will be stored in [_containerSymbolStack] instead the next symbol.
+     * Nested symbols won't be replaced.
+     *
+     * @see containerSymbol
+     * @see pushContainerSymbol
+     * @see popContainerSymbol
+     */
+    var forcedContainerSymbol: FirBasedSymbol<*>? = null
+
+    /**
+     * Is required for [forcedContainerSymbol] to support "Nested symbols won't be replaced" constraint.
+     */
+    private var counter = 0
+
+    /**
+     * This stack is required to provide correct
+     * [FirAnnotationCall.containingDeclarationSymbol][org.jetbrains.kotlin.fir.expressions.FirAnnotationCall.containingDeclarationSymbol]
+     * during annotation call creation.
+     *
+     * @see pushContainerSymbol
+     * @see popContainerSymbol
+     */
+    val containerSymbol: FirBasedSymbol<*>? get() = _containerSymbolStack.lastOrNull()
+    private val _containerSymbolStack: MutableList<FirBasedSymbol<*>> = mutableListOf<FirBasedSymbol<*>>()
+
+    /**
+     * Add [symbol] to the container symbols stack. Must be paired with [popContainerSymbol].
+     *
+     * @see containerSymbol
+     */
+    fun pushContainerSymbol(symbol: FirBasedSymbol<*>) {
+        /**
+         * Replace [symbol] with [forcedContainerSymbol] if it is the first invocation of [pushContainerSymbol] in the stack
+         */
+        val containerSymbol = forcedContainerSymbol?.takeIf { counter++ == 0 } ?: symbol
+        _containerSymbolStack += containerSymbol
+    }
+
+    /**
+     * Remove [symbol] from the container symbols stack. Must be called after corresponding [pushContainerSymbol].
+     *
+     * @see containerSymbol
+     */
+    fun popContainerSymbol(symbol: FirBasedSymbol<*>) {
+        /**
+         * The counterpart of [pushContainerSymbol] logic
+         */
+        val containerSymbol = forcedContainerSymbol?.takeIf { --counter == 0 } ?: symbol
+        val removed = _containerSymbolStack.removeLast()
+        checkWithAttachment(removed === containerSymbol, { "Inconsistent declaration stack" }) {
+            withFirSymbolEntry("expected", containerSymbol)
+            withFirSymbolEntry("actual", removed)
+            if (symbol != containerSymbol) {
+                withFirSymbolEntry("replaced symbol", symbol)
+            }
+
+            withEntry("stack", _containerSymbolStack.asReversed().toString())
         }
     }
 
