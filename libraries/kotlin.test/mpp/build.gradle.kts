@@ -3,6 +3,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.internal.component.UsageContext
+import org.gradle.api.publish.internal.PublicationInternal
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
@@ -355,6 +356,19 @@ configurations {
     all {
         println(name)
     }
+
+    for (name in listOf("kotlinTestCommonElements", "kotlinTestAnnotationCommonElements")) {
+        val legacyConfiguration = create(name) {
+            isCanBeResolved = false
+            isCanBeConsumed = false
+            attributes {
+                attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+            }
+        }
+        dependencies {
+            legacyConfiguration(project)
+        }
+    }
 }
 
 
@@ -430,6 +444,23 @@ publishing {
             variant("wasmWasiApiElements")
             variant("wasmWasiRuntimeElements")
             variant("wasmWasiSourcesElements")
+        }
+
+        module("testCommonModule") {
+            mavenPublication {
+                artifactId = "$artifactBaseName-common"
+                configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test Library. Use kotlin-test instead", packaging = "pom")
+                (this as PublicationInternal<*>).isAlias = true
+            }
+            variant("kotlinTestCommonElements")
+        }
+        module("testAnnotationsCommonModule") {
+            mavenPublication {
+                artifactId = "$artifactBaseName-annotations-common"
+                configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test Library. Use kotlin-test instead", packaging = "pom")
+                (this as PublicationInternal<*>).isAlias = true
+            }
+            variant("kotlinTestAnnotationCommonElements")
         }
 
 
@@ -562,7 +593,7 @@ fun Project.addVariant(component: AdhocComponentWithVariants, variant: MultiModu
     val configuration = configurations.getOrCreate(variant.configurationName)
     configuration.apply {
         isCanBeResolved = false
-        isCanBeConsumed = true
+//        isCanBeConsumed = true
 
         variant.attributesConfigurations.forEach { configure -> attributes.configure() }
     }
