@@ -481,7 +481,7 @@ private fun Candidate.prepareExpectedType(
                 }
             }
         }
-            ?: getExpectedTypeWithImplicintIntegerCoercion(session, argument, parameter, basicExpectedType)
+            ?: getExpectedTypeWithImplicitIntegerCoercion(session, argument, parameter, basicExpectedType)
             ?: basicExpectedType
     return this.substitutor.substituteOrSelf(expectedType)
 }
@@ -503,7 +503,7 @@ private fun Candidate.getExpectedTypeWithSAMConversion(
     }
 }
 
-private fun getExpectedTypeWithImplicintIntegerCoercion(
+private fun getExpectedTypeWithImplicitIntegerCoercion(
     session: FirSession,
     argument: FirExpression,
     parameter: FirValueParameter,
