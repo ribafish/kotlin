@@ -96,11 +96,10 @@ void beforeHeapRefUpdateSlowPath(mm::DirectRefAccessor ref, ObjHeader* value) no
         //       Yet at the moment there is now efficient way to distinguish black and gray objects.
 
         auto& objectData = alloc::objectDataForObject(prev);
-
-        // TODO This is just a dummy. Replace with enqueueing when thread-local mark queues will be implemented.
-        objectData.tryMark();
-        // TODO Note that we should not add the marked abject to mark statistics at this point.
-        //      The object will be counted on dequeue instead.
+        auto& threadData = *mm::ThreadRegistry::Instance().CurrentThreadData();
+        threadData.gc().impl().gc().mark().markQueue()->tryPush(objectData);
+        // No need to add the marked object in statistics here.
+        // Objects will be counted on dequeue.
     }
 }
 
