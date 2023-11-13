@@ -76,16 +76,17 @@ internal class RawFirNonLocalDeclarationBuilder private constructor(
                 else -> null
             }
 
-            return build(session, scopeProvider, designation, rootNonLocalDeclaration, functionsToRebind)
+            return build(session, scopeProvider, designation, rootNonLocalDeclaration, functionsToRebind, rebindContainingSymbol = true)
         }
 
-        fun build(
+        private fun build(
             session: FirSession,
             scopeProvider: FirScopeProvider,
             designation: FirDesignation,
             rootNonLocalDeclaration: KtElement,
             functionsToRebind: Set<FirFunction>? = null,
-            replacementApplier: RawFirReplacement.Applier? = null
+            replacementApplier: RawFirReplacement.Applier? = null,
+            rebindContainingSymbol: Boolean = false,
         ): FirDeclaration {
             check(rootNonLocalDeclaration is KtDeclaration || rootNonLocalDeclaration is KtCodeFragment)
 
@@ -98,6 +99,10 @@ internal class RawFirNonLocalDeclarationBuilder private constructor(
                 replacementApplier = replacementApplier
             )
             builder.context.packageFqName = rootNonLocalDeclaration.containingKtFile.packageFqName
+            if (rebindContainingSymbol) {
+                builder.context.forcedContainerSymbol = designation.target.symbol
+            }
+
             return builder.moveNext(designation.path.iterator(), containingClass = null)
         }
     }
