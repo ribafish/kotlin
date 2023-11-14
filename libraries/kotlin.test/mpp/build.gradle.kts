@@ -380,9 +380,11 @@ constructor(val factory: SoftwareComponentFactory)
 
 val componentFactory = objects.newInstance<ComponentsFactoryAccess>().factory
 
-val emptyJavadocJar by tasks.creating(org.gradle.api.tasks.bundling.Jar::class) {
-    archiveClassifier.set("javadoc")
-}
+fun emptyJavadocJar(appendix: String? = null) =
+    tasks.register<org.gradle.api.tasks.bundling.Jar>("emptyJavadocJar${appendix.orEmpty().capitalize()}") {
+        archiveAppendix = appendix
+        archiveClassifier = "javadoc"
+    }
 
 publishing {
     val artifactBaseName = base.archivesName.get()
@@ -391,7 +393,7 @@ publishing {
             mavenPublication {
                 artifactId = artifactBaseName
                 configureKotlinPomAttributes(project, "Kotlin Test Library")
-                artifact(emptyJavadocJar)
+                artifact(emptyJavadocJar())
             }
             variant("metadataApiElements") { suppressPomMetadataWarnings() }
             variant("jvmApiElements")
@@ -406,6 +408,18 @@ publishing {
                 }
             }
         }
+        val frameworkModules = jvmTestFrameworks.map { framework ->
+            module("${framework.lowercase()}Module") {
+                mavenPublication {
+                    artifactId = "$artifactBaseName-${framework.lowercase()}"
+                    configureKotlinPomAttributes(project, "Kotlin Test Library for ${framework}")
+                    artifact(emptyJavadocJar(framework.lowercase()))
+                }
+                variant("jvm${framework}ApiElements") { suppressPomMetadataWarnings() }
+                variant("jvm${framework}RuntimeElements") { suppressPomMetadataWarnings() }
+                variant("jvm${framework}SourcesElements") { suppressPomMetadataWarnings() }
+            }
+        }
 
         val js = module("jsModule") {
             mavenPublication {
@@ -416,17 +430,7 @@ publishing {
             variant("jsRuntimeElements")
             variant("jsSourcesElements")
         }
-        val frameworkModules = jvmTestFrameworks.map { framework ->
-            module("${framework.lowercase()}Module") {
-                mavenPublication {
-                    artifactId = "$artifactBaseName-${framework.lowercase()}"
-                    configureKotlinPomAttributes(project, "Kotlin Test Library for ${framework}")
-                }
-                variant("jvm${framework}ApiElements") { suppressPomMetadataWarnings() }
-                variant("jvm${framework}RuntimeElements") { suppressPomMetadataWarnings() }
-                variant("jvm${framework}SourcesElements") { suppressPomMetadataWarnings() }
-            }
-        }
+
         val wasmJs = module("wasmJsModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-wasm-js"
