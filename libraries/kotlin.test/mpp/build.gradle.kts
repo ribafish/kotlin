@@ -297,6 +297,10 @@ configurations {
         val frameworkCapability = "$group:kotlin-test-framework-${framework.lowercase()}:$version"
         metadataApiElements.outgoing.capability(frameworkCapability)
 
+        val runtimeDeps = create("jvm${framework}RuntimeDependencies") {
+            isCanBeResolved = true
+            isCanBeConsumed = false
+        }
         val (apiElements, runtimeElements, sourcesElements) = listOf(KotlinUsages.KOTLIN_API, KotlinUsages.KOTLIN_RUNTIME, KotlinUsages.KOTLIN_SOURCES).map { usage ->
             val name = "jvm$framework${usage.substringAfter("kotlin-").replaceFirstChar { it.uppercase() }}Elements"
             create(name) {
@@ -326,9 +330,10 @@ configurations {
                         }
                         KotlinUsages.KOTLIN_RUNTIME -> {
                             attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
-                            extendsFrom(getByName("jvm${framework}Api"))
-                            extendsFrom(getByName("jvm${framework}Implementation"))
-                            extendsFrom(getByName("jvm${framework}RuntimeOnly"))
+                            runtimeDeps.extendsFrom(getByName("jvm${framework}Api"))
+                            runtimeDeps.extendsFrom(getByName("jvm${framework}Implementation"))
+                            runtimeDeps.extendsFrom(getByName("jvm${framework}RuntimeOnly"))
+                            extendsFrom(runtimeDeps)
                         }
                         else -> error(usage)
                     }
@@ -337,12 +342,12 @@ configurations {
         }
         dependencies {
             apiElements(project)
-            runtimeElements(project)
+            runtimeDeps(project)
             when (framework) {
                 JvmTestFramework.JUnit -> {}
                 JvmTestFramework.JUnit5 -> {
                     apiElements("org.junit.jupiter:junit-jupiter-api:5.6.3")
-                    runtimeElements("org.junit.jupiter:junit-jupiter-engine:5.6.3")
+                    runtimeDeps("org.junit.jupiter:junit-jupiter-engine:5.6.3")
                 }
                 JvmTestFramework.TestNG -> {}
             }
@@ -357,16 +362,21 @@ configurations {
         println(name)
     }
 
-    for (name in listOf("kotlinTestCommonElements", "kotlinTestAnnotationCommonElements")) {
-        val legacyConfiguration = create(name) {
+    for (name in listOf("kotlinTestCommon", "kotlinTestAnnotationsCommon")) {
+        val legacyConfigurationDeps = create("${name}Dependencies") {
+            isCanBeResolved = true
+            isCanBeConsumed = false
+        }
+        val legacyConfiguration = create("${name}Elements") {
             isCanBeResolved = false
             isCanBeConsumed = false
             attributes {
                 attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
             }
+            extendsFrom(legacyConfigurationDeps)
         }
         dependencies {
-            legacyConfiguration(project)
+            legacyConfigurationDeps(project)
         }
     }
 }
@@ -464,7 +474,7 @@ publishing {
                 configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test Library. Use kotlin-test instead", packaging = "pom")
                 (this as PublicationInternal<*>).isAlias = true
             }
-            variant("kotlinTestAnnotationCommonElements")
+            variant("kotlinTestAnnotationsCommonElements")
         }
 
 
@@ -472,8 +482,20 @@ publishing {
         rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi)
     }
 
-//    publications {
-//    }
+    publications {
+        (listOf(
+            listOf("rootModule", "Main", "kotlin-test", "jvmRuntimeClasspath"),
+            listOf("jsModule", "Js", "kotlin-test-js", "jsRuntimeClasspath"),
+            listOf("wasmJsModule", "Wasm-Js", "kotlin-test-wasm-js", "wasmJsRuntimeClasspath"),
+            listOf("wasmWasiModule", "Wasm-Wasi", "kotlin-test-wasm-wasi", "wasmWasiRuntimeClasspath"),
+            listOf("testCommonModule", "Common", "kotlin-test-common", "kotlinTestCommonDependencies"),
+            listOf("testAnnotationsCommonModule", "AnnotationsCommon", "kotlin-test-annotations-common", "kotlinTestAnnotationsCommonDependencies"),
+        ) + jvmTestFrameworks.map { framework ->
+            listOf("${framework.lowercase()}Module", "$framework", "kotlin-test-${framework.lowercase()}", "jvm${framework}RuntimeDependencies")
+        }).forEach { (module, sbomTarget, sbomDocument, classpath) ->
+            configureSbom(sbomTarget, sbomDocument, setOf(classpath), named<MavenPublication>(module))
+        }
+    }
 }
 
 fun copyAttributes(from: AttributeContainer, to: AttributeContainer,) {
