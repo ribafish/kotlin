@@ -23,57 +23,13 @@
         "name": "jvmApiElements",
         "sourceSet": [
           "assertionsCommonMain",
-          "commonMain",
-          "annotationsCommonMain"
+          "commonMain"
         ]
       },
       {
         "name": "jvmRuntimeElements",
         "sourceSet": [
           "assertionsCommonMain",
-          "commonMain",
-          "annotationsCommonMain"
-        ]
-      },
-      {
-        "name": "jvmJUnitApiElements",
-        "sourceSet": [
-          "annotationsCommonMain",
-          "commonMain"
-        ]
-      },
-      {
-        "name": "jvmJUnitRuntimeElements",
-        "sourceSet": [
-          "annotationsCommonMain",
-          "commonMain"
-        ]
-      },
-      {
-        "name": "jvmJUnit5ApiElements",
-        "sourceSet": [
-          "annotationsCommonMain",
-          "commonMain"
-        ]
-      },
-      {
-        "name": "jvmJUnit5RuntimeElements",
-        "sourceSet": [
-          "annotationsCommonMain",
-          "commonMain"
-        ]
-      },
-      {
-        "name": "jvmTestNGApiElements",
-        "sourceSet": [
-          "annotationsCommonMain",
-          "commonMain"
-        ]
-      },
-      {
-        "name": "jvmTestNGRuntimeElements",
-        "sourceSet": [
-          "annotationsCommonMain",
           "commonMain"
         ]
       },
