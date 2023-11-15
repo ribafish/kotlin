@@ -213,9 +213,9 @@ tasks {
         }
     }
     val jvmJarTasks = jvmTestFrameworks.map { framework ->
-        register("jvm${framework}Jar", Jar::class) {
+        named("jvm${framework}Jar", Jar::class) {
+            archiveBaseName = base.archivesName
             archiveAppendix = framework.lowercase()
-            from(kotlin.jvm().compilations[framework.name].output.allOutputs)
             from(project.sourceSets["jvm${framework}Java9"].output)
             manifestAttributes(manifest, "Test", multiRelease = true)
         }
