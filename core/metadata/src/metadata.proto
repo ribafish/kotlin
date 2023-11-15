@@ -251,6 +251,8 @@ message Class {
   repeated Type multi_field_value_class_underlying_type = 23;
   repeated int32 multi_field_value_class_underlying_type_id = 24 [packed = true, (type_id_in_table) = true];
 
+  repeated Annotation annotation = 25;
+
   optional TypeTable type_table = 30;
 
   // Index into the VersionRequirementTable
@@ -297,6 +299,8 @@ message Constructor {
   // Index into the VersionRequirementTable
   repeated int32 version_requirement = 31;
 
+  repeated Annotation annotation = 3;
+
   extensions 100 to 18999;
 }
 
@@ -339,6 +343,8 @@ message Function {
   repeated int32 version_requirement = 31;
 
   optional Contract contract = 32;
+
+  repeated Annotation annotation = 12;
 
   extensions 100 to 18999;
 }
@@ -395,6 +401,10 @@ message Property {
   // Index into the VersionRequirementTable
   repeated int32 version_requirement = 31;
 
+  repeated Annotation annotation = 14;
+  repeated Annotation getter_annotation = 15;
+  repeated Annotation setter_annotation = 16;
+
   extensions 100 to 18999;
 }
 
@@ -414,6 +424,8 @@ message ValueParameter {
 
   optional Type vararg_element_type = 4;
   optional int32 vararg_element_type_id = 6 [(type_id_in_table) = true];
+
+  repeated Annotation annotation = 7;
 
   extensions 100 to 199;
 }

@@ -89,6 +89,10 @@ class JvmSerializerExtension @JvmOverloads constructor(
                 )
             )
         }
+
+        for (annotation in descriptor.nonSourceAnnotations) {
+            proto.addAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
+        }
     }
 
     // Interfaces which have @JvmDefault members somewhere in the hierarchy need the compiler 1.2.40+
@@ -131,6 +135,12 @@ class JvmSerializerExtension @JvmOverloads constructor(
         }
     }
 
+    override fun serializeValueParameter(descriptor: ValueParameterDescriptor, proto: ProtoBuf.ValueParameter.Builder) {
+        for (annotation in descriptor.nonSourceAnnotations) {
+            proto.addAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
+        }
+    }
+
     override fun serializeFlexibleType(
         flexibleType: FlexibleType,
         lowerProto: ProtoBuf.Type.Builder,
@@ -169,6 +179,10 @@ class JvmSerializerExtension @JvmOverloads constructor(
                 proto.setExtension(JvmProtoBuf.constructorSignature, signature)
             }
         }
+
+        for (annotation in descriptor.nonSourceAnnotations) {
+            proto.addAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
+        }
     }
 
     override fun serializeFunction(
@@ -201,6 +215,10 @@ class JvmSerializerExtension @JvmOverloads constructor(
             !DescriptorUtils.hasJvmNameAnnotation(descriptor) && !useOldManglingScheme
         ) {
             versionRequirementTable?.writeNewFunctionNameManglingRequirement(proto::addVersionRequirement)
+        }
+
+        for (annotation in descriptor.nonSourceAnnotations) {
+            proto.addAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
         }
     }
 
@@ -271,6 +289,18 @@ class JvmSerializerExtension @JvmOverloads constructor(
                 versionRequirementTable?.writeNewFunctionNameManglingRequirement(proto::addVersionRequirement)
             }
             versionRequirementTable?.writeFunctionNameManglingForReturnTypeRequirement(proto::addVersionRequirement)
+        }
+
+        for (annotation in getter?.nonSourceAnnotations.orEmpty()) {
+            proto.addGetterAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
+        }
+
+        for (annotation in setter?.nonSourceAnnotations.orEmpty()) {
+            proto.addSetterAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
+        }
+
+        for (annotation in descriptor.nonSourceAnnotations) {
+            proto.addAnnotation(annotationSerializer.serializeAnnotation(annotation)!!)
         }
     }
 
