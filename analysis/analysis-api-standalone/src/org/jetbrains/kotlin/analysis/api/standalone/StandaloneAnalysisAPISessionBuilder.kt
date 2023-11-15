@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.FirStandaloneServiceRegistrar
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtStaticProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.LLFirStandaloneLibrarySymbolProviderFactory
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProviderImpl
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.KtModuleProviderBuilder
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildProjectStructureProvider
-import org.jetbrains.kotlin.analysis.project.structure.impl.KtModuleProviderImpl
 import org.jetbrains.kotlin.analysis.project.structure.impl.KtSourceModuleImpl
 import org.jetbrains.kotlin.analysis.project.structure.impl.buildKtModuleProviderByCompilerConfiguration
 import org.jetbrains.kotlin.analysis.project.structure.impl.getPsiFilesFromPaths
@@ -111,7 +109,6 @@ public class StandaloneAnalysisAPISessionBuilder(
         extensionDescriptor.registerExtensionPoint(project)
     }
 
-    @OptIn(KtAnalysisApiInternals::class)
     private fun registerProjectServices(
         sourceKtFiles: List<KtFile>,
         packagePartProvider: (GlobalSearchScope) -> PackagePartProvider,
@@ -165,15 +162,10 @@ public class StandaloneAnalysisAPISessionBuilder(
     }
 
     private fun registerPsiDeclarationFromBinaryModuleProvider() {
-        val ktModuleProviderImpl = projectStructureProvider as KtModuleProviderImpl
         kotlinCoreProjectEnvironment.project.apply {
             registerService(
                 KotlinPsiDeclarationProviderFactory::class.java,
-                KotlinStaticPsiDeclarationProviderFactory(
-                    this,
-                    ktModuleProviderImpl.binaryModules,
-                    kotlinCoreProjectEnvironment.environment.jarFileSystem as CoreJarFileSystem
-                )
+                KotlinStaticPsiDeclarationProviderFactory::class.java
             )
         }
     }
