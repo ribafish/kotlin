@@ -60,7 +60,6 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
     private val expressionResolutionExtensions = session.extensionService.expressionResolutionExtensions.takeIf { it.isNotEmpty() }
     private val assignAltererExtensions = session.extensionService.assignAltererExtensions.takeIf { it.isNotEmpty() }
     private val callRefinementExtensions = session.extensionService.callRefinementExtensions.takeIf { it.isNotEmpty() }
-    private val callRefinementService = session.callRefinementService
 
     init {
         @Suppress("LeakingThis")
@@ -437,9 +436,9 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             if (callRefinementExtensions != null) {
                 val reference = result.calleeReference
                 if (reference is FirResolvedNamedReference) {
-                    val interceptor = callRefinementService.get(reference.resolvedSymbol)
-                    if (interceptor != null) {
-                        result = interceptor.transform(result)
+                    val callData = reference.resolvedSymbol.fir.originalCallData
+                    if (callData != null) {
+                        result = callData.extension.transform(result, callData.originalSymbol)
                     }
                     // validate result ?
                 }

@@ -15,9 +15,10 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildErrorProperty
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.extensions.callRefinementService
+import org.jetbrains.kotlin.fir.extensions.OriginalCallData
 import org.jetbrains.kotlin.fir.extensions.callRefinementExtensions
 import org.jetbrains.kotlin.fir.extensions.extensionService
+import org.jetbrains.kotlin.fir.extensions.originalCallData
 import org.jetbrains.kotlin.fir.resolve.isIntegerLiteralOrOperatorCall
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -36,7 +37,6 @@ class CandidateFactory private constructor(
 ) {
 
     private val callRefinementExtensions = context.session.extensionService.callRefinementExtensions.takeIf { it.isNotEmpty() }
-    private val callRefinementService = context.session.callRefinementService
 
     companion object {
         private fun buildBaseSystem(context: ResolutionContext, callInfo: CallInfo): ConstraintStorage {
@@ -69,11 +69,11 @@ class CandidateFactory private constructor(
         @Suppress("NAME_SHADOWING")
         val symbol: FirBasedSymbol<*> = if (callRefinementExtensions != null && callInfo.callKind == CallKind.Function) {
             if (callRefinementExtensions.size == 1) {
-                val interceptor = callRefinementExtensions[0]
-                val result = interceptor.intercept(callInfo, symbol)
+                val extension = callRefinementExtensions[0]
+                val result = extension.intercept(callInfo, symbol)
 
                 if (result != null) {
-                    callRefinementService.associate(result, interceptor)
+                    result.fir.originalCallData = OriginalCallData(symbol, extension)
                     result
                 } else {
                     symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
@@ -88,9 +88,9 @@ class CandidateFactory private constructor(
                         symbol.unwrapIntegerOperatorSymbolIfNeeded(callInfo)
                     }
                     1 -> {
-                        val (symbol, extension) = variants[0]
-                        callRefinementService.associate(symbol, extension)
-                        symbol
+                        val (result, extension) = variants[0]
+                        result.fir.originalCallData = OriginalCallData(symbol, extension)
+                        result
                     }
                     else -> {
                         pluginAmbiguity =

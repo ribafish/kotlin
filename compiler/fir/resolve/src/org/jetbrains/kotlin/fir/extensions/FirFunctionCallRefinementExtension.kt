@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.fir.extensions
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.FirSessionComponent
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataKey
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataRegistry
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.resolve.calls.CallInfo
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -28,23 +30,15 @@ abstract class FirFunctionCallRefinementExtension(session: FirSession) : FirExte
      */
     abstract fun intercept(callInfo: CallInfo, symbol: FirBasedSymbol<*>): FirBasedSymbol<*>?
 
-    abstract fun transform(call: FirFunctionCall): FirFunctionCall
+    abstract fun transform(call: FirFunctionCall, originalSymbol: FirBasedSymbol<*>): FirFunctionCall
 
     fun interface Factory : FirExtension.Factory<FirFunctionCallRefinementExtension>
 }
 
 val FirExtensionService.callRefinementExtensions: List<FirFunctionCallRefinementExtension> by FirExtensionService.registeredExtensions()
 
-class CallRefinementService : FirSessionComponent {
-    private val symbolToExtension: MutableMap<FirBasedSymbol<*>, FirFunctionCallRefinementExtension> = mutableMapOf()
+internal class OriginalCallData(val originalSymbol: FirBasedSymbol<*>, val extension: FirFunctionCallRefinementExtension)
 
-    fun associate(symbol: FirBasedSymbol<*>, interceptor: FirFunctionCallRefinementExtension) {
-        symbolToExtension[symbol] = interceptor
-    }
+internal object OriginalCallDataKey : FirDeclarationDataKey()
 
-    fun get(symbol: FirBasedSymbol<*>): FirFunctionCallRefinementExtension? {
-        return symbolToExtension[symbol]
-    }
-}
-
-internal val FirSession.callRefinementService: CallRefinementService by FirSession.sessionComponentAccessor()
+internal var FirDeclaration.originalCallData: OriginalCallData? by FirDeclarationDataRegistry.data(OriginalCallDataKey)

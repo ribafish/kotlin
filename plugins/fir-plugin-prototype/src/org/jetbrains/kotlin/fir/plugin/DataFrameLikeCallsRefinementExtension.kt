@@ -121,7 +121,7 @@ class DataFrameLikeCallsRefinementExtension(session: FirSession) : FirFunctionCa
     }
 
     @OptIn(SymbolInternals::class)
-    override fun transform(call: FirFunctionCall): FirFunctionCall {
+    override fun transform(call: FirFunctionCall, originalSymbol: FirBasedSymbol<*>): FirFunctionCall {
         val resolvedLet = findLet()
         val parameter = resolvedLet.valueParameterSymbols[0]
 
