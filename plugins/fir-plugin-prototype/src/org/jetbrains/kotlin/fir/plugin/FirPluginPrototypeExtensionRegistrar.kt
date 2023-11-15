@@ -36,6 +36,7 @@ class FirPluginPrototypeExtensionRegistrar : FirExtensionRegistrar() {
         +::AdditionalMembersGenerator
         +::CompanionGenerator
         +::MembersOfSerializerGenerator
+        +::DataFrameLikeTypeMembersGenerator
 
         +::AllPropertiesConstructorMetadataProvider
     }
