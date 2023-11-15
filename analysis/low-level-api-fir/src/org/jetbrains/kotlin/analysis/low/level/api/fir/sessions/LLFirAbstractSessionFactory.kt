@@ -571,8 +571,15 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
         fun getOrCreateSessionForDependency(dependency: KtModule): LLFirSession? = when (dependency) {
             is KtBuiltinsModule -> null // Built-ins are already added
+
             is KtBinaryModule -> llFirSessionCache.getSession(dependency, preferBinary = true)
-            is KtSourceModule, is KtDanglingFileModule -> llFirSessionCache.getSession(dependency)
+
+            is KtSourceModule -> llFirSessionCache.getSession(dependency)
+
+            is KtDanglingFileModule -> {
+                require(dependency.isStable) { "Unstable dangling modules cannot be used as a dependency" }
+                llFirSessionCache.getSession(dependency)
+            }
 
             is KtScriptModule,
             is KtScriptDependencyModule,

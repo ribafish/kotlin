@@ -36,6 +36,7 @@ class LLFirSessionCache(private val project: Project) {
     private val sourceCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
     private val binaryCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
     private val danglingFileSessionCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
+    private val unstableDanglingFileSessionCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
 
     /**
      * Returns the existing session if found, or creates a new session and caches it.
@@ -49,7 +50,7 @@ class LLFirSessionCache(private val project: Project) {
         }
 
         val targetCache = when (module) {
-            is KtDanglingFileModule -> danglingFileSessionCache
+            is KtDanglingFileModule -> if (module.isStable) danglingFileSessionCache else unstableDanglingFileSessionCache
             else -> sourceCache
         }
 
@@ -87,8 +88,9 @@ class LLFirSessionCache(private val project: Project) {
         val didSourceSessionExist = removeSessionFrom(module, sourceCache)
         val didBinarySessionExist = module is KtBinaryModule && removeSessionFrom(module, binaryCache)
         val didDanglingFileSessionExist = module is KtDanglingFileModule && removeSessionFrom(module, danglingFileSessionCache)
+        val didUnstableDanglingFileSessionExist = module is KtDanglingFileModule && removeSessionFrom(module, unstableDanglingFileSessionCache)
 
-        return didSourceSessionExist || didBinarySessionExist || didDanglingFileSessionExist
+        return didSourceSessionExist || didBinarySessionExist || didDanglingFileSessionExist || didUnstableDanglingFileSessionExist
     }
 
     private fun removeSessionFrom(module: KtModule, storage: SessionStorage): Boolean {
@@ -117,7 +119,13 @@ class LLFirSessionCache(private val project: Project) {
         removeAllDanglingFileSessions()
     }
 
+    fun removeUnstableDanglingFileSessions() {
+        removeAllSessionsFrom(unstableDanglingFileSessionCache)
+    }
+
     fun removeContextualDanglingFileSessions(contextModule: KtModule) {
+        removeUnstableDanglingFileSessions()
+
         if (contextModule is KtDanglingFileModule) {
             removeAllMatchingSessionsFrom(danglingFileSessionCache) { it is KtDanglingFileModule && hasContextModule(it, contextModule) }
         } else {
@@ -136,6 +144,7 @@ class LLFirSessionCache(private val project: Project) {
 
     fun removeAllDanglingFileSessions() {
         removeAllSessionsFrom(danglingFileSessionCache)
+        removeAllSessionsFrom(unstableDanglingFileSessionCache)
     }
 
     // Removing script sessions is only needed temporarily until KTIJ-25620 has been implemented.
