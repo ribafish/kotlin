@@ -422,14 +422,22 @@ internal class AdapterGenerator(
     private fun castArgumentToFunctionalInterfaceForSamType(
         argument: IrExpression,
         argumentConeType: ConeKotlinType,
-        samFunctionType: ConeKotlinType
+        samFunctionType: ConeKotlinType,
     ): IrExpression {
-        val coneKotlinFunctionType = samFunctionType
+        val approximatedConeKotlinFunctionType = samFunctionType.approximateForIrOrSelf()
         // This line is not present in the K1 counterpart because there is InsertImplicitCasts::cast that effectively removes
         // such unnecessary casts. At the same time, many IR lowerings assume that there are no such redundant casts and many
         // tests from FirBlackBoxCodegenTestGenerated relevant to INDY start failing once this line is removed.
-        if (argumentConeType.isSubtypeOf(coneKotlinFunctionType, session)) return argument
-        val irFunctionType = coneKotlinFunctionType.toIrType()
+        val approximateArgumentConeType = argumentConeType.approximateForIrOrSelf()
+
+        if (approximateArgumentConeType.isSubtypeOf(approximatedConeKotlinFunctionType, session)
+        // TODO uncomment when KT-63510 is fixed, probably fixes KT-62865
+        // && approximateArgumentConeType.lowerBoundIfFlexible().functionTypeKind(session)?.isReflectType == false
+        ) {
+            return argument
+        }
+
+        val irFunctionType = approximatedConeKotlinFunctionType.toIrType()
         return argument.implicitCastTo(irFunctionType)
     }
 
