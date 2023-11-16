@@ -210,15 +210,19 @@ public fun Path.copyToRecursively(
 
     visitFileTree(followLinks = followLinks) {
         onPreVisitDirectory { directory, attributes ->
-            directory.checkFileName()
             if (stack.isNotEmpty()) {
+                // Check only for directories inside a directory
+                directory.checkFileName()
                 directory.checkNotSameAs(stack.last())
             }
             copy(directory, attributes).also {
                 if (it == FileVisitResult.CONTINUE) stack.add(directory)
             }
         }
-        onVisitFile(::copy)
+        onVisitFile { file, attributes ->
+            file.checkFileName()
+            copy(file, attributes)
+        }
         onVisitFileFailed(::error)
         onPostVisitDirectory { directory, exception ->
             stack.removeLast()
@@ -347,7 +351,7 @@ private fun Path.deleteRecursivelyImpl(): List<Exception> {
     }
 
     if (useInsecure) {
-        insecureHandleEntry(this, collector)
+        insecureHandleEntry(this, null, collector)
     }
 
     return collector.collectedExceptions
@@ -409,8 +413,13 @@ private fun SecureDirectoryStream<Path>.isDirectory(entryName: Path, vararg opti
 
 // insecure walk
 
-private fun insecureHandleEntry(entry: Path, collector: ExceptionsCollector) {
+private fun insecureHandleEntry(entry: Path, parent: Path?, collector: ExceptionsCollector) {
     collectIfThrows(collector) {
+        if (parent != null) {
+            // Check only for entries inside a directory
+            entry.checkFileName()
+            entry.checkNotSameAs(parent)
+        }
         if (entry.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
             val preEnterTotalExceptions = collector.totalExceptions
 
@@ -433,9 +442,7 @@ private fun insecureEnterDirectory(path: Path, collector: ExceptionsCollector) {
             Files.newDirectoryStream(path)
         }?.use { directoryStream ->
             for (entry in directoryStream) {
-                entry.checkFileName() // test when traversal is started with a directory with an illegal name
-                entry.checkNotSameAs(path)
-                insecureHandleEntry(entry, collector)
+                insecureHandleEntry(entry, path, collector)
             }
         }
     }

@@ -9,6 +9,8 @@ import java.lang.NullPointerException
 import java.nio.file.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
+import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.*
 import kotlin.jdk7.test.PathTreeWalkTest.Companion.createTestFiles
@@ -1025,8 +1027,46 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
         }
     }
 
-    private fun withZip(parent: Path, name: String, entries: List<String>, block: (Path) -> Unit) {
+    private fun listZipContent(archivePath: Path) {
+        println("### $archivePath content:")
+        ZipInputStream(archivePath.inputStream()).use { zipIS ->
+            while (true) {
+                val entry = zipIS.nextEntry ?: break
+                println("'${entry}', isDirectory: ${entry.isDirectory}")
+                ZipFile(archivePath.toFile()).getInputStream(entry).bufferedReader().readText().also {
+                    println("    $it")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun slashFile() {
+        val root = createTempDirectory().cleanupRecursively()
+        val zipRoot = root.resolve("Archive1.zip")
+        ZipOutputStream(zipRoot.outputStream()).use { out ->
+            out.putNextEntry(ZipEntry("/"))
+            out.write("/".toByteArray())
+            out.closeEntry()
+
+            out.putNextEntry(ZipEntry("dir/"))
+            out.closeEntry()
+
+            out.putNextEntry(ZipEntry("dir//"))
+            out.write("dir//".toByteArray())
+            out.closeEntry()
+
+            out.putNextEntry(ZipEntry("file/"))
+            out.write("file/".toByteArray())
+            out.closeEntry()
+        }
+        listZipContent(zipRoot)
+    }
+
+    private fun withZip(name: String, entries: List<String>, block: (parent: Path, zipRoot: Path) -> Unit) {
+        val parent = createTempDirectory().cleanupRecursively()
         val archive = createZipFile(parent, name, entries)
+        listZipContent(archive)
         val zipFs: FileSystem
         try {
             val classLoader: ClassLoader? = null
@@ -1039,13 +1079,16 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
         }
         zipFs.use {
             val zipRoot = it.getPath("/")
-            block(zipRoot)
+            block(parent, zipRoot)
         }
     }
 
     private fun testWalkFailsWithIllegalFileName(path: Path, expectedErrorFile: String) {
         assertFailsWith<IllegalFileNameException> {
-            path.walkIncludeDirectories().toList()
+            println("### walk IllegalFileName")
+            path.walkIncludeDirectories().forEach {
+                println("    $it")
+            }
         }.also { exception ->
             assertEquals(expectedErrorFile, exception.file)
         }
@@ -1097,47 +1140,78 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
 
     @Test
     fun zipDotFileName() {
-        val root = createTempDirectory().cleanupRecursively()
-
-        withZip(root, "Archive1.zip", listOf("normal", ".")) { zipRoot ->
+        withZip("Archive1.zip", listOf("normal", ".")) { root, zipRoot ->
+            val dot = zipRoot.resolve(".")
+            val dotDir = zipRoot.resolve("./")
             testWalkFailsWithIllegalFileName(zipRoot, "/.")
+            testWalkFailsWithIllegalFileName(dot, "/.")
+            testVisitedFiles(listOf("/./"), dotDir.walkIncludeDirectories(), root)
 
             val target = root.resolve("UnzipArchive1")
             testCopyFailsWithIllegalFileName(zipRoot, target, "/.")
+            val dotTarget = root.resolve("UnzipArchive1-dot")
+            testCopyFailsWithIllegalFileName(dot, dotTarget, "/.")
+            val dotDirTarget = root.resolve("UnzipArchive1-dotDir")
+            testCopyFailsWithIllegalFileName(dotDir, dotDirTarget, "/./")
 
             testDeleteFailsWithIllegalFileName(zipRoot, "/.")
+            testDeleteFailsWithIllegalFileName(dot, "/.")
+
+            assertTrue(dotDir.exists())
+            dotDir.deleteRecursively()
+            assertFalse(dotDir.exists())
+            assertTrue(dot.exists())
+            assertTrue(zipRoot.exists())
         }
 
-        withZip(root, "Archive2.zip", listOf("normal", "./")) { zipRoot ->
+        withZip("Archive2.zip", listOf("normal", "./")) { root, zipRoot ->
+            val dot = zipRoot.resolve(".")
+            val dotDir = zipRoot.resolve("./")
             testWalkFailsWithIllegalFileName(zipRoot, "/./")
+            testWalkFailsWithIllegalFileName(dot, "/./")
+            testVisitedFiles(listOf("/./"), dotDir.walkIncludeDirectories(), root)
 
             val target = root.resolve("UnzipArchive2")
             testCopyFailsWithIllegalFileName(zipRoot, target, "/./")
+            val dotTarget = root.resolve("UnzipArchive2-dot")
+            testCopyFailsWithIllegalFileName(dot, dotTarget, "/./")
+            val dotDirTarget = root.resolve("UnzipArchive2-dotDir")
+            dotDir.copyToRecursively(dotDirTarget, followLinks = false)
+            testVisitedFiles(listOf(""), dotDirTarget.walkIncludeDirectories(), dotDirTarget)
 
             testDeleteFailsWithIllegalFileName(zipRoot, "/./")
+            testDeleteFailsWithIllegalFileName(dot, "/./")
+
+            assertTrue(dotDir.exists())
+            dotDir.deleteRecursively()
+            assertFalse(dotDir.exists())
+            assertTrue(dot.exists())
+            assertTrue(zipRoot.exists())
         }
 
-        withZip(root, "Archive3.zip", listOf("a/", "a/.")) { zipRoot ->
+        withZip("Archive3.zip", listOf("a/", "a/.")) { root, zipRoot ->
             val a = zipRoot.resolve("a")
             testWalkFailsWithIllegalFileName(zipRoot, "/a/.")
             testWalkFailsWithIllegalFileName(a, "/a/.")
 
             val target = root.resolve("UnzipArchive3")
             testCopyFailsWithIllegalFileName(zipRoot, target, "/a/.")
-            testCopyFailsWithIllegalFileName(a, target, "/a/.")
+            val aTarget = root.resolve("UnzipArchive3-a")
+            testCopyFailsWithIllegalFileName(a, aTarget, "/a/.")
 
             testDeleteFailsWithIllegalFileName(zipRoot, "/a/.")
             testDeleteFailsWithIllegalFileName(a, "/a/.")
         }
 
-        withZip(root, "Archive4.zip", listOf("a/", "a/./")) { zipRoot ->
+        withZip("Archive4.zip", listOf("a/", "a/./")) { root, zipRoot ->
             val a = zipRoot.resolve("a")
             testWalkFailsWithIllegalFileName(zipRoot, "/a/./")
             testWalkFailsWithIllegalFileName(a, "/a/./")
 
             val target = root.resolve("UnzipArchive4")
             testCopyFailsWithIllegalFileName(zipRoot, target, "/a/./")
-            testCopyFailsWithIllegalFileName(a, target, "/a/./")
+            val aTarget = root.resolve("UnzipArchive4-a")
+            testCopyFailsWithIllegalFileName(a, aTarget, "/a/./")
 
             testDeleteFailsWithIllegalFileName(zipRoot, "/a/./")
             testDeleteFailsWithIllegalFileName(a, "/a/./")
@@ -1146,9 +1220,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
 
     @Test
     fun zipSlashFileName() {
-        val root = createTempDirectory().cleanupRecursively()
-
-        withZip(root, "Archive1.zip", listOf("normal", "/")) { zipRoot ->
+        withZip("Archive1.zip", listOf("normal", "/")) { root, zipRoot ->
             testWalkFailsWithLoop(zipRoot, "/")
 
             val target = root.resolve("UnzipArchive1")
@@ -1157,7 +1229,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithLoop(zipRoot, "/")
         }
 
-        withZip(root, "Archive2.zip", listOf("normal", "//")) { zipRoot ->
+        withZip("Archive2.zip", listOf("normal", "//")) { root, zipRoot ->
             testWalkFailsWithLoop(zipRoot, "/")
 
             val target = root.resolve("UnzipArchive2")
@@ -1166,28 +1238,31 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithLoop(zipRoot, "/")
         }
 
-        withZip(root, "Archive3.zip", listOf("a/", "a//")) { zipRoot ->
+        withZip("Archive3.zip", listOf("a/", "a//")) { root, zipRoot ->
             val a = zipRoot.resolve("a")
+            val aDir = zipRoot.resolve("a/")
             testWalkFailsWithLoop(zipRoot, "/a")
             testWalkFailsWithLoop(a, "/a")
+            testWalkFailsWithLoop(aDir, "/a")
 
             val zipRootTarget = root.resolve("UnzipArchive3")
             testCopyFailsWithLoop(zipRoot, zipRootTarget, "/a")
-            val aTarget = root.resolve("UnzipArchive4")
+            val aTarget = root.resolve("UnzipArchive3-a")
             testCopyFailsWithLoop(a, aTarget, "/a")
+            val aDirTarget = root.resolve("UnzipArchive3-aDir")
+            testCopyFailsWithLoop(aDir, aDirTarget, "/a")
 
             testDeleteFailsWithLoop(zipRoot, "/a")
             testDeleteFailsWithLoop(a, "/a")
+            testDeleteFailsWithLoop(aDir, "/a")
         }
     }
 
     // KT-63103
     @Test
     fun zipSneakyFileName() {
-        val root = createTempDirectory().cleanupRecursively()
-        root.resolve("sneaky").createFile().also { it.writeText("outer sneaky") }
-
-        withZip(root, "Archive1.zip", listOf("normal", "../sneaky")) { zipRoot ->
+        withZip("Archive1.zip", listOf("normal", "../sneaky")) { root, zipRoot ->
+            root.resolve("sneaky").createFile().also { it.writeText("outer sneaky") }
             testWalkFailsWithIllegalFileName(zipRoot, "/../")
 
             val target = root.resolve("UnzipArchive1")
@@ -1195,7 +1270,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
 
             testDeleteFailsWithIllegalFileName(zipRoot, "/../")
         }
-        withZip(root, "Archive2.zip", listOf("normal", "../normal")) { zipRoot ->
+        withZip("Archive2.zip", listOf("normal", "../normal")) { root, zipRoot ->
             testWalkFailsWithIllegalFileName(zipRoot, "/../")
 
             val target = root.resolve("UnzipArchive2")
@@ -1204,7 +1279,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithIllegalFileName(zipRoot, "/../")
         }
 
-        withZip(root, "Archive3.zip", listOf("normal", "../")) { zipRoot ->
+        withZip("Archive3.zip", listOf("normal", "../")) { root, zipRoot ->
             testWalkFailsWithIllegalFileName(zipRoot, "/../")
 
             val target = root.resolve("UnzipArchive3")
@@ -1213,7 +1288,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithIllegalFileName(zipRoot, "/../")
         }
 
-        withZip(root, "Archive4.zip", listOf("normal", "..")) { zipRoot ->
+        withZip("Archive4.zip", listOf("normal", "..")) { root, zipRoot ->
             testWalkFailsWithIllegalFileName(zipRoot, "/..")
 
             val target = root.resolve("UnzipArchive4")
@@ -1222,7 +1297,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithIllegalFileName(zipRoot, "/..")
         }
 
-        withZip(root, "Archive5.zip", listOf("normal", "../..")) { zipRoot ->
+        withZip("Archive5.zip", listOf("normal", "../..")) { root, zipRoot ->
             testWalkFailsWithIllegalFileName(zipRoot, "/../")
 
             val target = root.resolve("UnzipArchive5")
@@ -1231,7 +1306,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithIllegalFileName(zipRoot, "/../")
         }
 
-        withZip(root, "Archive6.zip", listOf("normal", "../")) { zipRoot ->
+        withZip("Archive6.zip", listOf("normal", "../")) { root, zipRoot ->
             val targetParent = root.resolve("UnzipArchive6Parent").createDirectory()
             val targetSibling = targetParent.resolve("UnzipArchive6Sibling").createFile()
             val target = targetParent.resolve("UnzipArchive6").createDirectory()
@@ -1251,7 +1326,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             assertTrue(targetSibling.exists())
         }
 
-        withZip(root, "Archive7.zip", listOf("normal", "..a..b..")) { zipRoot ->
+        withZip("Archive7.zip", listOf("normal", "..a..b..")) { root, zipRoot ->
             testVisitedFiles(listOf("", "normal", "..a..b.."), zipRoot.walkIncludeDirectories(), zipRoot)
 
             val target = root.resolve("UnzipArchive7")
@@ -1267,7 +1342,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testVisitedFiles(listOf(""), zipRoot.walkIncludeDirectories(), zipRoot)
         }
 
-        withZip(root, "Archive8.zip", listOf("b", "a/", "a/../b")) { zipRoot ->
+        withZip("Archive8.zip", listOf("b", "a/", "a/../b")) { root, zipRoot ->
             val a = zipRoot.resolve("a")
             testWalkFailsWithIllegalFileName(a, "/a/../")
 
@@ -1277,7 +1352,7 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             testDeleteFailsWithIllegalFileName(a, "/a/../")
         }
 
-        withZip(root, "Archive9.zip", listOf("b/", "b/d", "a/", "a/../b/c")) { zipRoot ->
+        withZip("Archive9.zip", listOf("b/", "b/d", "a/", "a/../b/c")) { root, zipRoot ->
             val b = zipRoot.resolve("a/../b")
             // Traverses the "b" directory outside "a"
             testVisitedFiles(listOf("/a/../b", "/b/d"), b.walkIncludeDirectories(), root)
@@ -1291,14 +1366,107 @@ class PathRecursiveFunctionsTest : AbstractPathTest() {
             // The deleted "/a/../b" path actually deleted the "b" outside "a"
             assertNull(zipRoot.listDirectoryEntries().find { it.name == "b" })
         }
+    }
 
-        val expectedRootContent = listOf(
-            "sneaky",
-            "Archive1.zip", "Archive2.zip", "Archive3.zip", "Archive4.zip", "Archive5.zip",
-            "Archive6.zip", "Archive7.zip", "Archive8.zip", "Archive9.zip",
-            "UnzipArchive1", "UnzipArchive2", "UnzipArchive3", "UnzipArchive4", "UnzipArchive5",
-            "UnzipArchive6Parent", "UnzipArchive7", "UnzipArchive8", "UnzipArchive9",
-        )
-        testVisitedFiles(expectedRootContent, root.listDirectoryEntries().asSequence(), root)
+    @Test
+    // TODO: Should recursive functions normalize the Path at the beginning ?
+    fun legalDirectorySymbols() {
+        createTestFiles().cleanupRecursively().let { root ->
+            val path = root.resolve("1/3/.")
+            println("### $path")
+            println("    normalized: ${path.normalize()}")
+
+            testVisitedFiles(listOf("", "4.txt", "5.txt"), path.walkIncludeDirectories(), path)
+
+            val target = root.resolve("target")
+            path.copyToRecursively(target, followLinks = false)
+            testVisitedFiles(listOf("", "4.txt", "5.txt"), target.walkIncludeDirectories(), target)
+
+            assertFailsWith<FileSystemException> {
+                path.deleteRecursively()
+            }.also { exception ->
+                // Path.deleteIfExists() threw FileSystemException with message "Invalid argument"
+                val suppressed = exception.suppressed.single()
+                assertIs<FileSystemException>(suppressed)
+                assertEquals(path.toString(), suppressed.file)
+                assertIsNot<IllegalFileNameException>(suppressed)
+                assertIsNot<FileSystemLoopException>(suppressed)
+            }
+        }
+
+        createTestFiles().cleanupRecursively().let { root ->
+            val path = root.resolve("1/3/4.txt/.")
+            println("### $path")
+            println("    normalized: ${path.normalize()}")
+
+            testVisitedFiles(listOf(), path.walkIncludeDirectories(), path)
+
+            assertFailsWith<NoSuchFileException> {
+                val target = root.resolve("target")
+                path.copyToRecursively(target, followLinks = false)
+            }.also { exception ->
+                assertEquals(path.toString(), exception.file)
+            }
+
+            assertFailsWith<FileSystemException> {
+                path.deleteRecursively()
+            }.also { exception ->
+                // Path.deleteIfExists() threw FileSystemException with message "Invalid argument"
+                val suppressed = exception.suppressed.single()
+                assertIs<FileSystemException>(suppressed)
+                assertEquals(path.toString(), suppressed.file)
+                assertIsNot<IllegalFileNameException>(suppressed)
+                assertIsNot<FileSystemLoopException>(suppressed)
+            }
+        }
+
+        createTestFiles().cleanupRecursively().let { root ->
+            val path = root.resolve("1/3/..")
+            println("### $path")
+            println("    normalized: ${path.normalize()}")
+
+            testVisitedFiles(listOf("", "2", "3", "3/4.txt", "3/5.txt"), path.walkIncludeDirectories(), path)
+
+            val target = root.resolve("target")
+            path.copyToRecursively(target, followLinks = false)
+            testVisitedFiles(listOf("", "2", "3", "3/4.txt", "3/5.txt"), target.walkIncludeDirectories(), target)
+
+            assertFailsWith<FileSystemException> {
+                path.deleteRecursively()
+            }.also { exception ->
+                // Path.isSameFileAs() threw NoSuchFileException
+                val suppressed = exception.suppressed.single()
+                assertIs<FileSystemException>(suppressed)
+                assertEquals(path.resolve("2").toString(), suppressed.file)
+                assertIsNot<IllegalFileNameException>(suppressed)
+                assertIsNot<FileSystemLoopException>(suppressed)
+            }
+        }
+
+        createTestFiles().cleanupRecursively().let { root ->
+            val path = root.resolve("1/3/4.txt/..")
+            println("### $path")
+            println("    normalized: ${path.normalize()}")
+
+            testVisitedFiles(listOf(), path.walkIncludeDirectories(), path)
+
+            assertFailsWith<NoSuchFileException> {
+                val target = root.resolve("target")
+                path.copyToRecursively(target, followLinks = false)
+            }.also { exception ->
+                assertEquals(path.toString(), exception.file)
+            }
+
+            assertFailsWith<FileSystemException> {
+                path.deleteRecursively()
+            }.also { exception ->
+                // Path.deleteIfExists() threw FileSystemException with message "Invalid argument"
+                val suppressed = exception.suppressed.single()
+                assertIs<FileSystemException>(suppressed)
+                assertEquals(path.toString(), suppressed.file)
+                assertIsNot<IllegalFileNameException>(suppressed)
+                assertIsNot<FileSystemLoopException>(suppressed)
+            }
+        }
     }
 }
