@@ -5,6 +5,8 @@ plugins {
     id("jps-compatible")
 }
 
+val junit5Classpath by configurations.creating
+
 dependencies {
     embedded(project(":kotlin-power-assert-compiler-plugin.backend")) { isTransitive = false }
     embedded(project(":kotlin-power-assert-compiler-plugin.cli")) { isTransitive = false }
@@ -20,6 +22,9 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.vintage.engine)
 
+    testImplementation(project(":kotlin-power-assert-compiler-plugin.backend"))
+    testImplementation(project(":kotlin-power-assert-compiler-plugin.cli"))
+
     testApi(projectTests(":compiler:tests-common-new"))
     testApi(projectTests(":compiler:test-infrastructure"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
@@ -30,6 +35,7 @@ dependencies {
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 
+    junit5Classpath(libs.junit.jupiter.api)
 
     testApi(intellijCore())
 }
@@ -55,4 +61,10 @@ projectTest(parallel = true) {
     dependsOn(":dist")
     workingDir = rootDir
     useJUnitPlatform()
+
+    val localJunit5Classpath: FileCollection = junit5Classpath
+
+    doFirst {
+        systemProperty("junit5.classpath", localJunit5Classpath.asPath)
+    }
 }
