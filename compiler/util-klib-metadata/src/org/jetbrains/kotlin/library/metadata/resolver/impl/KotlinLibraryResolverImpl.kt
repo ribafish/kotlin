@@ -108,7 +108,7 @@ class KotlinLibraryResolverImpl<L: KotlinLibrary> internal constructor(
         val result = KotlinLibraryResolverResultImpl(rootLibraries)
 
         val cache = mutableMapOf<Any, KotlinResolvedLibrary>()
-        cache.putAll(rootLibraries.map { it.library.libraryFile.fileKey to it })
+        cache.putAll(rootLibraries.map { it.library.libraryFile.attributes.fileKey to it })
 
         var newDependencies = rootLibraries
         do {
@@ -118,7 +118,7 @@ class KotlinLibraryResolverImpl<L: KotlinLibrary> internal constructor(
                         .filterNot { searchPathResolver.isProvidedByDefault(it) }
                         .mapNotNull { searchPathResolver.resolve(it)?.let(::KotlinResolvedLibraryImpl) }
                         .map { resolved ->
-                            val fileKey = resolved.library.libraryFile.fileKey
+                            val fileKey = resolved.library.libraryFile.attributes.fileKey
                             if (fileKey in cache) {
                                 library.addDependency(cache[fileKey]!!)
                                 null

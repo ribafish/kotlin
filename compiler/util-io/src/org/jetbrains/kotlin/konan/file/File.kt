@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.konan.file
 
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.RandomAccessFile
@@ -21,6 +22,23 @@ data class File constructor(internal val javaPath: Path) {
     constructor(parent: File, child: File): this(parent.javaPath.resolve(child.javaPath))
     constructor(path: String): this(Paths.get(path))
     constructor(parent: String, child: String): this(Paths.get(parent, child))
+
+    /**
+     * File attributes that can be read from the FS as a bulk operation.
+     *
+     * IMPORTANT: If the path of the current [File] object points to a symbolic link,
+     * then attributes are read for the link's target but not for the symbolic link itself.
+     */
+    interface Attributes {
+        /** If the object denoted by the file is a regular file. */
+        val isRegularFile: Boolean
+
+        /** If the object denoted by the file is a directory. */
+        val isDirectory: Boolean
+
+        /** Returns an object that uniquely identifies the file. This object can be used for various caches, for example. */
+        val fileKey: Any
+    }
 
     val path: String
         get() = javaPath.toString()
@@ -45,30 +63,45 @@ data class File constructor(internal val javaPath: Path) {
     val parentFile: File
         get() = File(javaPath.parent)
 
+    /** Read file attributes as a bulk operation. */
+    val attributes: Attributes
+        get() = object : Attributes {
+            private val wrapped: BasicFileAttributes? by lazy {
+                try {
+                    Files.readAttributes(javaPath, BasicFileAttributes::class.java)
+                } catch (_: IOException) {
+                    // Files.readAttributes() throws IOException is an object denoted by the path does not exist.
+                    null
+                }
+            }
+
+            override val isRegularFile get() = wrapped?.isRegularFile == true
+            override val isDirectory get() = wrapped?.isDirectory == true
+            override val fileKey: Any
+                get() {
+                    // It is not guaranteed that all filesystems have fileKey. If not we fall
+                    // back on canonicalPath which can be significantly slower to get.
+                    return wrapped?.fileKey() ?: this@File.canonicalPath
+                }
+        }
+
+    /** Hint: Consider using `attributes.isDirectory` to minimize the amount of IO operations. */
+    inline val isDirectory get() = attributes.isDirectory
+
+    /** Hint: Consider using `attributes.isRegularFile` to minimize the amount of IO operations. */
+    inline val isFile get() = attributes.isRegularFile
+
+    @Deprecated("Use File.attributes.fileKey instead", ReplaceWith("attributes.fileKey"), DeprecationLevel.ERROR)
+    val fileKey: Any get() = attributes.fileKey
+
     val exists
         get() = Files.exists(javaPath)
-    val isDirectory
-        get() = Files.isDirectory(javaPath)
-    val isFile
-        get() = Files.isRegularFile(javaPath)
     val isAbsolute
         get() = javaPath.isAbsolute
     val listFiles: List<File>
         get() = Files.newDirectoryStream(javaPath).use { stream -> stream.map(::File) }
     val listFilesOrEmpty: List<File>
         get() = if (exists) listFiles else emptyList()
-
-	// A fileKey is an object that uniquely identifies the given file.
-	val fileKey: Any
-	    get() {
-            // It is not guaranteed that all filesystems have fileKey. If not we fall
-            // back on canonicalPath which can be significantly slower to get.
-            var key = Files.readAttributes(javaPath, BasicFileAttributes::class.java).fileKey()
-            if (key == null) {
-                key = this.canonicalPath
-            }
-            return key
-        }
 
     fun child(name: String) = File(this, name)
     fun startsWith(another: File) = javaPath.startsWith(another.javaPath)
