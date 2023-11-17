@@ -530,8 +530,8 @@ val interopSrcDirs = listOf(
         project(":kotlin-native:Interop:JsRuntime").file("src/main/kotlin")
 )
 
-val testAnnotationCommonSrcDir = project(":kotlin-test:kotlin-test-annotations-common").files("src/main/kotlin").files
-val testCommonSrcDir = project(":kotlin-test:kotlin-test-common").files("src/main/kotlin").files
+val testAnnotationCommonSrcDir = project(":kotlin-test").files("../annotations-common/src/main/kotlin").files
+val testCommonSrcDir = project(":kotlin-test").files("../common/src/main/kotlin").files
 
 val stdLibSrcDirs =  interopSrcDirs + listOf(
         project.file("src/main/kotlin"),
