@@ -50,9 +50,11 @@ interface SearchPathResolver<L : KotlinLibrary> : WithLogger {
         }
 
         companion object {
-            fun lookUpByAbsolutePath(absoluteLibraryPath: File): File? =
-                when {
-                    absoluteLibraryPath.isFile -> {
+            fun lookUpByAbsolutePath(absoluteLibraryPath: File): File? {
+                val attributes = absoluteLibraryPath.attributes
+
+                return when {
+                    attributes.isRegularFile -> {
                         // It's a really existing file.
                         when (absoluteLibraryPath.extension.toLowerCase()) {
                             KLIB_FILE_EXTENSION -> absoluteLibraryPath
@@ -66,12 +68,13 @@ interface SearchPathResolver<L : KotlinLibrary> : WithLogger {
                             }
                         }
                     }
-                    absoluteLibraryPath.isDirectory -> {
+                    attributes.isDirectory -> {
                         // It's a really existing directory.
                         absoluteLibraryPath
                     }
                     else -> null
                 }
+            }
         }
     }
 

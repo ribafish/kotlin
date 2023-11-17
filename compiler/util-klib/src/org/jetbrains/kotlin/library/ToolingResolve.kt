@@ -62,14 +62,17 @@ object ToolingSingleFileKlibResolveStrategy : SingleFileKlibResolveStrategy {
     private fun <T : Any> withSafeAccess(libraryFile: File, action: (localRoot: File) -> T?): T? {
         val extension = libraryFile.extension
 
-        val wrappedAction: () -> T? = when {
-            libraryFile.isDirectory -> {
-                { action(libraryFile) }
+        val wrappedAction: () -> T? = run {
+            val attributes = libraryFile.attributes
+            when {
+                attributes.isDirectory -> {
+                    { action(libraryFile) }
+                }
+                attributes.isRegularFile && extension == KLIB_FILE_EXTENSION -> {
+                    { libraryFile.withZipFileSystem { fs -> action(fs.file("/")) } }
+                }
+                else -> return null
             }
-            libraryFile.isFile && extension == KLIB_FILE_EXTENSION -> {
-                { libraryFile.withZipFileSystem { fs -> action(fs.file("/")) } }
-            }
-            else -> return null
         }
 
         return try {
