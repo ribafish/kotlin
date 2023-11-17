@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.js.lower.coroutines
 
 import org.jetbrains.kotlin.backend.common.DeclarationTransformer
+import org.jetbrains.kotlin.backend.common.ir.ValueRemapper
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
@@ -13,12 +14,14 @@ import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.memoryOptimizedPlus
 
@@ -80,15 +83,16 @@ class JsSuspendFunctionWithGeneratorsLowering(private val context: JsIrBackendCo
             function.isInfix,
             function.isExternal,
         ).apply {
+            copyParameterDeclarationsFrom(function)
             parent = function.parent
             annotations = function.annotations
-            valueParameters = function.valueParameters
-            typeParameters = function.typeParameters
-            dispatchReceiverParameter = function.dispatchReceiverParameter
-            extensionReceiverParameter = function.extensionReceiverParameter
-            contextReceiverParametersCount = function.contextReceiverParametersCount
             body = functionBody.apply {
-                transformChildrenVoid(object : IrElementTransformerVoid() {
+                val valueSymbols = function.valueParameters.zip(valueParameters)
+                    .plus(function.dispatchReceiverParameter to dispatchReceiverParameter)
+                    .plus(function.extensionReceiverParameter to extensionReceiverParameter)
+                    .mapNotNull { (old, new) -> new?.let { old?.symbol?.to(it.symbol) } }
+                    .toMap<IrValueSymbol, IrValueSymbol>()
+                transformChildrenVoid(object : ValueRemapper(valueSymbols) {
                     override fun visitCall(expression: IrCall): IrExpression {
                         val call = super.visitCall(expression)
                         return if (call !is IrCall || !call.symbol.owner.isSuspend) {
