@@ -85,7 +85,7 @@ fun buildTree(expression: IrExpression): Node? {
             }
 
             override fun visitContainerExpression(expression: IrContainerExpression, data: Node) {
-                if (expression.origin is IrStatementOrigin.SAFE_CALL) {
+                if (expression.origin == IrStatementOrigin.SAFE_CALL) {
                     // Null safe expressions can be correctly navigated
                     super.visitContainerExpression(expression, data)
                 } else {
