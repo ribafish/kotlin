@@ -94,7 +94,7 @@ fun Test.setupWasmStdlib(target: String) {
     val Target = target.capitalize()
     dependsOn(":kotlin-stdlib:compileKotlinWasm$Target")
     systemProperty("kotlin.wasm-$target.stdlib.path", "libraries/stdlib/build/classes/kotlin/wasm$Target/main")
-    dependsOn(":kotlin-test:kotlin-test-mpp:compileKotlinWasm$Target")
+    dependsOn(":kotlin-test:compileKotlinWasm$Target")
     systemProperty("kotlin.wasm-$target.kotlin.test.path", "libraries/kotlin.test/mpp/build/classes/kotlin/wasm$Target/main")
 }
 

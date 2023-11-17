@@ -295,7 +295,7 @@ kotlin {
         commonTest {
             dependencies {
                 // TODO: use project dependency when kotlin-test is migrated
-                api(project(":kotlin-test:kotlin-test-mpp"))
+                api(kotlinTest(suffix = null))
 //                compileOnly("org.jetbrains.kotlin:kotlin-test-common:$bootstrapKotlinVersion")
 //                compileOnly("org.jetbrains.kotlin:kotlin-test-annotations-common:$bootstrapKotlinVersion")
 //                compileOnly(project(":kotlin-test:kotlin-test-common"))
@@ -336,7 +336,7 @@ kotlin {
                 optIn("kotlin.io.path.ExperimentalPathApi")
             }
             dependencies {
-                api(project(":kotlin-test:kotlin-test-mpp", configuration = "jvmJUnitRuntimeElements"))
+                api(kotlinTest("junit"))
             }
             kotlin.srcDir("jvm/test")
             kotlin.srcDir("jdk7/test")
@@ -345,7 +345,7 @@ kotlin {
 
         val jvmLongRunningTest by getting {
             dependencies {
-                api(project(":kotlin-test:kotlin-test-mpp", configuration = "jvmJUnitRuntimeElements"))
+                api(kotlinTest("junit"))
 //                api(project(":kotlin-test:kotlin-test-junit"))
             }
             kotlin.srcDir("jvm/testLongRunning")

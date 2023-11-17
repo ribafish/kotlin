@@ -401,12 +401,7 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
     into("lib") {
         from(jarFiles) { rename { "$compilerBaseName.jar" } }
         from(librariesFiles)
-        from(librariesKotlinTestFiles) {
-            rename {
-                it.replace("kotlin-test-mpp-jvm", "kotlin-test-mpp")
-                    .replace("kotlin-test-mpp", "kotlin-test")
-            }
-        }
+        from(librariesKotlinTestFiles)
         from(librariesStripVersionFiles) {
             rename {
                 it.replace(Regex("-\\d.*\\.jar\$"), ".jar")

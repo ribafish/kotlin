@@ -79,7 +79,7 @@ fun Project.kotlinTest(suffix: String? = "junit", classifier: String? = null): A
             "js" -> "js${elementsType}Elements"
             else -> error("Unsupported kotlin-test flavor: $suffix")
         }
-        dependencies.project(":kotlin-test:kotlin-test-mpp", configuration)
+        dependencies.project(":kotlin-test", configuration)
     }
 }
 
