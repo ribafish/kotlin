@@ -403,7 +403,7 @@ publishing {
         val rootModule = module("rootModule") {
             mavenPublication {
                 artifactId = artifactBaseName
-                configureKotlinPomAttributes(project, "Kotlin Test Library")
+                configureKotlinPomAttributes(project, "Kotlin Test Multiplatform library")
                 artifact(emptyJavadocJar())
             }
             variant("metadataApiElements") { suppressPomMetadataWarnings() }
@@ -423,7 +423,7 @@ publishing {
             module("${framework.lowercase()}Module") {
                 mavenPublication {
                     artifactId = "$artifactBaseName-${framework.lowercase()}"
-                    configureKotlinPomAttributes(project, "Kotlin Test Library for ${framework}")
+                    configureKotlinPomAttributes(project, "Kotlin Test library support for ${framework}")
                     artifact(emptyJavadocJar(framework.lowercase()))
                 }
                 variant("jvm${framework}ApiElements") { suppressPomMetadataWarnings() }
@@ -435,7 +435,7 @@ publishing {
         val js = module("jsModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-js"
-                configureKotlinPomAttributes(project, "Kotlin Test Library for JS", packaging = "klib")
+                configureKotlinPomAttributes(project, "Kotlin Test library for JS", packaging = "klib")
             }
             variant("jsApiElements")
             variant("jsRuntimeElements")
@@ -445,7 +445,7 @@ publishing {
         val wasmJs = module("wasmJsModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-wasm-js"
-                configureKotlinPomAttributes(project, "Kotlin Test Library for experimental WebAssembly JS platform", packaging = "klib")
+                configureKotlinPomAttributes(project, "Kotlin Test library for experimental WebAssembly JS platform", packaging = "klib")
             }
             variant("wasmJsApiElements")
             variant("wasmJsRuntimeElements")
@@ -454,7 +454,7 @@ publishing {
         val wasmWasi = module("wasmWasiModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-wasm-wasi"
-                configureKotlinPomAttributes(project, "Kotlin Test Library for experimental WebAssembly WASI platform", packaging = "klib")
+                configureKotlinPomAttributes(project, "Kotlin Test library for experimental WebAssembly WASI platform", packaging = "klib")
             }
             variant("wasmWasiApiElements")
             variant("wasmWasiRuntimeElements")
@@ -464,7 +464,7 @@ publishing {
         module("testCommonModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-common"
-                configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test Library. Use kotlin-test instead", packaging = "pom")
+                configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test library. Use kotlin-test instead", packaging = "pom")
                 (this as PublicationInternal<*>).isAlias = true
             }
             variant("kotlinTestCommonElements")
@@ -472,7 +472,7 @@ publishing {
         module("testAnnotationsCommonModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-annotations-common"
-                configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test Library. Use kotlin-test instead", packaging = "pom")
+                configureKotlinPomAttributes(project, "Legacy artifact of Kotlin Test library. Use kotlin-test instead", packaging = "pom")
                 (this as PublicationInternal<*>).isAlias = true
             }
             variant("kotlinTestAnnotationsCommonElements")
