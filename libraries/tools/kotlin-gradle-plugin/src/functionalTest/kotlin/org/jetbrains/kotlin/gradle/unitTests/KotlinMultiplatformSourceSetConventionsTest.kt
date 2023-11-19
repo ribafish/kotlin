@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformSourceSetConventionsIm
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.configurationResult
-import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.util.assertContainsDependencies
 import org.jetbrains.kotlin.gradle.util.buildProjectWithMPP
 import org.jetbrains.kotlin.gradle.util.runLifecycleAwareTest
@@ -55,13 +54,12 @@ class KotlinMultiplatformSourceSetConventionsTest {
     fun `test - invoke - allows creating new source set in closure`() {
         val project = buildProjectWithMPP()
         project.multiplatformExtension.apply {
+            val fooSourceSet = sourceSets.create("foo")
             sourceSets.jvmMain {
-                /*
-                When done wrong, expect:
-                org.gradle.api.internal.AbstractMutationGuard$IllegalMutationException:
-                    NamedDomainObjectContainer#create(String) on KotlinSourceSet container cannot be executed in the current context
-                 */
-                dependsOn(sourceSets.create("foo"))
+                // When done wrong, expect:
+                // org.gradle.api.internal.AbstractMutationGuard$IllegalMutationException:
+                // NamedDomainObjectContainer#create(String) on KotlinSourceSet container cannot be executed in the current context
+                dependsOn(fooSourceSet)
             }
 
             assertEquals(setOf("foo"), sourceSets.jvmMain.get().dependsOn.map { it.name }.toSet())

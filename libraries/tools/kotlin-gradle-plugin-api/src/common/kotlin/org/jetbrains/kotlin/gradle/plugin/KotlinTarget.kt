@@ -17,11 +17,12 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.jetbrains.kotlin.gradle.PRESETS_API_IS_DEPRECATED_MESSAGE
 import org.jetbrains.kotlin.gradle.DeprecatedTargetPresetApi
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptionsDeprecated
+import org.jetbrains.kotlin.gradle.dsl.KotlinGradlePluginDsl
 import org.jetbrains.kotlin.tooling.core.HasMutableExtras
 
+@KotlinGradlePluginDsl
 interface KotlinTarget : Named, HasAttributes, HasProject, HasMutableExtras {
     val targetName: String
     val disambiguationClassifier: String? get() = targetName

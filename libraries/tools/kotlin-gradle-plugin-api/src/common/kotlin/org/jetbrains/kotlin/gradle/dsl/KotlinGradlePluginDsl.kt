@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.gradle.dsl
 
 /**
- * Adhoc marker for APIs that are considered 'User facing dsl'.
+ * Marker annotation to specify Kotlin Gradle plugin public DSL.
+ *
  * Annotated APIs will be binary validated.
  */
-internal annotation class KotlinGradlePluginDsl
+@DslMarker
+annotation class KotlinGradlePluginDsl

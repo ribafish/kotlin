@@ -27,8 +27,9 @@ class TargetPresetDeprecationTest {
     fun `targets fromPreset usage - emits FromPreset diagnostic`() = checkDiagnostics(
         "PresetDeprecation-fromPreset"
     ) {
+        val jvmPreset = presets.getByName("jvm")
         targets {
-            fromPreset(presets.getByName("jvm"), "jvm")
+            fromPreset(jvmPreset, "jvm")
         }
     }
 
