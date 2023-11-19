@@ -408,7 +408,9 @@ publishing {
             }
             variant("metadataApiElements") { suppressPomMetadataWarnings() }
             variant("jvmApiElements")
-            variant("jvmRuntimeElements")
+            variant("jvmRuntimeElements") {
+                configureVariantDetails { mapToMavenScope("runtime") }
+            }
             variant("jvmSourcesElements")
             variant("nativeApiElements") {
                 attributes {
@@ -427,7 +429,10 @@ publishing {
                     artifact(emptyJavadocJar(framework.lowercase()))
                 }
                 variant("jvm${framework}ApiElements") { suppressPomMetadataWarnings() }
-                variant("jvm${framework}RuntimeElements") { suppressPomMetadataWarnings() }
+                variant("jvm${framework}RuntimeElements") {
+                    suppressPomMetadataWarnings()
+                    configureVariantDetails { mapToMavenScope("runtime") }
+                }
                 variant("jvm${framework}SourcesElements") { suppressPomMetadataWarnings() }
             }
         }
