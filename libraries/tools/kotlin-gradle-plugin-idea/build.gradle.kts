@@ -40,7 +40,7 @@ dependencies {
     testFixturesImplementation(gradleKotlinDsl())
     testFixturesImplementation(project(":kotlin-tooling-core"))
     testFixturesImplementation(project(":kotlin-gradle-plugin-idea-proto"))
-    testFixturesImplementation(kotlinTest())
+    testFixturesImplementation(kotlinTest(suffix = null)) // no test annotations, only assertions are needed
 }
 
 
