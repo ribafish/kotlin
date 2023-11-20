@@ -10,10 +10,8 @@ import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
-import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 import org.jetbrains.kotlinx.jso.compiler.backend.JsObjectLoweringExtension
 import org.jetbrains.kotlinx.jso.compiler.fir.JsObjectExtensionRegistrar
-import org.jetbrains.kotlinx.jso.compiler.psi.JsObjectFactoryFunctionGenerator
 
 @OptIn(ExperimentalCompilerApi::class)
 class JsObjectComponentRegistrar : CompilerPluginRegistrar() {
@@ -25,7 +23,6 @@ class JsObjectComponentRegistrar : CompilerPluginRegistrar() {
 
     companion object {
         fun registerExtensions(extensionStorage: ExtensionStorage) = with(extensionStorage) {
-            SyntheticResolveExtension.registerExtension(JsObjectFactoryFunctionGenerator())
             FirExtensionRegistrarAdapter.registerExtension(JsObjectExtensionRegistrar())
             IrGenerationExtension.registerExtension(JsObjectLoweringExtension())
         }

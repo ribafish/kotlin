@@ -20,7 +20,6 @@ val jsoIrRuntimeForTests by configurations.creating {
 
 dependencies {
     embedded(project(":kotlinx-jso-compiler-plugin.common")) { isTransitive = false }
-    embedded(project(":kotlinx-jso-compiler-plugin.k1")) { isTransitive = false }
     embedded(project(":kotlinx-jso-compiler-plugin.k2")) { isTransitive = false }
     embedded(project(":kotlinx-jso-compiler-plugin.cli")) { isTransitive = false }
 

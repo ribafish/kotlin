@@ -13,7 +13,6 @@ dependencies {
 
     implementation(project(":kotlinx-jso-compiler-plugin.backend"))
     implementation(project(":kotlinx-jso-compiler-plugin.common"))
-    implementation(project(":kotlinx-jso-compiler-plugin.k1"))
     implementation(project(":kotlinx-jso-compiler-plugin.k2"))
 
     compileOnly(intellijCore())

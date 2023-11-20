@@ -7,7 +7,6 @@ package org.jetbrains.kotlinx.jso
 
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlinx.jso.runners.AbstractFirJsObjectIrJsBoxTest
-import org.jetbrains.kotlinx.jso.runners.AbstractPsiJsObjectIrJsBoxTest
 
 fun main(args: Array<String>) {
 //    val excludedFirTestdataPattern = "^(.+)\\.fir\\.kts?\$"
@@ -25,9 +24,6 @@ fun main(args: Array<String>) {
             // ------------------------------- box -------------------------------
 
             testClass<AbstractFirJsObjectIrJsBoxTest> {
-                model("box")
-            }
-            testClass<AbstractPsiJsObjectIrJsBoxTest> {
                 model("box")
             }
         }

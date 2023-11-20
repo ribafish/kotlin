@@ -18,13 +18,3 @@ open class AbstractFirJsObjectIrJsBoxTest : AbstractFirJsTest(
         builder.configureForKotlinxJsObject()
     }
 }
-
-open class AbstractPsiJsObjectIrJsBoxTest : AbstractJsIrTest(
-    pathToTestDir = "plugins/kotlinx-serialization/testData/boxIr/",
-    testGroupOutputDirPrefix = "codegen/serializationBoxIr/"
-) {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.configureForKotlinxJsObject()
-    }
-}
