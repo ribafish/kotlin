@@ -174,7 +174,7 @@ private class AutoboxingTransformer(val context: Context) : AbstractValueUsageTr
             return if (insertSafeCasts
                     && expectedClass != null
                     && actualType.classifierOrFail is IrTypeParameterSymbol
-                    && !expectedClass.isInlined()
+                    && expectedType.computePrimitiveBinaryTypeOrNull() == null
                     && !expectedClass.isObjCForwardDeclaration()
                     && !expectedClass.isObjCMetaClass()
             ) {
