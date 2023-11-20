@@ -17,10 +17,10 @@
 #include "ScopedThread.hpp"
 #include "Utils.hpp"
 #include "Logging.hpp"
+#include "objc_support/RunLoopSource.hpp"
 
 #if KONAN_OBJC_INTEROP
 #include "ObjCMMAPI.h"
-#include <CoreFoundation/CoreFoundation.h>
 #include <CoreFoundation/CFRunLoop.h>
 #endif
 
@@ -114,17 +114,7 @@ private:
     public:
         explicit ProcessingLoop(FinalizerProcessor& owner) :
                 owner_(owner),
-                sourceContext_{
-                        0, this, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                        [](void* info) {
-                            auto& self = *reinterpret_cast<ProcessingLoop*>(info);
-                            self.handleNewFinalizers();
-                        }},
-                runLoopSource_(CFRunLoopSourceCreate(nullptr, 0, &sourceContext_)) {}
-
-        ~ProcessingLoop() {
-            CFRelease(runLoopSource_);
-        }
+                runLoopSource_([this]() noexcept { handleNewFinalizers(); }) {}
 
         void notify() {
             // wait until runLoop_ ptr is published
@@ -132,7 +122,7 @@ private:
                 std::this_thread::yield();
             }
             // notify
-            CFRunLoopSourceSignal(runLoopSource_);
+            runLoopSource_.signal();
             CFRunLoopWakeUp(runLoop_);
         }
 
@@ -142,12 +132,10 @@ private:
 
         void body() {
             konan::AutoreleasePool autoreleasePool;
-            auto mode = kCFRunLoopDefaultMode;
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource_, mode);
-
-            CFRunLoopRun();
-
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource_, mode);
+            {
+                auto subscription = runLoopSource_.attachToCurrentRunLoop();
+                CFRunLoopRun();
+            }
             runLoop_.store(nullptr, std::memory_order_release);
         }
     private:
@@ -168,9 +156,8 @@ private:
 
         FinalizerProcessor& owner_;
         int64_t finishedEpoch_ = 0;
-        CFRunLoopSourceContext sourceContext_;
+        objc_support::RunLoopSource runLoopSource_;
         std::atomic<CFRunLoopRef> runLoop_ = nullptr;
-        CFRunLoopSourceRef runLoopSource_;
     };
 #else
     class ProcessingLoop {
