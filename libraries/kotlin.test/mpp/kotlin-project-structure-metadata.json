@@ -78,6 +78,14 @@
         ]
       },
       {
+        "name": "nativeApiElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
+      },
+      {
         "name": "wasmJsApiElements",
         "sourceSet": [
           "assertionsCommonMain",
