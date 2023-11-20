@@ -246,6 +246,10 @@ fun translateCall(
         else -> jsElementAccess(symbolName.ident, jsDispatchReceiver)
     }
 
+    if (symbolName.isGeneratorFunction) {
+        ref.commentsBeforeNode = listOf(JsMultiLineComment("#__NOINLINE__"))
+    }
+
     return if (isExternalVararg) {
         // TODO: Don't use `Function.prototype.apply` when number of arguments is known at compile time (e.g. there are no spread operators)
 
