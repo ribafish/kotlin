@@ -126,6 +126,7 @@ kotlin {
             kotlin.srcDir("../common/src/main/kotlin")
         }
         val commonTest by getting {
+            kotlin.srcDir("../annotations-common/src/test/kotlin")
             kotlin.srcDir("../common/src/test/kotlin")
         }
         val jvmMain by getting {
