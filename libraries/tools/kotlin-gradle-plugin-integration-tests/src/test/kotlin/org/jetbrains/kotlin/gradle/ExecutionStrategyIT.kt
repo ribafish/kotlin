@@ -30,7 +30,7 @@ class ExecutionStrategyJsIT : ExecutionStrategyIT() {
                     |
                     |afterEvaluate {
                     |    tasks.named('compileKotlinJs') {
-                    |        kotlinOptions.outputFile = "${'$'}{project.projectDir}/web/js/"
+                    |        destinationDirectory = new File(project.projectDir, "web/js/")
                     |    }
                     |}
                     |
