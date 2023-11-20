@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.gradle.targets.js.dsl
 import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
+import org.jetbrains.kotlin.gradle.dsl.HasConfigurableCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDce
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlatformTestRun
@@ -33,7 +35,10 @@ interface KotlinJsSubTargetContainerDsl : KotlinTarget {
     fun whenBrowserConfigured(body: KotlinJsBrowserDsl.() -> Unit)
 }
 
-interface KotlinJsTargetDsl : KotlinTarget, KotlinTargetWithNodeJsDsl {
+interface KotlinJsTargetDsl : KotlinTarget,
+    HasConfigurableCompilerOptions<KotlinJsCompilerOptions>,
+    KotlinTargetWithNodeJsDsl {
+
     var moduleName: String?
 
     fun browser() = browser { }

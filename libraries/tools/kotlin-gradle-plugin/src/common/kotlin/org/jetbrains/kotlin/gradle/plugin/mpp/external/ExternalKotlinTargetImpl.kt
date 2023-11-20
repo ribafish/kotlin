@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.external
 import org.gradle.api.*
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.AttributeContainer
-import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.publish.maven.MavenPublication

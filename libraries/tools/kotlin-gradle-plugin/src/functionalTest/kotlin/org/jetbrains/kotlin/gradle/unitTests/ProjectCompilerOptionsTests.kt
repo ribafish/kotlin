@@ -24,21 +24,20 @@ import kotlin.test.assertEquals
 
 class ProjectCompilerOptionsTests {
 
-    @Ignore
     @Test
     fun nativeTargetCompilerOptionsDSL() {
         val project = buildProjectWithMPP {
             with(multiplatformExtension) {
                 linuxX64 {
-//                    compilerOptions {
-//                        progressiveMode.set(true)
-//                    }
+                    compilerOptions {
+                        progressiveMode.set(true)
+                    }
                 }
 
                 iosX64 {
-//                    compilerOptions {
-//                        suppressWarnings.set(true)
-//                    }
+                    compilerOptions {
+                        suppressWarnings.set(true)
+                    }
                 }
 
                 applyDefaultHierarchyTemplate()
@@ -57,7 +56,6 @@ class ProjectCompilerOptionsTests {
         assertEquals(false, project.kotlinNativeTask("compileTestKotlinIosX64").compilerOptions.progressiveMode.get())
     }
 
-    @Ignore
     @Test
     fun nativeTaskOverridesTargetOptions() {
         val project = buildProjectWithMPP {
@@ -69,9 +67,9 @@ class ProjectCompilerOptionsTests {
 
             with(multiplatformExtension) {
                 linuxX64 {
-//                    compilerOptions {
-//                        progressiveMode.set(true)
-//                    }
+                    compilerOptions {
+                        progressiveMode.set(true)
+                    }
                 }
 
                 applyDefaultHierarchyTemplate()
@@ -83,15 +81,14 @@ class ProjectCompilerOptionsTests {
         assertEquals(false, project.kotlinNativeTask("compileKotlinLinuxX64").compilerOptions.progressiveMode.get())
     }
 
-    @Ignore
     @Test
     fun jsTargetCompilerOptionsDsl() {
         val project = buildProjectWithMPP {
             with(multiplatformExtension) {
                 js {
-//                    compilerOptions {
-//                        suppressWarnings.set(true)
-//                    }
+                    compilerOptions {
+                        suppressWarnings.set(true)
+                    }
                 }
 
                 applyDefaultHierarchyTemplate()
@@ -104,7 +101,6 @@ class ProjectCompilerOptionsTests {
         assertEquals(true, project.kotlinJsTask("compileTestKotlinJs").compilerOptions.suppressWarnings.get())
     }
 
-    @Ignore
     @Test
     fun jsTaskOptionsOverridesTargetOptions() {
         val project = buildProjectWithMPP {
@@ -116,9 +112,9 @@ class ProjectCompilerOptionsTests {
 
             with(multiplatformExtension) {
                 js {
-//                    compilerOptions {
-//                        suppressWarnings.set(true)
-//                    }
+                    compilerOptions {
+                        suppressWarnings.set(true)
+                    }
                 }
 
                 applyDefaultHierarchyTemplate()
@@ -130,7 +126,6 @@ class ProjectCompilerOptionsTests {
         assertEquals(false, project.kotlinJsTask("compileKotlinJs").compilerOptions.suppressWarnings.get())
     }
 
-    @Ignore
     @Test
     fun metadataTargetDsl() {
         val project = buildProjectWithMPP {
@@ -140,9 +135,9 @@ class ProjectCompilerOptionsTests {
                 iosArm64()
 
                 targets.named("metadata", KotlinMetadataTarget::class.java) {
-//                    it.compilerOptions {
-//                        progressiveMode.set(true)
-//                    }
+                    it.compilerOptions {
+                        progressiveMode.set(true)
+                    }
                 }
 
                 applyDefaultHierarchyTemplate()
@@ -154,7 +149,6 @@ class ProjectCompilerOptionsTests {
         assertEquals(true, project.kotlinCommonTask("compileKotlinMetadata").compilerOptions.progressiveMode.get())
     }
 
-    @Ignore
     @Test
     fun metadataTaskOptionsOverrideTargetOptions() {
         val project = buildProjectWithMPP {
@@ -170,9 +164,9 @@ class ProjectCompilerOptionsTests {
                 iosArm64()
 
                 targets.named("metadata", KotlinMetadataTarget::class.java) {
-//                    it.compilerOptions {
-//                        progressiveMode.set(true)
-//                    }
+                    it.compilerOptions {
+                        progressiveMode.set(true)
+                    }
                 }
 
                 applyDefaultHierarchyTemplate()
@@ -184,7 +178,6 @@ class ProjectCompilerOptionsTests {
         assertEquals(false, project.kotlinCommonTask("compileKotlinMetadata").compilerOptions.progressiveMode.get())
     }
 
-    @Ignore
     @Test
     fun externalTargetDsl() {
         val project = buildProjectWithMPP()
@@ -194,9 +187,9 @@ class ProjectCompilerOptionsTests {
                 target.createCompilation<FakeCompilation> { defaults(this@with) }
                 target.createCompilation<FakeCompilation> { defaults(this@with, "test") }
 
-//                target.compilerOptions {
-//                    javaParameters.set(true)
-//                }
+                target.compilerOptions {
+                    javaParameters.set(true)
+                }
             }
         }
 
@@ -204,7 +197,6 @@ class ProjectCompilerOptionsTests {
         assertEquals(true, project.kotlinJvmTask("compileTestKotlinFake").compilerOptions.javaParameters.get())
     }
 
-    @Ignore
     @Test
     fun externalTaskOptionsOverridesTargetOptions() {
         val project = buildProjectWithMPP()
@@ -220,9 +212,9 @@ class ProjectCompilerOptionsTests {
                 target.createCompilation<FakeCompilation> { defaults(this@with) }
                 target.createCompilation<FakeCompilation> { defaults(this@with, "test") }
 
-//                target.compilerOptions {
-//                    javaParameters.set(true)
-//                }
+                target.compilerOptions {
+                    javaParameters.set(true)
+                }
             }
         }
 
@@ -259,16 +251,15 @@ class ProjectCompilerOptionsTests {
         assertEquals(true, project.kotlinNativeTask("compileTestKotlinIosArm64").compilerOptions.progressiveMode.get())
     }
 
-    @Ignore
     @Test
     fun testTargetDslOverridesTopLevelDsl() {
         val project = buildProjectWithMPP()
         project.runLifecycleAwareTest {
             with(multiplatformExtension) {
                 jvm {
-//                    compilerOptions {
-//                        languageVersion.set(KotlinVersion.KOTLIN_1_8)
-//                    }
+                    compilerOptions {
+                        languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                    }
                 }
 
                 compilerOptions {
@@ -320,7 +311,6 @@ class ProjectCompilerOptionsTests {
         assertEquals("2.0", project.multiplatformExtension.sourceSets.getByName("commonTest").languageSettings.languageVersion)
     }
 
-    @Ignore
     @Test
     fun testJvmModuleNameInMppIsConfigured() {
         val project = buildProjectWithMPP()
@@ -335,17 +325,16 @@ class ProjectCompilerOptionsTests {
         assertEquals("my-custom-module-name", project.kotlinJvmTask("compileKotlinJvm").compilerOptions.moduleName.orNull)
     }
 
-    @Ignore
     @Test
     fun testJsOptionsIsConfigured() {
         val project = buildProjectWithMPP()
         project.runLifecycleAwareTest {
             with(multiplatformExtension) {
                 js {
-//                    compilerOptions {
-//                        moduleName.set("js-module-name")
-//                        freeCompilerArgs.add("-Xstrict-implicit-export-types")
-//                    }
+                    compilerOptions {
+                        moduleName.set("js-module-name")
+                        freeCompilerArgs.add("-Xstrict-implicit-export-types")
+                    }
                 }
             }
         }
@@ -360,7 +349,6 @@ class ProjectCompilerOptionsTests {
         )
     }
 
-    @Ignore
     @Test
     fun testJsBrowserConfigDoesNotOverrideFreeCompilerArgsFromTarget() {
         val project = buildProjectWithMPP()
@@ -369,9 +357,9 @@ class ProjectCompilerOptionsTests {
                 js {
                     binaries.executable()
                     browser()
-//                    compilerOptions {
-//                        freeCompilerArgs.addAll("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
-//                    }
+                    compilerOptions {
+                        freeCompilerArgs.addAll("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
+                    }
                 }
             }
         }
@@ -384,7 +372,6 @@ class ProjectCompilerOptionsTests {
         )
     }
 
-    @Ignore
     @Test
     fun testJsLinkTaskAreAlsoConfiguredWithOptionsFromDSL() {
         val project = buildProjectWithMPP()
@@ -393,13 +380,13 @@ class ProjectCompilerOptionsTests {
                 js {
                     nodejs()
                     binaries.library()
-//                    compilerOptions {
-//                        moduleName.set("my-custom-module")
-//                        languageVersion.set(KotlinVersion.KOTLIN_1_8)
-//                        apiVersion.set(KotlinVersion.KOTLIN_1_8)
-//                        moduleKind.set(JsModuleKind.MODULE_PLAIN)
-//                        freeCompilerArgs.addAll("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
-//                    }
+                    compilerOptions {
+                        moduleName.set("my-custom-module")
+                        languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                        apiVersion.set(KotlinVersion.KOTLIN_1_8)
+                        moduleKind.set(JsModuleKind.MODULE_PLAIN)
+                        freeCompilerArgs.addAll("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
+                    }
                 }
             }
         }
