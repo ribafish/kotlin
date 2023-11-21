@@ -601,6 +601,12 @@ tasks.register("unchecked_cast6", KonanLocalTest) {
     source = "codegen/basics/unchecked_cast6.kt"
 }
 
+tasks.register("unchecked_cast7", KonanLocalTest) {
+    enabled = !project.globalTestArgs.contains("-opt")
+    useGoldenData = true
+    source = "codegen/basics/unchecked_cast7.kt"
+}
+
 tasks.register("null_check", KonanLocalTest) {
     source = "codegen/basics/null_check.kt"
 }
