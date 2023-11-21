@@ -75,7 +75,7 @@ fun IrClass.isAbstract() = this.modality == Modality.SEALED || this.modality == 
 
 private enum class TypeKind {
     ABSENT,
-    UNIT,
+    VOID,
     VALUE_TYPE,
     REFERENCE,
     GENERIC
@@ -101,7 +101,7 @@ private data class TypeWithKind(val erasedType: IrType?, val kind: TypeKind) {
 private fun IrFunction.typeWithKindAt(index: ParameterIndex) = when (index) {
     ParameterIndex.RETURN_INDEX -> when {
         isSuspend -> TypeWithKind(null, TypeKind.REFERENCE)
-        returnType.isVoidAsReturnType() -> TypeWithKind(returnType, TypeKind.UNIT)
+        returnType.isVoidAsReturnType() -> TypeWithKind(returnType, TypeKind.VOID)
         else -> TypeWithKind.fromType(returnType)
     }
     ParameterIndex.DISPATCH_RECEIVER_INDEX -> TypeWithKind.fromType(dispatchReceiverParameter?.type)
@@ -156,7 +156,7 @@ internal data class BridgeDirection(val erasedType: IrType?, val kind: BridgeDir
 /*
  *   left to right : overridden
  *   up to down    : function
- *   ⊥ = ABSENT, () = UNIT
+ *   ⊥ = ABSENT, () = VOID
  *  +-----+-----+-----+-----+-----+-----+
  *  |  \  |  ⊥  |  () | VAL | REF | <T> |
  *  +-----+-----+-----+-----+-----+-----+
