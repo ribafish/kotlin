@@ -2753,7 +2753,7 @@ open class PsiRawFirBuilder(
                                 DiagnosticKind.ExpressionExpected
                             )
                         }
-                    }
+                    } as FirElement
                 } else {
                     buildEqualityOperatorCall {
                         this.source = source
@@ -3009,7 +3009,7 @@ open class PsiRawFirBuilder(
                     ConeNotAnnotationContainer(rawResult?.render() ?: "???")
                 )
             expression.extractAnnotationsTo(result)
-            return result
+            return result as FirElement
         }
 
         override fun visitThrowExpression(expression: KtThrowExpression, data: FirElement?): FirElement {

@@ -25,6 +25,8 @@ fun Implementation.generateCode(generationPath: File): GeneratedFile =
         fileSuppressions = listOf("DuplicatedCode", "unused"),
     ) {
         addAllImports(usedTypes)
+        addImport(acceptOnInterfaceImport)
+        addImport(transformOnInterfaceImport)
         printImplementation(this@generateCode)
     }
 

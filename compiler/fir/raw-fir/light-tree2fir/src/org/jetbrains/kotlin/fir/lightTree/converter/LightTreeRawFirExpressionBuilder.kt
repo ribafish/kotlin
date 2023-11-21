@@ -101,7 +101,7 @@ class LightTreeRawFirExpressionBuilder(
     fun convertExpression(expression: LighterASTNode, errorReason: String): FirElement {
         return when (expression.tokenType) {
             LAMBDA_EXPRESSION -> convertLambdaExpression(expression)
-            BINARY_EXPRESSION -> convertBinaryExpression(expression)
+            BINARY_EXPRESSION -> convertBinaryExpression(expression) as FirElement
             BINARY_WITH_TYPE -> convertBinaryWithTypeRHSExpression(expression) {
                 this.getOperationSymbol().toFirOperation()
             }
@@ -140,7 +140,7 @@ class LightTreeRawFirExpressionBuilder(
             SUPER_EXPRESSION -> convertSuperExpression(expression)
 
             OBJECT_LITERAL -> declarationBuilder.convertObjectLiteral(expression)
-            FUN -> declarationBuilder.convertFunctionDeclaration(expression)
+            FUN -> declarationBuilder.convertFunctionDeclaration(expression) as FirElement
             DESTRUCTURING_DECLARATION -> declarationBuilder.convertDestructingDeclaration(expression).toFirDestructingDeclaration(baseModuleData)
             else -> buildErrorExpression(expression.toFirSourceElement(KtFakeSourceElementKind.ErrorTypeRef), ConeSimpleDiagnostic(errorReason, DiagnosticKind.ExpressionExpected))
         }
@@ -412,7 +412,7 @@ class LightTreeRawFirExpressionBuilder(
                 }
                 BLOCK -> firExpression = declarationBuilder.convertBlock(it)
                 PROPERTY -> firExpression = declarationBuilder.convertPropertyDeclaration(it)
-                else -> if (it.isExpression()) firExpression = getAsFirStatement(it)
+                else -> if (it.isExpression()) firExpression = getAsFirStatement(it) as FirElement
             }
         }
 
@@ -490,7 +490,7 @@ class LightTreeRawFirExpressionBuilder(
                 BLOCK -> firExpression = declarationBuilder.convertBlockExpression(it)
                 else -> if (it.isExpression()) {
                     context.forwardLabelUsagePermission(annotatedExpression, it)
-                    firExpression = getAsFirStatement(it)
+                    firExpression = getAsFirStatement(it) as FirElement
                 }
             }
         }

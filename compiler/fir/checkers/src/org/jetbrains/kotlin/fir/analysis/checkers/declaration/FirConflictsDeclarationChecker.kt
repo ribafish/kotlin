@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirNameConflictsTrackerComponent
 import org.jetbrains.kotlin.fir.analysis.checkers.*
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
@@ -32,7 +33,8 @@ object FirConflictsDeclarationChecker : FirBasicDeclarationChecker() {
             }
             is FirRegularClass -> {
                 if (declaration.source?.kind !is KtFakeSourceElementKind) {
-                    checkForLocalRedeclarations(declaration.typeParameters, context, reporter)
+                    @Suppress("UNCHECKED_CAST")
+                    checkForLocalRedeclarations(declaration.typeParameters as List<FirElement>, context, reporter)
                 }
                 val inspector = FirDeclarationCollector<FirBasedSymbol<*>>(context)
                 inspector.collectClassMembers(declaration.symbol)
@@ -43,7 +45,8 @@ object FirConflictsDeclarationChecker : FirBasicDeclarationChecker() {
                     if (declaration is FirFunction) {
                         checkForLocalRedeclarations(declaration.valueParameters, context, reporter)
                     }
-                    checkForLocalRedeclarations(declaration.typeParameters, context, reporter)
+                    @Suppress("UNCHECKED_CAST")
+                    checkForLocalRedeclarations(declaration.typeParameters as List<FirElement>, context, reporter)
                 }
             }
         }

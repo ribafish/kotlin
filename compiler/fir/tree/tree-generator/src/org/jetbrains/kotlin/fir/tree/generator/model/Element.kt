@@ -180,7 +180,8 @@ class Element(override val name: String, override val propertyName: String, kind
         TypeRef("types"),
         Contracts("contracts"),
         Diagnostics("diagnostics"),
-        Other("")
+        Other(""),
+        DeclarationImpl("declarations.impl")
     }
 }
 

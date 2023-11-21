@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.SingleNonLoca
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.isImplicitConstructor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isScriptStatement
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.visitors.accept
 import org.jetbrains.kotlin.fir.correspondingProperty
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor

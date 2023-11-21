@@ -407,6 +407,10 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             shouldBeAnInterface()
         }
 
+        declarationStatusBase.configure {
+            shouldBeAbstractClass()
+        }
+
         constructor.configure {
             +annotations
             +symbol("FirConstructorSymbol")

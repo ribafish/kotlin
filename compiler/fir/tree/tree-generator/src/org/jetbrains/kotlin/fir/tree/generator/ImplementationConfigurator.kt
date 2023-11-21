@@ -37,6 +37,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(constructedClassTypeParameterRef)
 
         noImpl(declarationStatus)
+        noImpl(declarationStatusBase)
         noImpl(resolvedDeclarationStatus)
 
         impl(regularClass) {

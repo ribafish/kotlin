@@ -36,10 +36,13 @@ abstract class AbstractVisitorVoidPrinter<Element, Field>(
 
     abstract val overriddenVisitMethodsAreFinal: Boolean
 
+    open val allowVisitInterfaces: Boolean = true
+
     context(ImportCollector)
     final override fun printMethodsForElement(element: Element) {
         val parentInVisitor = parentInVisitor(element)
         if (!element.isRootElement && parentInVisitor == null) return
+        if (element.kind?.isInterface == true && !allowVisitInterfaces) return
 
         val isAbstractVisitRootElementMethod = element.isRootElement && useAbstractMethodForRootElement
 

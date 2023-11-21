@@ -24,7 +24,7 @@ private class TransformerPrinter(
         get() = firTransformerType
 
     override val visitorSuperType: ClassRef<PositionTypeParameterRef>
-        get() = firVisitorType.withArgs(AbstractFirTreeBuilder.baseFirElement, visitorDataType)
+        get() = firVisitorType.withArgs(AbstractFirTreeBuilder.baseFirAbstractElement, visitorDataType)
 
     override val visitorTypeParameters: List<TypeVariable>
         get() = listOf(dataTypeVariable)
@@ -32,13 +32,14 @@ private class TransformerPrinter(
     override val visitorDataType: TypeRef
         get() = dataTypeVariable
 
-    override fun visitMethodReturnType(element: Element) = element.transformerClass
+    override fun visitMethodReturnType(element: Element) = AbstractFirTreeBuilder.baseFirAbstractElement
 
     override val allowTypeParametersInVisitorMethods: Boolean
         get() = true
 
     context(ImportCollector)
     override fun printMethodsForElement(element: Element) {
+        if (element.kind?.isInterface == true) return
         printer.run {
             println()
             val elementParameterName = element.safeDecapitalizedName
@@ -62,7 +63,7 @@ private class TransformerPrinter(
                         FunctionParameter(elementParameterName, element),
                         FunctionParameter("data", dataTypeVariable)
                     ),
-                    returnType = visitMethodReturnType(element),
+                    returnType = element.transformerClass,
                     typeParameters = element.params,
                     modality = Modality.OPEN,
                 ) {
@@ -82,7 +83,8 @@ private class TransformerPrinter(
                     "(",
                     element.safeDecapitalizedName,
                     ", ",
-                    "data)"
+                    "data)",
+                    if (element.transformerClass.kind?.isInterface == true) " as ${AbstractFirTreeBuilder.baseFirAbstractElement}" else ""
                 )
             }
         }
