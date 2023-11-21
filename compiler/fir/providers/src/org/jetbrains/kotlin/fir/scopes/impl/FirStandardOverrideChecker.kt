@@ -22,26 +22,7 @@ class FirStandardOverrideChecker(private val session: FirSession) : FirAbstractO
     private val context = session.typeContext
 
     private fun isEqualTypes(substitutedCandidateType: ConeKotlinType, substitutedBaseType: ConeKotlinType): Boolean {
-        return with(context) {
-            val baseIsFlexible = substitutedBaseType.isFlexible()
-            val candidateIsFlexible = substitutedCandidateType.isFlexible()
-            if (baseIsFlexible == candidateIsFlexible) {
-                return AbstractTypeChecker.equalTypes(context, substitutedCandidateType, substitutedBaseType)
-            }
-            val lowerBound: SimpleTypeMarker
-            val upperBound: SimpleTypeMarker
-            val type: KotlinTypeMarker
-            if (baseIsFlexible) {
-                lowerBound = substitutedBaseType.lowerBoundIfFlexible()
-                upperBound = substitutedBaseType.upperBoundIfFlexible()
-                type = substitutedCandidateType
-            } else {
-                lowerBound = substitutedCandidateType.lowerBoundIfFlexible()
-                upperBound = substitutedCandidateType.upperBoundIfFlexible()
-                type = substitutedBaseType
-            }
-            AbstractTypeChecker.isSubtypeOf(context, lowerBound, type) && AbstractTypeChecker.isSubtypeOf(context, type, upperBound)
-        }
+        return AbstractTypeChecker.equalTypes(context, substitutedCandidateType, substitutedBaseType)
     }
 
     private fun isEqualTypes(candidateType: ConeKotlinType, baseType: ConeKotlinType, substitutor: ConeSubstitutor): Boolean {
