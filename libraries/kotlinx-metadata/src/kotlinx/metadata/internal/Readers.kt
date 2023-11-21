@@ -86,6 +86,8 @@ public fun ProtoBuf.Class.toKmClass(
     contextReceiverTypes(c.types).mapTo(v.contextReceiverTypes) { it.toKmType(c) }
     versionRequirementList.mapTo(v.versionRequirements) { readVersionRequirement(it, c) }
 
+    annotationList.mapTo(v.annotations) { it.readAnnotation(c.strings) }
+
     c.extensions.forEach { it.readClassExtensions(v, this, c) }
 
     return v
@@ -164,6 +166,7 @@ private fun ProtoBuf.Constructor.toKmConstructor(c: ReadContext): KmConstructor 
     val v = KmConstructor(flags)
     valueParameterList.mapTo(v.valueParameters) { it.toKmValueParameter(c) }
     versionRequirementList.mapTo(v.versionRequirements) { readVersionRequirement(it, c) }
+    annotationList.mapTo(v.annotations) { it.readAnnotation(c.strings) }
 
     c.extensions.forEach { it.readConstructorExtensions(v, this, c) }
 
@@ -188,6 +191,8 @@ private fun ProtoBuf.Function.toKmFunction(outer: ReadContext): KmFunction {
 
     versionRequirementList.mapTo(v.versionRequirements) { readVersionRequirement(it, c) }
 
+    annotationList.mapTo(v.annotations) { it.readAnnotation(c.strings) }
+
     c.extensions.forEach { it.readFunctionExtensions(v, this, c) }
 
     return v
@@ -208,6 +213,12 @@ public fun ProtoBuf.Property.toKmProperty(outer: ReadContext): KmProperty {
     versionRequirementList.mapTo(v.versionRequirements) { readVersionRequirement(it, c) }
 
     c.extensions.forEach { it.readPropertyExtensions(v, this, c) }
+
+    annotationList.mapTo(v.annotations) { it.readAnnotation(c.strings) }
+    getterAnnotationList.mapTo(v.getter.annotations) { it.readAnnotation(c.strings) }
+    v.setter?.let { setter ->
+        setterAnnotationList.mapTo(setter.annotations) { it.readAnnotation(c.strings) }
+    }
 
     return v
 }
@@ -236,6 +247,8 @@ private fun ProtoBuf.ValueParameter.toKmValueParameter(c: ReadContext): KmValueP
     v.varargElementType = varargElementType(c.types)?.toKmType(c)
 
     c.extensions.forEach { it.readValueParameterExtensions(v, this, c) }
+
+    annotationList.mapTo(v.annotations) { it.readAnnotation(c.strings) }
 
     return v
 }

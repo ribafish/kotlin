@@ -29,6 +29,11 @@ public class K2KotlinpTestGenerated extends AbstractK2KotlinpTest {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("libraries/tools/kotlinp/testData"), Pattern.compile("^(.*)\\.kts?$"), null, true);
     }
 
+    @TestMetadata("AnnotationTargets.kt")
+    public void testAnnotationTargets() throws Exception {
+        runTest("libraries/tools/kotlinp/testData/AnnotationTargets.kt");
+    }
+
     @TestMetadata("Annotations.kt")
     public void testAnnotations() throws Exception {
         runTest("libraries/tools/kotlinp/testData/Annotations.kt");

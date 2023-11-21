@@ -30,6 +30,9 @@ private fun visitFunction(
         sb.appendLine("  // signature: $it")
     }
 
+    for (annotation in function.annotations) {
+        sb.appendLine("  @" + renderAnnotation(annotation))
+    }
     if (function.contextReceiverTypes.isNotEmpty()) {
         sb.appendLine(function.contextReceiverTypes.joinToString(prefix = "  context(", postfix = ")", transform = ::printType))
     }
@@ -80,6 +83,9 @@ private fun visitProperty(
     if (property.isMovedFromInterfaceCompanion) {
         sb.appendLine("  // is moved from interface companion")
     }
+    for (annotation in property.annotations) {
+        sb.appendLine("  @" + renderAnnotation(annotation))
+    }
     if (property.contextReceiverTypes.isNotEmpty()) {
         sb.appendLine(property.contextReceiverTypes.joinToString(prefix = "  context(", postfix = ")", transform = ::printType))
     }
@@ -99,11 +105,17 @@ private fun visitProperty(
         sb.append(" /* = ... */")
     }
     sb.appendLine()
+    for (annotation in property.getter.annotations) {
+        sb.appendLine("    @" + renderAnnotation(annotation))
+    }
     sb.append("    ")
     sb.appendPropertyAccessorModifiers(property.getter)
     sb.appendLine("get")
     val setter = property.setter
     if (setter != null) {
+        for (annotation in setter.annotations) {
+            sb.appendLine("    @" + renderAnnotation(annotation))
+        }
         sb.append("    ")
         sb.appendPropertyAccessorModifiers(setter)
         sb.append("set")
@@ -122,6 +134,9 @@ private fun visitConstructor(constructor: KmConstructor, sb: StringBuilder) {
     }
     if (constructor.signature != null) {
         sb.appendLine("  // signature: ${constructor.signature}")
+    }
+    for (annotation in constructor.annotations) {
+        sb.appendLine("  @" + renderAnnotation(annotation))
     }
     sb.append("  ")
     sb.appendConstructorModifiers(constructor)
@@ -247,6 +262,9 @@ private fun printValueParameter(
     val type = printType(valueParameter.type)
     val varargElementType = valueParameter.varargElementType?.let(::printType)
     return buildString {
+        for (annotation in valueParameter.annotations) {
+            append("@" + renderAnnotation(annotation) + " ")
+        }
         appendValueParameterModifiers(valueParameter)
         if (varargElementType != null) {
             append("vararg ").append(valueParameter.name).append(": ").append(varargElementType).append(" /* ").append(type).append(" */")
@@ -477,6 +495,9 @@ class ClassPrinter(private val settings: KotlinpSettings) : AbstractPrinter<Kotl
         }
         for (versionRequirement in versionRequirements) {
             result.appendLine("// $versionRequirement")
+        }
+        for (annotation in klass!!.annotations) {
+            result.appendLine("@" + renderAnnotation(annotation))
         }
         if (contextReceiverTypes.isNotEmpty()) {
             result.appendLine(contextReceiverTypes.joinToString(prefix = "context(", postfix = ")"))
