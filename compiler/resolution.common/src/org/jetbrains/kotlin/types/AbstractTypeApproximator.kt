@@ -141,14 +141,44 @@ abstract class AbstractTypeApproximator(
                     val lowerBound = type.lowerBound()
                     val upperBound = type.upperBound()
 
-                    val lowerResult = approximateTo(lowerBound, conf, depth)
+                    val lowerBoundConstructor = lowerBound.typeConstructor()
+                    val upperBoundConstructor = upperBound.typeConstructor()
 
-                    val upperResult = if (!type.isRawType() && lowerBound.typeConstructor() == upperBound.typeConstructor())
-                        lowerResult?.withNullability(upperBound.isMarkedNullable())
-                    else
-                        approximateTo(upperBound, conf, depth)
+                    val lowerResult: KotlinTypeMarker?
+                    val upperResult: KotlinTypeMarker?
+
+                    if (isK2) {
+                        if (!type.isRawType() && lowerBoundConstructor.isClassTypeConstructor()) {
+                            if (isArrayWithCapturedArgumentToApproximate(upperBoundConstructor, upperBound, conf) &&
+                                lowerBoundConstructor.isClassTypeConstructor()
+                            ) {
+                                upperResult = approximateTo(upperBound, conf, depth)
+                                lowerResult = upperResult?.copyWith(
+                                    nullable = lowerBound.isMarkedNullable(),
+                                    typeConstructor = lowerBoundConstructor,
+                                    typeArguments = upperResult.getArguments().map { it.getType() as? TypeArgumentMarker ?: it }
+                                )
+                            } else {
+                                lowerResult = approximateTo(lowerBound, conf, depth)
+                                upperResult = lowerResult?.copyWith(
+                                    nullable = upperBound.isMarkedNullable(),
+                                    typeConstructor = upperBoundConstructor
+                                )
+                            }
+                        } else {
+                            lowerResult = approximateTo(lowerBound, conf, depth)
+                            upperResult = approximateTo(upperBound, conf, depth)
+                        }
+                    } else {
+                        lowerResult = approximateTo(lowerBound, conf, depth)
+
+                        upperResult = if (!type.isRawType() && lowerBoundConstructor == upperBoundConstructor)
+                            lowerResult?.withNullability(upperBound.isMarkedNullable())
+                        else
+                            approximateTo(upperBound, conf, depth)
+                    }
+
                     if (lowerResult == null && upperResult == null) return null
-
                     /**
                      * If C <: L..U then C <: L.
                      * inputType.lower <: lowerResult => inputType.lower <: lowerResult?.lowerIfFlexible()
@@ -168,11 +198,28 @@ abstract class AbstractTypeApproximator(
         }
     }
 
+    private fun KotlinTypeMarker.copyWith(
+        nullable: Boolean,
+        typeConstructor: TypeConstructorMarker,
+        typeArguments: List<TypeArgumentMarker> = getArguments(),
+    ): KotlinTypeMarker {
+        return createSimpleType(typeConstructor, typeArguments, nullable, attributes = getAttributes())
+    }
+
+    private fun isArrayWithCapturedArgumentToApproximate(
+        typeConstructor: TypeConstructorMarker,
+        type: SimpleTypeMarker,
+        conf: TypeApproximatorConfiguration,
+    ): Boolean {
+        return typeConstructor.isArrayConstructor() &&
+                type.getArguments().first().let { it is CapturedTypeMarker && conf.capturedType(ctx, it) }
+    }
+
     private fun approximateLocalTypes(
         type: SimpleTypeMarker,
         conf: TypeApproximatorConfiguration,
         toSuper: Boolean,
-        depth: Int
+        depth: Int,
     ): SimpleTypeMarker? {
         if (!toSuper) return null
         if (!conf.localTypes && !conf.anonymous) return null
