@@ -1,13 +1,10 @@
 #import "kt57640.h"
 
-@implementation InterfaceBase
+@implementation Base
 @end
 
-@implementation InterfaceDerivedWithoutPropertyOverride
+@implementation Derived
 @end
 
-@implementation InterfaceDerivedWithPropertyReadonlyOverride
-@end
-
-@implementation InterfaceDerivedWithPropertyReadWriteOverride
+@implementation DerivedWithPropertyOverride
 @end

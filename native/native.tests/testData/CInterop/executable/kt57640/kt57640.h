@@ -1,47 +1,25 @@
 #import <Foundation/NSObject.h>
 
-@interface InterfaceBase : NSObject
-@property (readwrite) InterfaceBase* delegate;
+@interface Base : NSObject
+@property (readwrite) Base* delegate;
 @end
 
-@protocol IntegerProperty
-@property (readonly) NSInteger delegate;
+@protocol Foo
+@property (readwrite) id<Foo> delegate;
 @end
 
-@protocol UIntegerProperty
-@property (readonly) NSUInteger delegate;
+@protocol Bar
+@property (readwrite) id<Bar> delegate;
 @end
 
-// Note: `clang -Werror` would raise error for InterfaceDerivedWithoutPropertyOverride:
-// error: 'retain (or strong)' attribute on property 'delegate' does not match the property inherited from 'IntegerProperty' [-Wproperty-attribute-mismatch]
-@interface InterfaceDerivedWithoutPropertyOverride : InterfaceBase<UIntegerProperty, IntegerProperty>
-// property `delegate` is an intersection override from
-// - `InterfaceBase* InterfaceBase.delegate` and
-// - `NSUInteger IntegerProperty.delegate`
-// - `NSInteger IntegerProperty.delegate`
-// Clang chooses the following types for intersection override:
-// - for field `delegate`: type of property in base class
-// - for method `delegate()`: type of property in first mentioned protocol
+@interface Derived : Base<Bar, Foo>
+// This interface does not have re-declaration of property `delegate`.
+// Return type of getter `delegate()` and param type of setter `setDelegate()` are:
+//   the type of property defined in the first mentioned protocol (id<Bar>), which is incompatible with property type.
 @end
 
-// Note: `clang -Werror` would raise error for InterfaceDerivedWithPropertyOverride:
-// error: 'retain (or strong)' attribute on property 'delegate' does not match the property inherited from 'IntegerProperty' [-Wproperty-attribute-mismatch]
-@interface InterfaceDerivedWithPropertyReadonlyOverride : InterfaceBase<UIntegerProperty, IntegerProperty>
-// property `delegate` is affected by parent declarations:
-@property (readonly) InterfaceDerivedWithPropertyReadonlyOverride* delegate;
-@end
-
-@protocol IntegerPropertyReadWrite
-@property (readwrite) NSInteger delegate;
-@end
-
-@protocol UIntegerPropertyReadWrite
-@property (readwrite) NSUInteger delegate;
-@end
-
-// Note: `clang -Werror` would raise error for InterfaceDerivedWithPropertyReadWriteOverride:
-// error: 'retain (or strong)' attribute on property 'delegate' does not match the property inherited from 'IntegerProperty' [-Wproperty-attribute-mismatch]
-@interface InterfaceDerivedWithPropertyReadWriteOverride : InterfaceBase<UIntegerPropertyReadWrite, IntegerPropertyReadWrite>
-// property `delegate` is affected by parent declarations:
-@property (readwrite) InterfaceDerivedWithPropertyReadWriteOverride* delegate;
+@interface DerivedWithPropertyOverride : Base<Bar, Foo>
+// This interface does not have re-declaration of property `delegate`.
+// Return type of getter `delegate()` and param type of setter `setDelegate()` are `DerivedWithPropertyOverride*`
+@property (readwrite) DerivedWithPropertyOverride* delegate;
 @end
