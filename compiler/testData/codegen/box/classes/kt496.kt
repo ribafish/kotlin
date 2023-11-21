@@ -1,4 +1,4 @@
-// IGNORE_BACKEND_K2: NATIVE
+// IGNORE_NATIVE_K2: optimizationMode=DEBUG
 // (see KT-62878 for details)
 fun test1() : Boolean {
     try {
