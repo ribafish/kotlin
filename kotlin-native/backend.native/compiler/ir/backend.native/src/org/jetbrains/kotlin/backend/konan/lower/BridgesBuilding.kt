@@ -306,12 +306,9 @@ private fun Context.buildBridge(startOffset: Int, endOffset: Int,
         typeSafeBarrierDescription?.let { buildTypeSafeBarrier(bridge, overriddenFunction.function, it) }
 
         fun castIfNeeded(value: IrExpression, expectedType: IrType, bridgeDirection: BridgeDirection) =
-                if (bridgeDirection.kind != BridgeDirectionKind.CAST) {
-                    if (value.type == expectedType)
-                        value
-                    else
-                        irImplicitCast(value, expectedType)
-                } else {
+                if (bridgeDirection.kind != BridgeDirectionKind.CAST)
+                    value
+                else {
                     if (expectedType.isNullable())
                         irAs(value, expectedType)
                     else irImplicitCast(irAs(value, expectedType.makeNullable()), expectedType)
