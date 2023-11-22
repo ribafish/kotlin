@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.MutableOrEmptyList
 import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.symbols.impl.FirScriptSymbol
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
@@ -33,9 +32,9 @@ internal class FirScriptImpl(
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
     override val name: Name,
-    override var statements: MutableOrEmptyList<FirStatement>,
+    override val declarations: MutableList<FirDeclaration>,
     override val symbol: FirScriptSymbol,
-    override val parameters: MutableList<FirVariable>,
+    override val parameters: MutableList<FirProperty>,
     override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override val resultPropertyName: Name?,
 ) : FirScript() {
@@ -49,7 +48,7 @@ internal class FirScriptImpl(
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         annotations.forEach { it.accept(visitor, data) }
         controlFlowGraphReference?.accept(visitor, data)
-        statements.forEach { it.accept(visitor, data) }
+        declarations.forEach { it.accept(visitor, data) }
         parameters.forEach { it.accept(visitor, data) }
         contextReceivers.forEach { it.accept(visitor, data) }
     }
@@ -57,9 +56,9 @@ internal class FirScriptImpl(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirScriptImpl {
         transformAnnotations(transformer, data)
         controlFlowGraphReference = controlFlowGraphReference?.transform(transformer, data)
-        transformStatements(transformer, data)
-        parameters.transformInplace(transformer, data)
-        contextReceivers.transformInplace(transformer, data)
+        transformDeclarations(transformer, data)
+        transformParameters(transformer, data)
+        transformContextReceivers(transformer, data)
         return this
     }
 
@@ -68,8 +67,18 @@ internal class FirScriptImpl(
         return this
     }
 
-    override fun <D> transformStatements(transformer: FirTransformer<D>, data: D): FirScriptImpl {
-        statements.transformInplace(transformer, data)
+    override fun <D> transformDeclarations(transformer: FirTransformer<D>, data: D): FirScriptImpl {
+        declarations.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformParameters(transformer: FirTransformer<D>, data: D): FirScriptImpl {
+        parameters.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformContextReceivers(transformer: FirTransformer<D>, data: D): FirScriptImpl {
+        contextReceivers.transformInplace(transformer, data)
         return this
     }
 
@@ -81,7 +90,8 @@ internal class FirScriptImpl(
         controlFlowGraphReference = newControlFlowGraphReference
     }
 
-    override fun replaceStatements(newStatements: List<FirStatement>) {
-        statements = newStatements.toMutableOrEmpty()
+    override fun replaceDeclarations(newDeclarations: List<FirDeclaration>) {
+        declarations.clear()
+        declarations.addAll(newDeclarations)
     }
 }

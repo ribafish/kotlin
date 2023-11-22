@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLoc
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirFileBuilder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirProvider
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
@@ -60,7 +59,7 @@ internal fun KtDeclaration.findSourceNonLocalFirDeclaration(firFile: FirFile, pr
                                 return@findSourceNonLocalFirDeclarationByProvider firScript?.takeIf { it.psi == declaration }
                             }
 
-                            firScript?.statements?.filterIsInstance<FirDeclaration>()
+                            firScript?.declarations?.filterNot { it is FirAnonymousInitializer }
                         } else {
                             firFile.declarations
                         }
@@ -211,9 +210,9 @@ val FirDeclaration.isGeneratedDeclaration
     get() = realPsi == null
 
 internal inline fun FirScript.forEachDeclaration(action: (FirDeclaration) -> Unit) {
-    for (statement in statements) {
-        if (statement.isScriptStatement) continue
-        action(statement as FirDeclaration)
+    for (statement in declarations) {
+        if (statement.isElementWhichShouldBeResolvedAsPartOfScript) continue
+        action(statement)
     }
 }
 
@@ -236,15 +235,16 @@ internal inline fun FirDeclaration.forEachDeclaration(action: (FirDeclaration) -
     }
 }
 
-internal val FirStatement.isScriptStatement: Boolean get() = this !is FirDeclaration || isScriptDependentDeclaration
+// TODO: check usages - maybe the meaning is changed after introducing script blocks
+internal val FirDeclaration.isElementWhichShouldBeResolvedAsPartOfScript: Boolean get() = this is FirAnonymousInitializer || isScriptDependentDeclaration
 
-internal val FirStatement.isScriptDependentDeclaration: Boolean
-    get() = this is FirDeclaration && origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty
+internal val FirDeclaration.isScriptDependentDeclaration: Boolean
+    get() = origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty
 
 internal inline fun FirScript.forEachDependentDeclaration(action: (FirDeclaration) -> Unit) {
-    for (statement in statements) {
-        if (statement !is FirDeclaration || !statement.isScriptDependentDeclaration) continue
-        action(statement)
+    for (declaration in declarations) {
+        if (declaration is FirAnonymousInitializer || !declaration.isScriptDependentDeclaration) continue
+        action(declaration)
     }
 }
 

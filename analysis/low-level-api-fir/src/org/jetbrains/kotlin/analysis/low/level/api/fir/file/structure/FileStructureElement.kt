@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.FileStructure
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.ScriptDiagnosticRetriever
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.SingleNonLocalDeclarationDiagnosticRetriever
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.isImplicitConstructor
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isScriptStatement
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isElementWhichShouldBeResolvedAsPartOfScript
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.correspondingProperty
 import org.jetbrains.kotlin.fir.declarations.*
@@ -141,8 +141,8 @@ internal class RootScriptStructureElement(
 internal fun <T, R> visitScriptDependentElements(script: FirScript, visitor: FirVisitor<T, R>, data: R) {
     script.annotations.forEach { it.accept(visitor, data) }
     script.contextReceivers.forEach { it.accept(visitor, data) }
-    script.statements.forEach {
-        if (it.isScriptStatement) {
+    script.declarations.forEach {
+        if (it.isElementWhichShouldBeResolvedAsPartOfScript) {
             it.accept(visitor, data)
         }
     }

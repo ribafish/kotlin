@@ -433,7 +433,7 @@ private class CollectingVisitor(private val collector: ElementsToShortenCollecto
     }
 
     override fun visitScript(script: FirScript) {
-        script.statements.forEach {
+        script.declarations.forEach {
             it.accept(this)
         }
     }

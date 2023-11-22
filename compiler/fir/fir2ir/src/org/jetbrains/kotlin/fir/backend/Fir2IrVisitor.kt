@@ -254,9 +254,9 @@ class Fir2IrVisitor(
 
             conversionScope.withParent(irScript) {
                 val destructComposites = mutableMapOf<FirVariableSymbol<*>, IrComposite>()
-                for (statement in script.statements) {
-                    val irStatement = if (statement is FirDeclaration) {
-                        when {
+                for (statement in script.declarations) {
+                    if (statement !is FirAnonymousInitializer) {
+                        val irStatement = when {
                             statement is FirProperty && statement.name == SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> {
                                 continue
                             }
@@ -311,10 +311,12 @@ class Fir2IrVisitor(
                                 statement.accept(this@Fir2IrVisitor, null) as? IrDeclaration
                             }
                         }
+                        irScript.statements.add(irStatement!!)
                     } else {
-                        statement.toIrStatement()
+                        statement.body?.statements?.mapNotNull { it.toIrStatement() }?.let {
+                            irScript.statements.addAll(it)
+                        }
                     }
-                    irScript.statements.add(irStatement!!)
                 }
             }
             for (configurator in session.extensionService.fir2IrScriptConfigurators) {

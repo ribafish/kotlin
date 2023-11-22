@@ -266,7 +266,7 @@ private class LLFirBodyTargetResolver(
 
     override fun rawResolve(target: FirElementWithResolveState) {
         when (target) {
-            is FirScript -> target.takeUnless(FirScript::isCertainlyResolved)?.let(::resolveScript)
+            is FirScript -> target.let(::resolveScript)
             else -> super.rawResolve(target)
         }
 
@@ -276,20 +276,22 @@ private class LLFirBodyTargetResolver(
 
 internal object BodyStateKeepers {
     val SCRIPT: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { script, designation ->
-        val oldStatements = script.statements
-        if (oldStatements.none { it.isScriptStatement } || script.isCertainlyResolved) return@stateKeeper
+        val oldDeclarations = script.declarations
+        if (oldDeclarations.none { it.isElementWhichShouldBeResolvedAsPartOfScript }) return@stateKeeper
 
         add(RESULT_PROPERTY, designation)
-        add(FirScript::statements, FirScript::replaceStatements) {
-            val recreatedStatements = FirLazyBodiesCalculator.createStatementsForScript(script)
-            requireSameSize(oldStatements, recreatedStatements)
+        add(FirScript::declarations, FirScript::replaceDeclarations) {
+            val recreatedDeclarations = FirLazyBodiesCalculator.createDeclarationsForScript(script)
+            requireSameSize(oldDeclarations, recreatedDeclarations)
 
-            ArrayList<FirStatement>(oldStatements.size).apply {
-                oldStatements.zip(recreatedStatements).mapTo(this) { (old, new) ->
+            ArrayList<FirDeclaration>(oldDeclarations.size).apply {
+                oldDeclarations.zip(recreatedDeclarations).mapTo(this) { (old, new) ->
                     when {
-                        !old.isScriptStatement -> old
+                        !old.isElementWhichShouldBeResolvedAsPartOfScript -> old
                         old is FirProperty && old.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
-                            old.replaceInitializer((new as FirProperty).initializer)
+                            if (old.bodyResolveState != FirPropertyBodyResolveState.ALL_BODIES_RESOLVED) {
+                                old.replaceInitializer((new as FirProperty).initializer)
+                            }
                             old
                         }
 
@@ -432,17 +434,9 @@ private fun StateKeeperScope<FirFunction, FirDesignationWithFile>.preserveContra
     }
 }
 
-private fun FirScript.findResultProperty(): FirProperty? = statements.findIsInstanceAnd<FirProperty> {
+private fun FirScript.findResultProperty(): FirProperty? = declarations.findIsInstanceAnd<FirProperty> {
     it.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty
 }
-
-private val FirScript.isCertainlyResolved: Boolean
-    get() {
-        val dependentProperty = findResultProperty() ?: return false
-
-        // This meant that we already resolve the entire script on implicit body phase
-        return dependentProperty.bodyResolveState == FirPropertyBodyResolveState.ALL_BODIES_RESOLVED
-    }
 
 private val FirFunction.isCertainlyResolved: Boolean
     get() {
@@ -513,7 +507,8 @@ private fun delegatedConstructorCallGuard(fir: FirDelegatedConstructorCall): Fir
     }
 }
 
-private fun requireSameSize(old: List<FirStatement>, new: List<FirStatement>) {
+private fun requireSameSize(old: List<FirDeclaration>, new: List<FirDeclaration>) {
+    // TODO: check the meaning after switching to script blocks
     requireWithAttachment(
         condition = old.size == new.size,
         message = { "The number of statements are different" }

@@ -1233,21 +1233,45 @@ open class PsiRawFirBuilder(
             sourceFile: KtSourceFile?,
             setup: FirScriptBuilder.() -> Unit = {},
         ): FirScript {
+            val scriptName = Name.special("<script-$fileName>")
+            val scriptSymbol = FirScriptSymbol(context.packageFqName.child(scriptName))
+
             return buildScript {
                 source = script.toFirSourceElement()
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
-                name = Name.special("<script-$fileName>")
-                symbol = FirScriptSymbol(context.packageFqName.child(name))
-                for (declaration in script.declarations) {
+                name = scriptName
+                symbol = scriptSymbol
+
+                val scriptDeclarationsIter = script.declarations.listIterator()
+                while (scriptDeclarationsIter.hasNext()) {
+                    val declaration = scriptDeclarationsIter.next()
+                    val isLast = !scriptDeclarationsIter.hasNext()
+                    val declarationSource = declaration.toFirSourceElement()
                     when (declaration) {
                         is KtScriptInitializer -> {
-                            declaration.body?.let { statements.add(it.toFirStatement()) }
+                            val firBlock =
+                                if (isLast) {
+                                    // the last one need to be analyzed in script configurator to decide on result property
+                                    // therefore no lazy conversion in this case
+                                    withForcedLocalContext { declaration.body.toFirBlock() }
+                                } else {
+                                    buildOrLazyBlock { withForcedLocalContext { declaration.body.toFirBlock() } }
+                                }
+                            declarations.add(
+                                buildAnonymousInitializer {
+                                    moduleData = baseModuleData
+                                    origin = FirDeclarationOrigin.Source
+                                    source = declarationSource
+                                    body = firBlock
+                                    declaration.extractAnnotationsTo(this)
+                                }
+                            )
                         }
                         is KtDestructuringDeclaration -> {
                             val destructuringContainerVar = generateTemporaryVariable(
                                 baseModuleData,
-                                declaration.toFirSourceElement(),
+                                declarationSource,
                                 "destruct",
                                 declaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
                                 origin = FirDeclarationOrigin.Synthetic.ScriptTopLevelDestructuringDeclarationContainer,
@@ -1255,9 +1279,9 @@ open class PsiRawFirBuilder(
                             ).apply {
                                 isDestructuringDeclarationContainerVariable = true
                             }
-                            statements.add(destructuringContainerVar)
+                            declarations.add(destructuringContainerVar)
 
-                            statements.addDestructuringVariables(
+                            declarations.addDestructuringVariables(
                                 moduleData,
                                 declaration,
                                 destructuringContainerVar,
@@ -1268,7 +1292,12 @@ open class PsiRawFirBuilder(
                             }
                         }
                         else -> {
-                            statements.add(declaration.toFirStatement())
+                            val firStatement = declaration.toFirStatement()
+                            if (firStatement is FirDeclaration) {
+                                declarations.add(firStatement)
+                            } else {
+                                error("unexpected declaration type in script")
+                            }
                         }
                     }
                 }
