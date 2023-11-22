@@ -69,4 +69,62 @@ public class FirIdeNormalAnalysisSourceModuleDanglingFileReferenceResolveTestGen
     public void testFunctionSameFile() throws Exception {
         runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/functionSameFile.kt");
     }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf")
+    @TestDataPath("$PROJECT_ROOT")
+    public class IgnoreSelf {
+        @Test
+        public void testAllFilesPresentInIgnoreSelf() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/localClass.kt");
+        }
+
+        @Test
+        @TestMetadata("localVariable.kt")
+        public void testLocalVariable() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/localVariable.kt");
+        }
+
+        @Test
+        @TestMetadata("primaryConstructorParameter.kt")
+        public void testPrimaryConstructorParameter() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/primaryConstructorParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("privateClass.kt")
+        public void testPrivateClass() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/privateClass.kt");
+        }
+
+        @Test
+        @TestMetadata("privateFunction.kt")
+        public void testPrivateFunction() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/privateFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("privateProperty.kt")
+        public void testPrivateProperty() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/privateProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("publicFunction.kt")
+        public void testPublicFunction() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/publicFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("publicProperty.kt")
+        public void testPublicProperty() throws Exception {
+            runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/publicProperty.kt");
+        }
+    }
 }
