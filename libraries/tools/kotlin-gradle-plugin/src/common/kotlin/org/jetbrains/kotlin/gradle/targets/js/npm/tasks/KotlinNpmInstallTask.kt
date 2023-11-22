@@ -81,16 +81,12 @@ abstract class KotlinNpmInstallTask :
     }
 
     @get:OutputFile
-    val yarnLock: Provider<RegularFile> by lazy {
-        nodeJs.rootPackageDir.map { it.file("yarn.lock") }
-    }
+    val yarnLock: Provider<RegularFile> = nodeJs.rootPackageDir.map { it.file("yarn.lock") }
 
     // node_modules as OutputDirectory is performance problematic
     // so input will only be existence of its directory
     @get:Internal
-    val nodeModules: Provider<Directory> by lazy {
-        nodeJs.rootPackageDir.map { it.dir("node_modules") }
-    }
+    val nodeModules: Provider<Directory> = nodeJs.rootPackageDir.map { it.dir("node_modules") }
 
     @TaskAction
     fun resolve() {

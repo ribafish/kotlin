@@ -54,9 +54,8 @@ abstract class RootPackageJsonTask :
     }
 
     @get:OutputFile
-    val rootPackageJson: Provider<RegularFile> by lazy {
+    val rootPackageJson: Provider<RegularFile> =
         nodeJs.rootPackageDir.map { it.file(NpmProject.PACKAGE_JSON) }
-    }
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:IgnoreEmptyDirectories

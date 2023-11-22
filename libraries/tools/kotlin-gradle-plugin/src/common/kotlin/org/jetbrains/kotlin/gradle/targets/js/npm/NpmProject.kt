@@ -55,9 +55,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
         project.rootProject.kotlinNodeJsExtension
     }
 
-    val dir: Provider<Directory> by lazy {
-        nodeJs.projectPackagesDir.map { it.dir(name) }
-    }
+    val dir: Provider<Directory> = nodeJs.projectPackagesDir.map { it.dir(name) }
 
     val target: KotlinJsTargetDsl
         get() = compilation.target as KotlinJsTargetDsl
@@ -105,7 +103,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
         args: List<String>
     ) {
         exec.workingDir(dir)
-        exec.executable = nodeExecutable
+        exec.executable(nodeExecutable)
         exec.args = nodeArgs + require(tool) + args
     }
 
