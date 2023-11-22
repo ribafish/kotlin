@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.collectContainingDeclarationsIfNonLocal
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.collectUseSiteContainers
+import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.java.JavaVisibilities
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
@@ -48,22 +50,32 @@ internal class KtFirVisibilityChecker(
             candidateSymbol.isVisibleByPsi(useSiteFile)?.let { return it }
         }
 
-        val useSiteFirFile = useSiteFile.firSymbol.fir
-        val containers = position.collectContainingDeclarationsIfNonLocal(analysisSession.firResolveSession).orEmpty()
-
         val dispatchReceiverCanBeExplicit = candidateSymbol is KtCallableSymbol && !candidateSymbol.isExtension
         val explicitDispatchReceiver = runIf(dispatchReceiverCanBeExplicit) {
             receiverExpression?.getOrBuildFirSafe<FirExpression>(analysisSession.firResolveSession)
         }
 
-        val candidateFirSymbol = candidateSymbol.firSymbol.fir as FirMemberDeclaration
+        val candidateDeclaration = candidateSymbol.firSymbol.fir as FirMemberDeclaration
 
-        val rootModuleSession = rootModuleSession
-        return rootModuleSession.visibilityChecker.isVisible(
-            candidateFirSymbol,
-            rootModuleSession,
-            useSiteFirFile,
-            containers,
+        val positionModule = firResolveSession.moduleProvider.getModule(position)
+        val candidateModule = candidateDeclaration.llFirModuleData.ktModule
+        val shouldUnwrapCopy = positionModule is KtDanglingFileModule && candidateModule != positionModule
+
+        val effectiveSession = when {
+            shouldUnwrapCopy -> {
+                @Suppress("USELESS_CAST") // Smart cast is only available in K2
+                firResolveSession.getSessionFor((positionModule as KtDanglingFileModule).contextModule)
+            }
+            else -> firResolveSession.getSessionFor(positionModule)
+        }
+
+        val effectiveContainers = collectUseSiteContainers(position, firResolveSession, shouldUnwrapCopy).orEmpty()
+
+        return effectiveSession.visibilityChecker.isVisible(
+            candidateDeclaration,
+            effectiveSession,
+            useSiteFile.firSymbol.fir,
+            effectiveContainers,
             explicitDispatchReceiver
         )
     }
