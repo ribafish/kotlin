@@ -408,7 +408,8 @@ internal fun wasm_i64_extend_i32_s(a: Int): Long =
     implementedAsIntrinsic
 
 @WasmOp(WasmOp.I64_EXTEND_I32_U)
-internal external fun wasm_i64_extend_i32_u(a: Int): Long
+internal fun wasm_i64_extend_i32_u(a: Int): Long =
+    implementedAsIntrinsic
 
 @PublishedApi
 @WasmOp(WasmOp.F32_CONVERT_I32_S)
@@ -421,10 +422,12 @@ internal fun wasm_f32_convert_i64_s(a: Long): Float =
     implementedAsIntrinsic
 
 @WasmOp(WasmOp.F32_CONVERT_I32_U)
-internal external fun wasm_f32_convert_i32_u(a: Int): Float
+internal fun wasm_f32_convert_i32_u(a: Int): Float =
+    implementedAsIntrinsic
 
 @WasmOp(WasmOp.F32_CONVERT_I64_U)
-internal external fun wasm_f32_convert_i64_u(a: Long): Float
+internal fun wasm_f32_convert_i64_u(a: Long): Float =
+    implementedAsIntrinsic
 
 @PublishedApi
 @WasmOp(WasmOp.F32_DEMOTE_F64)
@@ -442,10 +445,12 @@ internal fun wasm_f64_convert_i64_s(a: Long): Double =
     implementedAsIntrinsic
 
 @WasmOp(WasmOp.F64_CONVERT_I32_U)
-internal external fun wasm_f64_convert_i32_u(a: Int): Double
+internal fun wasm_f64_convert_i32_u(a: Int): Double =
+    implementedAsIntrinsic
 
 @WasmOp(WasmOp.F64_CONVERT_I64_U)
-internal external fun wasm_f64_convert_i64_u(a: Long): Double
+internal fun wasm_f64_convert_i64_u(a: Long): Double =
+    implementedAsIntrinsic
 
 @PublishedApi
 @WasmOp(WasmOp.F64_PROMOTE_F32)
@@ -480,11 +485,13 @@ internal fun wasm_i32_trunc_sat_f64_s(a: Double): Int =
 
 @PublishedApi
 @WasmOp(WasmOp.I32_TRUNC_SAT_F32_U)
-internal external fun wasm_i32_trunc_sat_f32_u(a: Float): Int
+internal fun wasm_i32_trunc_sat_f32_u(a: Float): Int =
+    implementedAsIntrinsic
 
 @PublishedApi
 @WasmOp(WasmOp.I32_TRUNC_SAT_F64_U)
-internal external fun wasm_i32_trunc_sat_f64_u(a: Double): Int
+internal fun wasm_i32_trunc_sat_f64_u(a: Double): Int =
+    implementedAsIntrinsic
 
 @PublishedApi
 @WasmOp(WasmOp.I64_TRUNC_SAT_F32_S)
@@ -498,11 +505,13 @@ internal fun wasm_i64_trunc_sat_f64_s(a: Double): Long =
 
 @PublishedApi
 @WasmOp(WasmOp.I64_TRUNC_SAT_F32_U)
-internal external fun wasm_i64_trunc_sat_f32_u(a: Float): Long
+internal fun wasm_i64_trunc_sat_f32_u(a: Float): Long =
+    implementedAsIntrinsic
 
 @PublishedApi
 @WasmOp(WasmOp.I64_TRUNC_SAT_F64_U)
-internal external fun wasm_i64_trunc_sat_f64_u(a: Double): Long
+internal fun wasm_i64_trunc_sat_f64_u(a: Double): Long =
+    implementedAsIntrinsic
 
 @WasmOp(WasmOp.I32_LOAD)
 internal fun wasm_i32_load(x: Int): Int =
