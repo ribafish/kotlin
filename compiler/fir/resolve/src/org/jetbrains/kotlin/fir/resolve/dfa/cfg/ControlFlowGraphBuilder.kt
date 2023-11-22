@@ -624,14 +624,58 @@ class ControlFlowGraphBuilder {
         }
     }
 
-    fun enterScript(script: FirScript): ScriptEnterNode {
-        return enterGraph(script, "SCRIPT_GRAPH", ControlFlowGraph.Kind.Function) {
+    // ----------------------------------- Scripts -----------------------------------
+
+    fun enterScript(script: FirScript, buildGraph: Boolean): ScriptEnterNode? {
+        if (!buildGraph) {
+            graphs.push(ControlFlowGraph(declaration = null, "<discarded script graph>", ControlFlowGraph.Kind.Script))
+            return null
+        }
+        return enterGraph(script, script.name.asString(), ControlFlowGraph.Kind.Script) {
             createScriptEnterNode(it) to createScriptExitNode(it)
         }
     }
 
-    fun exitScript(): Pair<ScriptExitNode, ControlFlowGraph> {
-        return exitGraph()
+    fun exitScript(): Pair<ScriptExitNode?, ControlFlowGraph?> {
+        assert(currentGraph.kind == ControlFlowGraph.Kind.Script)
+        if (currentGraph.declaration == null) {
+            graphs.pop() // Discard empty script graph.
+            return null to null
+        }
+
+        val enterNode = lastNodes.pop() as ScriptEnterNode
+        val exitNode = currentGraph.exitNode as ScriptExitNode
+
+        val script = enterNode.fir
+        if ((script as FirControlFlowGraphOwner).controlFlowGraphReference != null) {
+            graphs.pop()
+            return null to null
+        }
+
+        val calledInPlace = mutableListOf<ControlFlowGraph>()
+
+        script.declarations.forEachGraphOwner {
+            val graph = it.controlFlowGraphReference?.controlFlowGraph ?: return@forEachGraphOwner
+            if (it is FirProperty || it is FirAnonymousInitializer) {
+                calledInPlace.add(graph)
+            }
+        }
+
+        val lastNode = calledInPlace.fold<_, CFGNode<*>>(enterNode) { lastNode, graph ->
+            if (lastNode !== enterNode || lastNode.previousNodes.isEmpty()) {
+                addEdgeToSubGraph(lastNode, graph.enterNode)
+            }
+            graph.exitNode
+        }
+
+        addEdge(lastNode, exitNode, preferredKind = EdgeKind.CfgForward, propagateDeadness = false)
+        if (calledInPlace.isNotEmpty()) {
+            // Fake edge to enforce ordering.
+            addEdge(enterNode, exitNode, preferredKind = EdgeKind.DeadForward, propagateDeadness = false)
+        }
+
+        enterNode.subGraphs = calledInPlace
+        return exitNode to popGraph()
     }
 
     fun enterCodeFragment(codeFragment: FirCodeFragment): CodeFragmentEnterNode {
@@ -1394,7 +1438,8 @@ class ControlFlowGraphBuilder {
     // ----------------------------------- Edge utils -----------------------------------
 
     private fun addNewSimpleNode(node: CFGNode<*>, isDead: Boolean = false) {
-        addEdge(lastNodes.pop(), node, preferredKind = if (isDead) EdgeKind.DeadForward else EdgeKind.Forward)
+        val from = lastNodes.pop()
+        addEdge(from, node, preferredKind = if (isDead) EdgeKind.DeadForward else EdgeKind.Forward)
         lastNodes.push(node)
     }
 
@@ -1476,6 +1521,15 @@ val FirControlFlowGraphOwner.isUsedInControlFlowGraphBuilderForClass: Boolean
 val FirControlFlowGraphOwner.isUsedInControlFlowGraphBuilderForFile: Boolean
     get() = when (this) {
         is FirProperty -> memberShouldHaveGraph
+        else -> false
+    }
+
+/**
+ * @return true for [FirControlFlowGraphOwner] which, as a script statement, should be part of the script
+ */
+val FirControlFlowGraphOwner.isUsedInControlFlowGraphBuilderForScript: Boolean
+    get() = when (this) {
+        is FirProperty, is FirField -> memberShouldHaveGraph
         else -> false
     }
 

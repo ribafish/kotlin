@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForClass
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForFile
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForScript
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirResolveContextCollector
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractsDslNames
@@ -104,6 +105,7 @@ private class LLFirBodyTargetResolver(
         firResolveContextCollector = firResolveContextCollector,
     ) {
         override val preserveCFGForClasses: Boolean get() = false
+        override val buildCfgForScripts: Boolean get() = false
         override val buildCfgForFiles: Boolean get() = false
     }
 
@@ -137,6 +139,12 @@ private class LLFirBodyTargetResolver(
                 }
 
                 return true
+            }
+            is FirScript -> {
+                if (target.resolvePhase >= resolverPhase) return true
+                // resolve properties so they are available for CFG building in resolveScript
+                resolveMembersForControlFlowGraph(target)
+                return false
             }
             is FirCodeFragment -> {
                 resolveCodeFragmentContext(target)
@@ -209,6 +217,35 @@ private class LLFirBodyTargetResolver(
         }
     }
 
+    private fun calculateControlFlowGraph(target: FirScript) {
+        checkWithAttachment(
+            target.controlFlowGraphReference == null,
+            { "'controlFlowGraphReference' should be 'null' if the script phase < $resolverPhase)" },
+        ) {
+            withFirEntry("firScript", target)
+        }
+
+        val dataFlowAnalyzer = transformer.declarationsTransformer.dataFlowAnalyzer
+        dataFlowAnalyzer.enterScript(target, buildGraph = true)
+        val controlFlowGraph = dataFlowAnalyzer.exitScript()
+            ?: errorWithAttachment("CFG should not be 'null' as 'buildGraph' is specified") {
+                withFirEntry("firScript", target)
+            }
+
+        target.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph))
+    }
+
+    private fun resolveMembersForControlFlowGraph(target: FirScript) {
+        withScript(target) {
+            for (member in target.declarations) {
+                if (member is FirControlFlowGraphOwner && member.isUsedInControlFlowGraphBuilderForScript) {
+                    member.lazyResolveToPhase(resolverPhase.previous)
+                    performResolve(member)
+                }
+            }
+        }
+    }
+
     private fun resolveCodeFragmentContext(firCodeFragment: FirCodeFragment) {
         val ktCodeFragment = firCodeFragment.psi as? KtCodeFragment
             ?: errorWithAttachment("Code fragment source not found") {
@@ -253,7 +290,12 @@ private class LLFirBodyTargetResolver(
             is FirField -> resolve(target, BodyStateKeepers.FIELD)
             is FirVariable -> resolve(target, BodyStateKeepers.VARIABLE)
             is FirAnonymousInitializer -> resolve(target, BodyStateKeepers.ANONYMOUS_INITIALIZER)
-            is FirScript -> resolve(target, BodyStateKeepers.SCRIPT)
+            is FirScript -> {
+                resolve(target, BodyStateKeepers.SCRIPT)
+                // Doesn't look like a good place for this call, but I don't see a better one, since the logic for scripts
+                // appear to be different from the class or file (?); see also doResolveWithoutLock
+                calculateControlFlowGraph(target)
+            }
             is FirDanglingModifierList,
             is FirFileAnnotationsContainer,
             is FirTypeAlias,
@@ -279,27 +321,18 @@ internal object BodyStateKeepers {
         val oldDeclarations = script.declarations
         if (oldDeclarations.none { it.isElementWhichShouldBeResolvedAsPartOfScript }) return@stateKeeper
 
-        add(RESULT_PROPERTY, designation)
-        add(FirScript::declarations, FirScript::replaceDeclarations) {
+        val lastProperty = oldDeclarations.lastOrNull()
+        if (lastProperty is FirProperty &&
+            lastProperty.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty &&
+            lastProperty.bodyResolveState != FirPropertyBodyResolveState.ALL_BODIES_RESOLVED
+        ) {
+            add(RESULT_PROPERTY, designation)
             val recreatedDeclarations = FirLazyBodiesCalculator.createDeclarationsForScript(script)
             requireSameSize(oldDeclarations, recreatedDeclarations)
-
-            ArrayList<FirDeclaration>(oldDeclarations.size).apply {
-                oldDeclarations.zip(recreatedDeclarations).mapTo(this) { (old, new) ->
-                    when {
-                        !old.isElementWhichShouldBeResolvedAsPartOfScript -> old
-                        old is FirProperty && old.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
-                            if (old.bodyResolveState != FirPropertyBodyResolveState.ALL_BODIES_RESOLVED) {
-                                old.replaceInitializer((new as FirProperty).initializer)
-                            }
-                            old
-                        }
-
-                        else -> new
-                    }
-                }
-            }
+            lastProperty.replaceInitializer((recreatedDeclarations.last() as FirProperty).initializer)
         }
+
+        entityList(oldDeclarations.mapNotNull { it as? FirAnonymousInitializer }, ANONYMOUS_INITIALIZER, designation)
     }
 
     private val RESULT_PROPERTY: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { script, _ ->
