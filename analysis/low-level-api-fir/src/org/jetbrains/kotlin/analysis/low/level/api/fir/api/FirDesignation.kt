@@ -5,12 +5,16 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.api
 
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.nullableJavaSymbolProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirLibraryOrLibrarySourceResolvableModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.FirElementFinder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.containingClassId
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.getContainingFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isScriptDependentDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.unwrapCopy
+import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
 import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -28,6 +32,7 @@ import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
@@ -63,6 +68,33 @@ open class FirDesignation(
 }
 
 private fun collectDesignationPath(target: FirElementWithResolveState): List<FirRegularClass>? {
+    val path = collectRealDesignationPath(target) ?: return null
+    return patchDesignationPathForCopy(target, path) ?: path
+}
+
+private fun patchDesignationPathForCopy(target: FirElementWithResolveState, targetPath: List<FirRegularClass>): List<FirRegularClass>? {
+    val targetModule = target.llFirModuleData.ktModule
+
+    if (targetModule is KtDanglingFileModule && targetModule.resolutionMode == DanglingFileResolutionMode.IGNORE_SELF) {
+        val targetPsiFile = targetModule.file ?: return null
+
+        val contextModule = targetModule.contextModule
+        val contextResolveSession = contextModule.getFirResolveSession(contextModule.project)
+
+        return buildList {
+            for (targetPathClass in targetPath) {
+                val targetPathPsi = targetPathClass.psi as? KtDeclaration ?: return null
+                val originalPathPsi = targetPathPsi.unwrapCopy(targetPsiFile) ?: return null
+                val originalPathClass = originalPathPsi.getOrBuildFirSafe<FirRegularClass>(contextResolveSession) ?: return null
+                add(originalPathClass)
+            }
+        }
+    }
+
+    return null
+}
+
+private fun collectRealDesignationPath(target: FirElementWithResolveState): List<FirRegularClass>? {
     when (target) {
         is FirSimpleFunction,
         is FirProperty,

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.project.structure
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.project.structure.impl.KtDanglingFileModuleImpl
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.psi.doNotAnalyze
 
@@ -54,7 +56,8 @@ public abstract class ProjectStructureProvider {
 
         if (file is KtFile && file.isDangling) {
             val contextModule = computeContextModule(file)
-            return KtDanglingFileModuleImpl(file, contextModule)
+            val resolutionMode = file.danglingFileResolutionMode ?: DanglingFileResolutionMode.PREFER_SELF
+            return KtDanglingFileModuleImpl(file, contextModule, resolutionMode)
         }
 
         return null
@@ -97,8 +100,33 @@ public abstract class ProjectStructureProvider {
 }
 
 @OptIn(KtModuleStructureInternals::class)
-private val KtFile.isDangling: Boolean
-    get() = this is KtCodeFragment
-            || !isPhysical
-            || analysisContext != null
-            || doNotAnalyze != null
+public val KtFile.isDangling: Boolean
+    get() = when {
+        this is KtCodeFragment -> true
+        virtualFile?.analysisExtensionFileContextModule != null -> false
+        !isPhysical -> true
+        analysisContext != null -> true
+        doNotAnalyze != null -> true
+        else -> false
+    }
+
+@OptIn(KtModuleStructureInternals::class)
+public val KtFile.danglingFileResolutionMode: DanglingFileResolutionMode?
+    get() = danglingFileResolutionModeState?.get()
+
+@KtModuleStructureInternals
+public fun <R> withDanglingFileResolutionMode(file: KtFile, mode: DanglingFileResolutionMode, action: () -> R): R {
+    val modeState = file.danglingFileResolutionModeState
+        ?: ThreadLocal<DanglingFileResolutionMode?>().also { file.danglingFileResolutionModeState = it }
+
+    val oldValue = modeState.get()
+    try {
+        modeState.set(mode)
+        return action()
+    } finally {
+        modeState.set(oldValue)
+    }
+}
+
+private var KtFile.danglingFileResolutionModeState: ThreadLocal<DanglingFileResolutionMode?>?
+        by UserDataProperty(Key.create("DANGLING_FILE_RESOLUTION_MODE"))

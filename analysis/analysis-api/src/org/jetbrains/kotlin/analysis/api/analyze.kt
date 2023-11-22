@@ -7,9 +7,12 @@
 
 package org.jetbrains.kotlin.analysis.api
 
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider
+import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtModuleStructureInternals
+import org.jetbrains.kotlin.analysis.project.structure.isDangling
+import org.jetbrains.kotlin.analysis.project.structure.withDanglingFileResolutionMode
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -58,3 +61,23 @@ public inline fun <R> analyzeInDependedAnalysisSession(
 ): R =
     KtAnalysisSessionProvider.getInstance(originalFile.project)
         .analyseInDependedAnalysisSession(originalFile, elementToReanalyze, action)
+
+/**
+ * Executes the given [action] in a [KtAnalysisSession] context, assuming that the [useSiteKtElement] is inside an in-memory file copy.
+ * Depending on the passed [resolutionMode], declarations inside a file copy will be treated in a specific way.
+ *
+ * The project will be analyzed from the perspective of [useSiteKtElement]'s module, also called the use-site module.
+ */
+@OptIn(KtModuleStructureInternals::class)
+public inline fun <R> analyzeCopy(
+    useSiteKtElement: KtElement,
+    resolutionMode: DanglingFileResolutionMode,
+    crossinline action: KtAnalysisSession.() -> R,
+): R {
+    val containingFile = useSiteKtElement.containingKtFile
+    require(containingFile.isDangling) { "analyzeCopy() is only available to dangling files" }
+
+    return withDanglingFileResolutionMode(containingFile, resolutionMode) {
+        analyze(containingFile, action)
+    }
+}
