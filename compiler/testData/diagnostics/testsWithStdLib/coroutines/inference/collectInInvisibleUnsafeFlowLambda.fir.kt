@@ -37,7 +37,7 @@ import internal.*
 
 @Suppress("INVISIBLE_MEMBER", <!ERROR_SUPPRESSION!>"INVISIBLE_REFERENCE"<!>)
 fun <T> Flow<T>.takeWhileDirect(predicate: suspend (T) -> Boolean): Flow<T> = unsafeFlow {
-    <!ILLEGAL_SUSPEND_FUNCTION_CALL!>collect<!> { value ->
+    collect { value ->
         if (predicate(value)) {
             emit(value)
         }

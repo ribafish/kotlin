@@ -315,7 +315,10 @@ class FirCallCompletionResultsWriterTransformer(
                 result.replaceArgumentList(newArgumentList)
             }
         }
-        val expectedArgumentsTypeMapping = runIf(!calleeReference.isError) { subCandidate.createArgumentsMapping() }
+        val expectedArgumentsTypeMapping = runIf(
+            !calleeReference.isError ||
+                    calleeReference is FirErrorReferenceWithCandidate && calleeReference.diagnostic is ConeVisibilityError
+        ) { subCandidate.createArgumentsMapping() }
         result.argumentList.transformArguments(this, expectedArgumentsTypeMapping)
         result.replaceConeTypeOrNull(resultType)
         session.lookupTracker?.recordTypeResolveAsLookup(resultType, functionCall.source, context.file.source)
