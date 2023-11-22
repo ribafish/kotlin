@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.backend.konan.ir.getSuperClassNotAny
 import org.jetbrains.kotlin.backend.konan.ir.getSuperInterfaces
 import org.jetbrains.kotlin.backend.konan.ir.isNothing
 import org.jetbrains.kotlin.backend.konan.llvm.isVoidAsReturnType
-import org.jetbrains.kotlin.backend.konan.lower.erasedUpperBound
+import org.jetbrains.kotlin.backend.konan.lower.erasure
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.*
@@ -84,10 +84,7 @@ private enum class TypeKind {
 private data class TypeWithKind(val erasedType: IrType?, val kind: TypeKind) {
     companion object {
         fun fromType(irType: IrType?): TypeWithKind {
-            val erasedUpperBound = irType?.erasedUpperBound
-            val erasedType = erasedUpperBound?.defaultType?.let {
-                if (irType.isNullable()) it.makeNullable() else it
-            }
+            val erasedType = irType?.erasure()
             return when {
                 irType == null -> TypeWithKind(null, TypeKind.ABSENT)
                 irType.isInlinedNative() -> TypeWithKind(erasedType, TypeKind.VALUE_TYPE)
