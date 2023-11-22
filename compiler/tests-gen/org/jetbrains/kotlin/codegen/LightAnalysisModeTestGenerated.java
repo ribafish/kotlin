@@ -39973,6 +39973,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/sam/kt59858.kt");
         }
 
+        @TestMetadata("kt63564.kt")
+        public void testKt63564() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt63564.kt");
+        }
+
         @TestMetadata("noConversionFromSamToSam.kt")
         public void testNoConversionFromSamToSam() throws Exception {
             runTest("compiler/testData/codegen/box/sam/noConversionFromSamToSam.kt");
