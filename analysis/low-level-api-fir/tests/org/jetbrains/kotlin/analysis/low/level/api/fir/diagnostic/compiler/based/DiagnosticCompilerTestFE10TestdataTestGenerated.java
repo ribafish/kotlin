@@ -42368,6 +42368,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("collectInInvisibleUnsafeFlowLambda.kt")
+                public void testCollectInInvisibleUnsafeFlowLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/collectInInvisibleUnsafeFlowLambda.kt");
+                }
+
+                @Test
                 @TestMetadata("coroutineInferenceWithCapturedTypeVariable.kt")
                 public void testCoroutineInferenceWithCapturedTypeVariable() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/coroutineInferenceWithCapturedTypeVariable.kt");

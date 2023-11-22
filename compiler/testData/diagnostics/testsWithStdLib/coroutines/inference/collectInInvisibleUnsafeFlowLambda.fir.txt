@@ -1,0 +1,45 @@
+Module: lib
+FILE: flow.kt
+    package flow
+
+    public abstract interface Flow<T> : R|kotlin/Any| {
+        public abstract suspend fun collect(collector: R|flow/FlowCollector<T>|): R|kotlin/Unit|
+
+    }
+    public abstract fun interface FlowCollector<T> : R|kotlin/Any| {
+        public abstract suspend fun emit(value: R|T|): R|kotlin/Unit|
+
+    }
+    @R|kotlin/Deprecated|(level = Q|kotlin/DeprecationLevel|.R|kotlin/DeprecationLevel.HIDDEN|, message = String()) public final inline suspend fun <T> R|flow/Flow<T>|.collect(crossinline action: R|suspend (@R|kotlin/ParameterName|(name = String(value))  T) -> kotlin/Unit|): R|kotlin/Unit| {
+    }
+FILE: internal.kt
+    package internal
+
+    internal final inline fun <T> unsafeFlow(crossinline block: R|suspend flow/FlowCollector<T>.() -> kotlin/Unit|): R|flow/Flow<T>| {
+        ^unsafeFlow object : R|flow/Flow<T>| {
+            private constructor(): R|internal/<anonymous><T>| {
+                super<R|kotlin/Any|>()
+            }
+
+            public open override suspend fun collect(collector: R|flow/FlowCollector<T>|): R|kotlin/Unit| {
+            }
+
+        }
+
+    }
+Module: main
+FILE: main.kt
+    @R|kotlin/Suppress|(names = vararg(String(INVISIBLE_MEMBER), String(INVISIBLE_REFERENCE))) public final fun <T> R|flow/Flow<T>|.takeWhileDirect(predicate: R|suspend (T) -> kotlin/Boolean|): R|flow/Flow<T>| {
+        ^takeWhileDirect R|internal/unsafeFlow<HIDDEN: internal/unsafeFlow is invisible>#|<R|T|>(<L> = unsafeFlow@fun R|flow/FlowCollector<T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+            this@R|/takeWhileDirect|.R|SubstitutionOverride<flow/Flow.collect: R|kotlin/Unit|>|(<L> = collect@fun <anonymous>(value: R|T|): R|kotlin/Unit| <inline=NoInline>  {
+                when () {
+                    R|<local>/predicate|.R|SubstitutionOverride<kotlin/coroutines/SuspendFunction1.invoke: R|kotlin/Boolean|>|(R|<local>/value|) ->  {
+                        this@R|special/anonymous|.R|SubstitutionOverride<flow/FlowCollector.emit: R|kotlin/Unit|>|(R|<local>/value|)
+                    }
+                }
+
+            }
+            )
+        }
+        )
+    }
