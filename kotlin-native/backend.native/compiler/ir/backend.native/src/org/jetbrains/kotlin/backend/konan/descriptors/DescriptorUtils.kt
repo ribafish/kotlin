@@ -165,7 +165,7 @@ internal data class BridgeDirection(val erasedType: IrType?, val kind: BridgeDir
  *  +-----+-----+-----+-----+-----+-----+
  *  | REF |  E  |  N  |  B  |  N  | C^N |
  *  +-----+-----+-----+-----+-----+-----+
- *  | <T> |  E  |  N  |  B  | C^N |  N  |
+ *  | <T> |  E  |  N  |  B  | C^N | C^N |
  *  +-----+-----+-----+-----+-----+-----+
  */
 
@@ -197,7 +197,7 @@ private val bridgeDirectionBuilders = arrayOf(
         arrayOf(null, None, None, Drop, Drop),
         arrayOf(null, Unbox, None, Unbox, Unbox),
         arrayOf(null, None, Box, None, Cast),
-        arrayOf(null, None, Box, Cast, None),
+        arrayOf(null, None, Box, Cast, Cast),
 )
 
 private fun IrFunction.bridgeDirectionToAt(overriddenFunction: IrFunction, index: ParameterIndex): BridgeDirection {

@@ -309,9 +309,10 @@ private fun Context.buildBridge(startOffset: Int, endOffset: Int,
                 if (bridgeDirection.kind != BridgeDirectionKind.CAST)
                     value
                 else {
-                    if (expectedType.isNullable())
-                        irAs(value, expectedType)
-                    else irImplicitCast(irAs(value, expectedType.makeNullable()), expectedType)
+                    val erasedExpectedType = expectedType.erasure()
+                    if (erasedExpectedType.isNullable())
+                        irAs(value, erasedExpectedType)
+                    else irImplicitCast(irAs(value, erasedExpectedType.makeNullable()), erasedExpectedType)
                 }
 
         val delegatingCall = IrCallImpl.fromSymbolOwner(
