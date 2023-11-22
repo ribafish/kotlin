@@ -1250,6 +1250,7 @@ open class PsiRawFirBuilder(
                                 declaration.toFirSourceElement(),
                                 "destruct",
                                 declaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
+                                origin = FirDeclarationOrigin.Synthetic.ScriptTopLevelDestructuringDeclarationContainer,
                                 extractAnnotationsTo = { extractAnnotationsTo(it) }
                             ).apply {
                                 isDestructuringDeclarationContainerVariable = true
