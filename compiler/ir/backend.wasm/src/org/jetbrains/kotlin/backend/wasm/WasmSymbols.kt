@@ -133,6 +133,12 @@ class WasmSymbols(
     val voidType by lazy { voidClass.defaultType }
 
     private val consumeAnyIntoVoid = getInternalFunction("consumeAnyIntoVoid")
+
+    val uByteType by lazy { getIrClass(FqName("kotlin.UByte")).defaultType }
+    val uShortType by lazy { getIrClass(FqName("kotlin.UShort")).defaultType }
+    val uIntType by lazy { getIrClass(FqName("kotlin.UInt")).defaultType }
+    val uLongType by lazy { getIrClass(FqName("kotlin.ULong")).defaultType }
+
     private val consumePrimitiveIntoVoid = mapOf(
         context.irBuiltIns.booleanType to getInternalFunction("consumeBooleanIntoVoid"),
         context.irBuiltIns.byteType to getInternalFunction("consumeByteIntoVoid"),
@@ -327,6 +333,10 @@ class WasmSymbols(
 
         val kotlinIntToExternRefAdapter = getInternalFunction("kotlinIntToExternRefAdapter")
         val kotlinBooleanToExternRefAdapter = getInternalFunction("kotlinBooleanToExternRefAdapter")
+        val kotlinUByteToExternRefAdapter = getInternalFunction("kotlinUByteToExternRefAdapter")
+        val kotlinUShortToExternRefAdapter = getInternalFunction("kotlinUShortToExternRefAdapter")
+        val kotlinUIntToExternRefAdapter = getInternalFunction("kotlinUIntToExternRefAdapter")
+        val kotlinULongExternRefAdapter = getInternalFunction("kotlinULongExternRefAdapter")
         val kotlinLongToExternRefAdapter = getInternalFunction("kotlinLongToExternRefAdapter")
         val kotlinFloatToExternRefAdapter = getInternalFunction("kotlinFloatToExternRefAdapter")
         val kotlinDoubleToExternRefAdapter = getInternalFunction("kotlinDoubleToExternRefAdapter")

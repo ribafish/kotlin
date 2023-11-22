@@ -263,6 +263,11 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             builtIns.anyType -> return FunctionBasedAdapter(adapters.kotlinToJsAnyAdapter.owner)
             builtIns.numberType -> return FunctionBasedAdapter(adapters.numberToDoubleAdapter.owner)
 
+            symbols.uByteType -> return FunctionBasedAdapter(adapters.kotlinUByteToExternRefAdapter.owner)
+            symbols.uShortType -> return FunctionBasedAdapter(adapters.kotlinUShortToExternRefAdapter.owner)
+            symbols.uIntType -> return FunctionBasedAdapter(adapters.kotlinUIntToExternRefAdapter.owner)
+            symbols.uLongType -> return FunctionBasedAdapter(adapters.kotlinULongExternRefAdapter.owner)
+
             builtIns.byteType,
             builtIns.shortType,
             builtIns.charType,
@@ -382,16 +387,19 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         when (this) {
             builtIns.stringType -> return FunctionBasedAdapter(adapters.jsToKotlinStringAdapter.owner)
             builtIns.anyType -> return FunctionBasedAdapter(adapters.jsToKotlinAnyAdapter.owner)
-            builtIns.byteType -> return FunctionBasedAdapter(adapters.jsToKotlinByteAdapter.owner)
-            builtIns.shortType -> return FunctionBasedAdapter(adapters.jsToKotlinShortAdapter.owner)
+            builtIns.byteType, symbols.uByteType -> return FunctionBasedAdapter(adapters.jsToKotlinByteAdapter.owner)
+            builtIns.shortType, symbols.uShortType -> return FunctionBasedAdapter(adapters.jsToKotlinShortAdapter.owner)
             builtIns.charType -> return FunctionBasedAdapter(adapters.jsToKotlinCharAdapter.owner)
+
+            symbols.uIntType -> return UnsignedUnboxedPrimitive(builtIns.intType, symbols.uIntType)
+            symbols.uLongType -> return UnsignedUnboxedPrimitive(builtIns.longType, symbols.uLongType)
 
             builtIns.booleanType,
             builtIns.intType,
             builtIns.longType,
             builtIns.floatType,
             builtIns.doubleType,
-            context.wasmSymbols.voidType ->
+            symbols.voidType ->
                 return null
         }
 
@@ -697,6 +705,15 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
 
     fun InteropTypeAdapter?.adaptIfNeeded(expression: IrExpression, builder: IrBuilderWithScope): IrExpression =
         this?.adapt(expression, builder) ?: expression
+
+    /**
+     * Adapter cast unboxed primitive to its unsigned type
+     */
+    class UnsignedUnboxedPrimitive(signed: IrType, unsigned: IrType) : InteropTypeAdapter {
+        override val fromType = signed
+        override val toType = unsigned
+        override fun adapt(expression: IrExpression, builder: IrBuilderWithScope) = expression
+    }
 
     /**
      * Adapter implemented as a single function call

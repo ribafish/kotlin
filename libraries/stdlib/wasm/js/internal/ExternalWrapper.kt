@@ -335,6 +335,18 @@ internal fun kotlinIntToExternRefAdapter(x: Int): JsNumber =
 internal fun kotlinBooleanToExternRefAdapter(x: Boolean): JsBoolean =
     if (x) jsTrue else jsFalse
 
+internal fun kotlinUByteToExternRefAdapter(x: Int, bytes: Int): JsNumber =
+    js("x & 0xFF")
+
+internal fun kotlinUShortToExternRefAdapter(x: Int): JsNumber =
+    js("x & 0xFFFF")
+
+internal fun kotlinUIntToExternRefAdapter(x: Int): JsNumber =
+    js("x >>> 0")
+
+internal fun kotlinULongExternRefAdapter(x: Long): JsBigInt =
+    js("x & 0xFFFFFFFFFFFFFFFFn")
+
 internal fun kotlinLongToExternRefAdapter(x: Long): ExternalInterfaceType =
     longToExternref(x)
 
