@@ -247,7 +247,8 @@ fun translateCall(
     }
 
     if (symbolName.isGeneratorFunction) {
-        ref.commentsBeforeNode = listOf(JsMultiLineComment("#__NOINLINE__"))
+        (ref.commentsBeforeNode ?: mutableListOf<JsComment>().also { ref.commentsBeforeNode = it })
+            .add(JsMultiLineComment("#__NOINLINE__"))
     }
 
     return if (isExternalVararg) {
