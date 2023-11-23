@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.pipeline
 import org.jetbrains.kotlin.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.backend.common.actualizer.IrActualizedResult
 import org.jetbrains.kotlin.backend.common.actualizer.IrActualizer
+import org.jetbrains.kotlin.backend.common.actualizer.SpecialFakeOverrideSymbolsResolver
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
@@ -144,6 +145,9 @@ fun FirResult.convertToIrAndActualize(
     }
 
     val (irModuleFragment, components, pluginContext) = fir2IrResult
+    if (components.configuration.useIrFakeOverrideBuilder) {
+        irModuleFragment.acceptVoid(SpecialFakeOverrideSymbolsResolver(actualizationResult?.expectActualMap ?: emptyMap()))
+    }
     Fir2IrConverter.evaluateConstants(irModuleFragment, components)
     pluginContext.applyIrGenerationExtensions(irModuleFragment, irGeneratorExtensions)
     return Fir2IrActualizedResult(irModuleFragment, components, pluginContext, actualizationResult)
