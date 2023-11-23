@@ -21,9 +21,11 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.overrides.buildForAll
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.util.IdSignatureComposer
 import org.jetbrains.kotlin.ir.util.KotlinMangler
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 data class FirResult(val outputs: List<ModuleCompilerAnalyzedOutput>)
 
@@ -83,6 +85,9 @@ fun FirResult.convertToIrAndActualize(
             ).also { result ->
                 fir2IrResultPostCompute(output, result)
             }
+            if (fir2IrConfiguration.useIrFakeOverrideBuilder) {
+                fir2IrResult.components.fakeOverrideBuilder.buildForAll(listOf(fir2IrResult.irModuleFragment))
+            }
             actualizationResult = null
         }
         else -> {
@@ -131,7 +136,6 @@ fun FirResult.convertToIrAndActualize(
                     fir2IrConfiguration.languageVersionSettings
                 ),
                 actualizerTypeContextProvider(fir2IrResult.irModuleFragment.irBuiltins),
-                commonMemberStorage.symbolTable,
                 fir2IrResult.components.fakeOverrideBuilder,
                 fir2IrConfiguration.useIrFakeOverrideBuilder,
                 fir2IrConfiguration.expectActualTracker,
