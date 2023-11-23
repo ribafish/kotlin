@@ -126,8 +126,6 @@ class Fir2IrConverter(
             @OptIn(LeakedDeclarationCaches::class)
             declarationStorage.fillUnboundSymbols()
         }
-
-        evaluateConstants(irModuleFragment, components)
     }
 
     fun bindFakeOverridesOrPostpone(declarations: List<IrDeclaration>) {
@@ -615,7 +613,7 @@ class Fir2IrConverter(
     }
 
     companion object {
-        private fun evaluateConstants(irModuleFragment: IrModuleFragment, components: Fir2IrComponents) {
+        fun evaluateConstants(irModuleFragment: IrModuleFragment, components: Fir2IrComponents) {
             val fir2IrConfiguration = components.configuration
             val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
             val targetPlatform = firModuleDescriptor?.platform

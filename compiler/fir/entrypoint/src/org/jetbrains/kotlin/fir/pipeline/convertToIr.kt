@@ -140,6 +140,7 @@ fun FirResult.convertToIrAndActualize(
     }
 
     val (irModuleFragment, components, pluginContext) = fir2IrResult
+    Fir2IrConverter.evaluateConstants(irModuleFragment, components)
     pluginContext.applyIrGenerationExtensions(irModuleFragment, irGeneratorExtensions)
     return Fir2IrActualizedResult(irModuleFragment, components, pluginContext, actualizationResult)
 }
