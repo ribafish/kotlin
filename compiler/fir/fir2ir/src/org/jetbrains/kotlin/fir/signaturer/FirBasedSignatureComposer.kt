@@ -124,6 +124,10 @@ class FirBasedSignatureComposer(val mangler: FirMangler) {
         } else
             publicSignature
 
+        if (declaration is FirProperty && declaration.name.asString() == "property") {
+            Unit
+        }
+
         return resultSignature
     }
 

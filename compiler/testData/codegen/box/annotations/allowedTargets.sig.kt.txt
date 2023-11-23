@@ -1,0 +1,24 @@
+// CHECK:
+//   Mangled name: @0:0{0§<kotlin.Any?>}property
+//   Mangled name for the signature: @0:0{0§<kotlin.Any?>}property
+val <T : Any?> T.property: Unit /* by */
+  // CHECK:
+  //   Mangled name: #<get-property>@0:0(){0§<kotlin.Any?>}
+  //   Mangled name for the signature: <get-property>@0:0(){0§<kotlin.Any?>}
+  get(): Unit
+
+// CHECK:
+//   Mangled name: IDelegate
+interface IDelegate<T : Any?> {
+
+  // CHECK:
+  //   Mangled name: IDelegate#getValue(1:0;kotlin.reflect.KProperty<*>){}
+  //   Mangled name for the signature: getValue(1:0;kotlin.reflect.KProperty<*>){}
+  abstract operator fun getValue(t: T, p: KProperty<*>): Unit
+
+}
+
+// CHECK JVM_IR:
+//   Mangled name: #box(){}kotlin.String
+//   Mangled name for the signature: box(){}kotlin.String
+fun box(): String
