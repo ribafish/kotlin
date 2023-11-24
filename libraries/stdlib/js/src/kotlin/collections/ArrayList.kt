@@ -179,7 +179,6 @@ public actual open class ArrayList<E> internal constructor(private var array: Ar
     }
 
     @ExperimentalJsExport
-    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE")
     override fun asJsArrayMutableView() = array.unsafeCast<JsMutableArray<E>>()
 
     internal override fun checkIsMutable() {

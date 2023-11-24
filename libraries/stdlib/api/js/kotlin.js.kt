@@ -291,12 +291,39 @@ public final annotation class JsFileName : kotlin.Annotation {
     public final val name: kotlin.String { get; }
 }
 
+@kotlin.js.JsName(name = "ReadonlyArray")
+public external interface JsImmutableArray<out E> {
+}
+
+@kotlin.js.JsName(name = "ReadonlyMap")
+public external interface JsImmutableMap<K, out V> {
+}
+
+@kotlin.js.JsName(name = "ReadonlySet")
+public external interface JsImmutableSet<out E> {
+}
+
 @kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
 @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION, AnnotationTarget.FILE})
 public final annotation class JsModule : kotlin.Annotation {
     public constructor JsModule(import: kotlin.String)
 
     public final val import: kotlin.String { get; }
+}
+
+@kotlin.js.JsName(name = "Array")
+public open external class JsMutableArray<E> : kotlin.js.JsImmutableArray<E> {
+    public constructor JsMutableArray<E>()
+}
+
+@kotlin.js.JsName(name = "Map")
+public open external class JsMutableMap<K, V> : kotlin.js.JsImmutableMap<K, V> {
+    public constructor JsMutableMap<K, V>()
+}
+
+@kotlin.js.JsName(name = "Set")
+public open external class JsMutableSet<E> : kotlin.js.JsImmutableSet<E> {
+    public constructor JsMutableSet<E>()
 }
 
 @kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
