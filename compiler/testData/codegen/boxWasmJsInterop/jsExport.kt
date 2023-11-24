@@ -28,19 +28,37 @@ fun anyAsEI(any: JsReference<Any>): EI = any.get() as EI
 fun provideUShort(): UShort = UShort.MAX_VALUE
 
 @JsExport
+fun provideNullableUShort(nullable: Boolean): UShort? = if (nullable) null else UShort.MAX_VALUE
+
+@JsExport
 fun consumeUShort(x: UShort) = x.toString()
+
+@JsExport
+fun consumeNullableUShort(x: UShort?) = x?.toString()
 
 @JsExport
 fun provideUInt(): UInt = UInt.MAX_VALUE
 
 @JsExport
+fun provideNullableUInt(nullable: Boolean): UInt? = if (nullable) null else UInt.MAX_VALUE
+
+@JsExport
 fun consumeUInt(x: UInt) = x.toString()
+
+@JsExport
+fun consumeNullableUInt(x: UInt?) = x?.toString()
 
 @JsExport
 fun provideULong(): ULong = ULong.MAX_VALUE
 
 @JsExport
+fun provideNullableULong(nullable: Boolean): ULong? = if (nullable) null else ULong.MAX_VALUE
+
+@JsExport
 fun consumeULong(x: ULong) = x.toString()
+
+@JsExport
+fun consumeNullableULong(x: ULong?) = x?.toString()
 
 fun box(): String = "OK"
 
@@ -75,32 +93,93 @@ if (main.provideULong() != 18446744073709551615n) {
     throw "Fail 7";
 }
 
-if (main.consumeUShort(-1) != "65535") {
+if (main.provideNullableUShort(false) != 65535) {
     throw "Fail 8";
 }
-if (main.consumeUInt(-1) != "4294967295") {
+if (main.provideNullableUShort(true) != null) {
     throw "Fail 9";
 }
-if (main.consumeULong(-1n) != "18446744073709551615") {
+if (main.provideNullableUInt(false) != 4294967295) {
     throw "Fail 10";
 }
-
-if (main.consumeUShort(65535) != "65535") {
+if (main.provideNullableUInt(true) != null) {
     throw "Fail 11";
 }
-if (main.consumeUInt(4294967295) != "4294967295") {
+if (main.provideNullableULong(false) != 18446744073709551615n) {
     throw "Fail 12";
 }
-if (main.consumeULong(18446744073709551615n) != "18446744073709551615") {
+if (main.provideNullableULong(true) != null) {
     throw "Fail 13";
 }
 
-if (main.consumeUShort(65536) != "0") {
+if (main.consumeUShort(-1) != "65535") {
     throw "Fail 14";
 }
-if (main.consumeUInt(4294967296) != "0") {
+if (main.consumeNullableUShort(-1) != "65535") {
     throw "Fail 15";
 }
-if (main.consumeULong(18446744073709551616n) != "0") {
+if (main.consumeNullableUShort(null) != null) {
     throw "Fail 16";
+}
+
+if (main.consumeUInt(-1) != "4294967295") {
+    throw "Fail 17";
+}
+if (main.consumeNullableUInt(-1) != "4294967295") {
+    throw "Fail 18";
+}
+if (main.consumeNullableUInt(null) != null) {
+    throw "Fail 19";
+}
+
+if (main.consumeULong(-1n) != "18446744073709551615") {
+    throw "Fail 20";
+}
+if (main.consumeNullableULong(-1n) != "18446744073709551615") {
+    throw "Fail 21";
+}
+if (main.consumeNullableULong(null) != null) {
+    throw "Fail 22";
+}
+
+if (main.consumeUShort(65535) != "65535") {
+    throw "Fail 23";
+}
+if (main.consumeNullableUShort(65535) != "65535") {
+    throw "Fail 24";
+}
+
+if (main.consumeUInt(4294967295) != "4294967295") {
+    throw "Fail 25";
+}
+if (main.consumeNullableUInt(4294967295) != "4294967295") {
+    throw "Fail 25";
+}
+
+if (main.consumeULong(18446744073709551615n) != "18446744073709551615") {
+    throw "Fail 26";
+}
+if (main.consumeNullableULong(18446744073709551615n) != "18446744073709551615") {
+    throw "Fail 27";
+}
+
+if (main.consumeUShort(65536) != "0") {
+    throw "Fail 28";
+}
+if (main.consumeNullableUShort(65536) != "0") {
+    throw "Fail 29";
+}
+
+if (main.consumeUInt(4294967296) != "0") {
+    throw "Fail 30";
+}
+if (main.consumeNullableUInt(4294967296) != "0") {
+    throw "Fail 31";
+}
+
+if (main.consumeULong(18446744073709551616n) != "0") {
+    throw "Fail 32";
+}
+if (main.consumeNullableULong(18446744073709551616n) != "0") {
+    throw "Fail 33";
 }

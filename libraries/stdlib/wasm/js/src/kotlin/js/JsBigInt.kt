@@ -5,12 +5,15 @@
 
 package kotlin.js
 
+import kotlin.wasm.internal.*
 import kotlin.wasm.internal.JsPrimitive
-import kotlin.wasm.internal.externRefToKotlinDoubleAdapter
-import kotlin.wasm.internal.externRefToKotlinIntAdapter
-import kotlin.wasm.internal.kotlinDoubleToExternRefAdapter
-import kotlin.wasm.internal.kotlinIntToExternRefAdapter
 
-/** JavaScript primitive number */
+/** JavaScript primitive bigint */
 @JsPrimitive("bigint")
 public external class JsBigInt internal constructor() : JsAny
+
+public fun JsBigInt.toLong(): Long =
+    externRefToKotlinLongAdapter(this)
+
+public fun Long.toJsBigInt(): JsBigInt =
+    kotlinLongToExternRefAdapter(this)

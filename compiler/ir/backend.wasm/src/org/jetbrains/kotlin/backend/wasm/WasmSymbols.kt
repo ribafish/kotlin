@@ -331,18 +331,28 @@ class WasmSymbols(
         val externRefToKotlinFloatAdapter = getInternalFunction("externRefToKotlinFloatAdapter")
         val externRefToKotlinDoubleAdapter = getInternalFunction("externRefToKotlinDoubleAdapter")
 
+        val externRefToKotlinUByteAdapter = getInternalFunction("externRefToKotlinUByteAdapter")
+        val externRefToKotlinUShortAdapter = getInternalFunction("externRefToKotlinUShortAdapter")
+        val externRefToKotlinUIntAdapter = getInternalFunction("externRefToKotlinUIntAdapter")
+        val externRefToKotlinULongAdapter = getInternalFunction("externRefToKotlinULongAdapter")
+
         val kotlinIntToExternRefAdapter = getInternalFunction("kotlinIntToExternRefAdapter")
         val kotlinBooleanToExternRefAdapter = getInternalFunction("kotlinBooleanToExternRefAdapter")
         val kotlinUByteToExternRefAdapter = getInternalFunction("kotlinUByteToExternRefAdapter")
         val kotlinUShortToExternRefAdapter = getInternalFunction("kotlinUShortToExternRefAdapter")
         val kotlinUIntToExternRefAdapter = getInternalFunction("kotlinUIntToExternRefAdapter")
-        val kotlinULongExternRefAdapter = getInternalFunction("kotlinULongExternRefAdapter")
+        val kotlinULongToExternRefAdapter = getInternalFunction("kotlinULongToExternRefAdapter")
         val kotlinLongToExternRefAdapter = getInternalFunction("kotlinLongToExternRefAdapter")
         val kotlinFloatToExternRefAdapter = getInternalFunction("kotlinFloatToExternRefAdapter")
         val kotlinDoubleToExternRefAdapter = getInternalFunction("kotlinDoubleToExternRefAdapter")
         val kotlinByteToExternRefAdapter = getInternalFunction("kotlinByteToExternRefAdapter")
         val kotlinShortToExternRefAdapter = getInternalFunction("kotlinShortToExternRefAdapter")
         val kotlinCharToExternRefAdapter = getInternalFunction("kotlinCharToExternRefAdapter")
+
+        val kotlinUByteToJsConsumableInt = getInternalFunction("kotlinUByteToJsConsumableInt")
+        val kotlinUShortToJsConsumableInt = getInternalFunction("kotlinUShortToJsConsumableInt")
+        val kotlinUIntToJsConsumableInt = getInternalFunction("kotlinUIntToJsConsumableInt")
+        val kotlinULongToJsConsumableBigInt = getInternalFunction("kotlinULongToJsConsumableBigInt")
     }
 
     inner class JsRelatedSymbols {

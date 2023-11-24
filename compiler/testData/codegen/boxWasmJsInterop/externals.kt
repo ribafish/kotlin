@@ -59,6 +59,33 @@ function jsRenamed() {
     return 'renamed'
 }
 
+function provideUShort() { return -1 }
+function provideNullableUShort(nullable) { return nullable ? null : - 1 }
+
+function consumeUShort(x) { return x.toString() }
+function consumeNullableUShort(x) { return x == null ? null : x.toString() }
+
+function provideUInt() { return -1 }
+function provideNullableUInt(nullable) { return nullable ? null : - 1 }
+
+function consumeUInt(x) { return x.toString() }
+function consumeNullableUInt(x) { return x == null ? null : x.toString() }
+
+function provideULong() { return -1n }
+function provideNullableULong(nullable) { return nullable ? null : - 1n }
+
+function consumeULong(x) { return x.toString() }
+function consumeNullableULong(x) { return x == null ? null : x.toString() }
+
+function consumeUShortVararg(x) { return x.toString() }
+function consumeNullableUShortVararg(x) { return x == null ? null : x.toString() }
+
+function consumeUIntVararg(x) { return x.toString() }
+function consumeNullableUIntVararg(x) { return x == null ? null : x.toString() }
+
+function consumeULongVararg(x) { return x.toString() }
+function consumeNullableULongVararg(x) { return x == null ? null : x.toString() }
+
 // FILE: externals.kt
 external interface Obj {
     var x: Int
@@ -118,6 +145,42 @@ external object externalObj {
 @JsName("jsRenamed")
 external fun testJsName(): String
 
+external fun provideUShort(): UShort
+
+external fun provideNullableUShort(nullable: Boolean): UShort?
+
+external fun consumeUShort(x: UShort): String
+
+external fun consumeNullableUShort(x: UShort?): String?
+
+external fun provideUInt(): UInt
+
+external fun provideNullableUInt(nullable: Boolean): UInt?
+
+external fun consumeUInt(x: UInt): String
+
+external fun consumeNullableUInt(x: UInt?): String?
+
+external fun provideULong(): ULong
+
+external fun provideNullableULong(nullable: Boolean): ULong?
+
+external fun consumeULong(x: ULong): String
+
+external fun consumeNullableULong(x: ULong?): String?
+
+external fun consumeUShortVararg(vararg shorts: UShort): String
+
+external fun consumeNullableUShortVararg(vararg shorts: UShort?): String?
+
+external fun consumeUIntVararg(vararg ints: UInt): String
+
+external fun consumeNullableUIntVararg(vararg ints: UInt?): String?
+
+external fun consumeULongVararg(vararg ints: ULong): String
+
+external fun consumeNullableULongVararg(vararg ints: ULong?): String?
+
 fun box(): String {
     val obj = createObject()
     setX(obj, 100)
@@ -171,6 +234,54 @@ fun box(): String {
     if (c1 as Any is C2) return "Fail 24"
 
     if (testJsName() != "renamed") return "Fail 25"
+
+    if (provideUShort() != UShort.MAX_VALUE) return "Fail 26"
+    if (provideNullableUShort(false) != UShort.MAX_VALUE) return "Fail 27"
+    if (provideNullableUShort(true) != null) return "Fail 28"
+
+    if (provideUInt() != UInt.MAX_VALUE) return "Fail 29"
+    if (provideNullableUInt(false) != UInt.MAX_VALUE) return "Fail 30"
+    if (provideNullableUInt(true) != null) return "Fail 31"
+
+    if (provideULong() != ULong.MAX_VALUE) return "Fail 32"
+    if (provideNullableULong(false) != ULong.MAX_VALUE) return "Fail 33"
+    if (provideNullableULong(true) != null) return "Fail 34"
+
+    if (consumeUShort(UShort.MAX_VALUE) != "65535") return "Fail 35"
+    if (consumeNullableUShort(UShort.MAX_VALUE) != "65535") return "Fail 36"
+    if (consumeNullableUShort(null) != null) return "Fail 37"
+
+    if (consumeUInt(UInt.MAX_VALUE) != "4294967295") return "Fail 38"
+    if (consumeNullableUInt(UInt.MAX_VALUE) != "4294967295") return "Fail 39"
+    if (consumeNullableUInt(null) != null) return "Fail 40"
+
+    if (consumeULong(ULong.MAX_VALUE) != "18446744073709551615") return "Fail 41"
+    if (consumeNullableULong(ULong.MAX_VALUE) != "18446744073709551615") return "Fail 42"
+    if (consumeNullableULong(null) != null) return "Fail 43"
+
+    if (provideUShort() != UShort.MAX_VALUE) return "Fail 44"
+    if (provideNullableUShort(false) != UShort.MAX_VALUE) return "Fail 45"
+    if (provideNullableUShort(true) != null) return "Fail 46"
+
+    if (provideUInt() != UInt.MAX_VALUE) return "Fail 47"
+    if (provideNullableUInt(false) != UInt.MAX_VALUE) return "Fail 48"
+    if (provideNullableUInt(true) != null) return "Fail 49"
+
+    if (provideULong() != ULong.MAX_VALUE) return "Fail 50"
+    if (provideNullableULong(false) != ULong.MAX_VALUE) return "Fail 51"
+    if (provideNullableULong(true) != null) return "Fail 52"
+
+    if (consumeUShortVararg(UShort.MAX_VALUE) != "65535") return "Fail 53"
+    if (consumeNullableUShortVararg(UShort.MAX_VALUE) != "65535") return "Fail 54"
+    if (consumeNullableUShortVararg(null) != null) return "Fail 55"
+
+    if (consumeUIntVararg(UInt.MAX_VALUE) != "4294967295") return "Fail 56"
+    if (consumeNullableUIntVararg(UInt.MAX_VALUE) != "4294967295") return "Fail 57"
+    if (consumeNullableUIntVararg(null) != null) return "Fail 58"
+
+    if (consumeULongVararg(ULong.MAX_VALUE) != "18446744073709551615") return "Fail 59"
+    if (consumeNullableULongVararg(ULong.MAX_VALUE) != "18446744073709551615") return "Fail 60"
+    if (consumeNullableULongVararg(null) != null) return "Fail 61"
 
     return "OK"
 }
