@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.gradle.utils
 
 import org.gradle.api.Project
+import org.jetbrains.kotlin.compilerRunner.kotlinNativeToolchainEnabled
 
 internal fun Project.whenKaptEnabled(action: () -> Unit) = whenPluginsEnabled(
     setOf("org.jetbrains.kotlin.kapt", "kotlin-kapt"),
@@ -21,6 +22,12 @@ internal fun Project.whenJsOrMppEnabled(action: () -> Unit) = whenPluginsEnabled
     setOf("org.jetbrains.kotlin.js", "org.jetbrains.kotlin.multiplatform", "kotlin-multiplatform"),
     action,
 )
+
+internal fun Project.whenKotlinNativeToolchainEnabled(action: () -> Unit) {
+    if (kotlinNativeToolchainEnabled) {
+        action()
+    }
+}
 
 private fun Project.whenPluginsEnabled(
     pluginIds: Set<String>,

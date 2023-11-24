@@ -25,8 +25,6 @@ import org.jetbrains.kotlin.build.report.metrics.GradleBuildPerformanceMetric
 import org.jetbrains.kotlin.build.report.metrics.GradleBuildTime
 import org.jetbrains.kotlin.compilerRunner.KotlinNativeCompilerRunner
 import org.jetbrains.kotlin.compilerRunner.KotlinToolRunner
-import org.jetbrains.kotlin.compilerRunner.konanDataDir
-import org.jetbrains.kotlin.compilerRunner.konanHome
 import org.jetbrains.kotlin.compilerRunner.addBuildMetricsForTaskAction
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
@@ -35,6 +33,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 import org.jetbrains.kotlin.gradle.report.GradleBuildMetricsReporter
 import org.jetbrains.kotlin.gradle.report.UsesBuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.native.tasks.buildKotlinNativeBinaryLinkerArgs
+import org.jetbrains.kotlin.gradle.targets.native.toolchain.KotlinNativeProvider
+import org.jetbrains.kotlin.gradle.targets.native.toolchain.UsesKotlinNativeToolchain
 import org.jetbrains.kotlin.gradle.tasks.KotlinToolTask
 import org.jetbrains.kotlin.gradle.utils.XcodeUtils
 import org.jetbrains.kotlin.gradle.utils.newInstance
@@ -55,7 +55,8 @@ abstract class KotlinNativeLinkArtifactTask @Inject constructor(
     private val projectLayout: ProjectLayout,
 ) : DefaultTask(),
     UsesBuildMetricsService,
-    KotlinToolTask<KotlinCommonCompilerToolOptions> {
+    KotlinToolTask<KotlinCommonCompilerToolOptions>,
+    UsesKotlinNativeToolchain {
 
     @get:Input
     abstract val baseName: Property<String>
@@ -170,13 +171,16 @@ abstract class KotlinNativeLinkArtifactTask @Inject constructor(
     val metrics: Property<BuildMetricsReporter<GradleBuildTime, GradleBuildPerformanceMetric>> = project.objects
         .property(GradleBuildMetricsReporter())
 
-    @get:Internal
-    val konanDataDir: Provider<String?> = project.provider { project.konanDataDir }
+    @Nested
+    final override val kotlinNativeProvider: Provider<KotlinNativeProvider> = project.provider {
+        KotlinNativeProvider(project, konanTarget)
+    }
 
-    @get:Internal
-    val konanHome: Provider<String> = project.provider { project.konanHome }
-
-    private val runnerSettings = KotlinNativeCompilerRunner.Settings.of(konanHome.get(), konanDataDir.getOrNull(), project)
+    private val runnerSettings = KotlinNativeCompilerRunner.Settings.of(
+        kotlinNativeProvider.get().konanHome.get(),
+        kotlinNativeProvider.get().konanDataDir.getOrNull(),
+        project
+    )
 
     init {
         baseName.convention(project.name)
