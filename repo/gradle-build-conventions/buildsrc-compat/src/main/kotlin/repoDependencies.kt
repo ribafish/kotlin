@@ -61,6 +61,26 @@ fun Project.kotlinStdlib(suffix: String? = null, classifier: String? = null): An
         dependencies.project(listOfNotNull(":kotlin-stdlib", suffix).joinToString("-"), classifier)
 }
 
+@JvmOverloads
+fun Project.kotlinTest(suffix: String? = "junit", classifier: String? = null): Any {
+    return run {
+        val elementsType = when (classifier) {
+            null -> "Runtime"
+            "sources" -> "Sources"
+            else -> error("Unsupported kotlin-test classifier: $classifier")
+        }
+        val configuration = when (suffix?.lowercase()) {
+            null -> classifier?.let { "jvm${elementsType}Elements" }
+            "junit" -> "jvmJUnit${elementsType}Elements"
+            "junit5" -> "jvmJUnit5${elementsType}Elements"
+            "testng" -> "jvmTestNG${elementsType}Elements"
+            "js" -> "js${elementsType}Elements"
+            else -> error("Unsupported kotlin-test flavor: $suffix")
+        }
+        dependencies.project(":kotlin-test", configuration)
+    }
+}
+
 fun Project.kotlinBuiltins(): Any = kotlinBuiltins(forJvm = false)
 
 fun Project.kotlinBuiltins(forJvm: Boolean): Any =
