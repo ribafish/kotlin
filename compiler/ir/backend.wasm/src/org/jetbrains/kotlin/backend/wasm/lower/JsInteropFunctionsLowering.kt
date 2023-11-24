@@ -36,8 +36,6 @@ import org.jetbrains.kotlin.js.config.WasmTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.butIf
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 /**
  * Create wrappers for external and @JsExport functions when type adaptation is needed
@@ -269,10 +267,10 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             builtIns.anyType -> return FunctionBasedAdapter(adapters.kotlinToJsAnyAdapter.owner)
             builtIns.numberType -> return FunctionBasedAdapter(adapters.numberToDoubleAdapter.owner)
 
-            symbols.uByteType -> return FunctionBasedAdapter(adapters.kotlinUByteToJsConsumableInt.owner)
-            symbols.uShortType -> return FunctionBasedAdapter(adapters.kotlinUShortToJsConsumableInt.owner)
-            symbols.uIntType -> return FunctionBasedAdapter(adapters.kotlinUIntToJsConsumableInt.owner)
-            symbols.uLongType -> return FunctionBasedAdapter(adapters.kotlinULongToJsConsumableBigInt.owner)
+            symbols.uByteType -> return FunctionBasedAdapter(adapters.kotlinUByteToJsNumber.owner)
+            symbols.uShortType -> return FunctionBasedAdapter(adapters.kotlinUShortToJsNumber.owner)
+            symbols.uIntType -> return FunctionBasedAdapter(adapters.kotlinUIntToJsNumber.owner)
+            symbols.uLongType -> return FunctionBasedAdapter(adapters.kotlinULongToJsBigInt.owner)
 
             builtIns.byteType,
             builtIns.shortType,

@@ -349,10 +349,10 @@ class WasmSymbols(
         val kotlinShortToExternRefAdapter = getInternalFunction("kotlinShortToExternRefAdapter")
         val kotlinCharToExternRefAdapter = getInternalFunction("kotlinCharToExternRefAdapter")
 
-        val kotlinUByteToJsConsumableInt = getInternalFunction("kotlinUByteToJsConsumableInt")
-        val kotlinUShortToJsConsumableInt = getInternalFunction("kotlinUShortToJsConsumableInt")
-        val kotlinUIntToJsConsumableInt = getInternalFunction("kotlinUIntToJsConsumableInt")
-        val kotlinULongToJsConsumableBigInt = getInternalFunction("kotlinULongToJsConsumableBigInt")
+        val kotlinUByteToJsNumber = getInternalFunction("kotlinUByteToJsNumber")
+        val kotlinUShortToJsNumber = getInternalFunction("kotlinUShortToJsNumber")
+        val kotlinUIntToJsNumber = getInternalFunction("kotlinUIntToJsNumber")
+        val kotlinULongToJsBigInt = getInternalFunction("kotlinULongToJsBigInt")
     }
 
     inner class JsRelatedSymbols {
