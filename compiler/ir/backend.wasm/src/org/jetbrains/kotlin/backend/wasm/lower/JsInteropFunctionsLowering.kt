@@ -422,7 +422,8 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             builtIns.longType,
             builtIns.floatType,
             builtIns.doubleType,
-            symbols.voidType -> return null
+            symbols.voidType ->
+                return null
         }
 
         if (isExternalType(this))
@@ -738,21 +739,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         override val toType = function.returnType
         override fun adapt(expression: IrExpression, builder: IrBuilderWithScope): IrExpression {
             val call = builder.irCall(function)
-            call.putValueArgument(0, expression)
-            return call
-        }
-    }
-
-    /**
-     * Adapter implemented as a single function call
-     */
-    class ConstructorBasedAdapter(
-        private val constructor: IrConstructor,
-    ) : InteropTypeAdapter {
-        override val fromType = constructor.valueParameters[0].type
-        override val toType = constructor.returnType
-        override fun adapt(expression: IrExpression, builder: IrBuilderWithScope): IrExpression {
-            val call = builder.irCallConstructor(constructor.symbol, emptyList())
             call.putValueArgument(0, expression)
             return call
         }
