@@ -23,6 +23,7 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
+import org.jetbrains.kotlin.compilerRunner.kotlinNativeToolchainEnabled
 import org.jetbrains.kotlin.compilerRunner.maybeCreateCommonizerClasspathConfiguration
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_BUILD_TOOLS_API_IMPL
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnab
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropCommonizerArtifactTypeAttribute
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropKlibLibraryElements
 import org.jetbrains.kotlin.gradle.targets.native.internal.CommonizerTargetAttribute
+import org.jetbrains.kotlin.gradle.targets.native.toolchain.KotlinNativeCompilerAttribute
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestsRegistry
 import org.jetbrains.kotlin.gradle.utils.*
@@ -69,6 +71,9 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
 
         addKotlinCompilerConfiguration(project)
 
+        if (project.kotlinNativeToolchainEnabled) {
+            addKotlinNativeCompilerConfiguration(project)
+        }
 
         project.configurations.maybeCreate(PLUGIN_CLASSPATH_CONFIGURATION_NAME).apply {
             isVisible = false
@@ -116,6 +121,31 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
                         }
                         project.configurations.named(classpathConfiguration)
                     }
+                )
+            }
+    }
+
+    private fun addKotlinNativeCompilerConfiguration(project: Project) {
+        project.configurations
+            .create(KOTLIN_NATIVE_COMPILER_CONFIGURATION_NAME) { configuration ->
+                configuration.isVisible = false
+                configuration.markResolvable()
+                configuration.defaultDependencies {
+                    it.add(
+                        project.dependencies.create(
+                            mapOf(
+                                "group" to NativeCompilerDownloader.KOTLIN_GROUP_ID,
+                                "name" to NativeCompilerDownloader.getDependencyName(project),
+                                "version" to NativeCompilerDownloader.getCompilerVersion(project),
+                                "classifier" to NativeCompilerDownloader.simpleOsName,
+                                "ext" to NativeCompilerDownloader.archiveExtension
+                            )
+                        )
+                    )
+                }
+                configuration.attributes.attribute(
+                    KotlinNativeCompilerAttribute.attribute,
+                    KotlinNativeCompilerAttribute.KotlinNativeCompilerArtifactsTypes.DIRECTORY
                 )
             }
     }
@@ -205,6 +235,11 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
             CInteropKlibLibraryElements.setupAttributesMatchingStrategy(this)
             CommonizerTargetAttribute.setupAttributesMatchingStrategy(this)
             CInteropCommonizerArtifactTypeAttribute.setupTransform(project)
+        }
+
+        project.whenKotlinNativeToolchainEnabled {
+            KotlinNativeCompilerAttribute.setupAttributesMatchingStrategy(this)
+            KotlinNativeCompilerAttribute.setupTransform(project)
         }
     }
 
