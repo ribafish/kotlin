@@ -16,90 +16,116 @@ class InlineScopesGenerator {
     var inlinedScopes = 0
     var currentCallSiteLineNumber = 0
 
-    private data class ScopeInfo(val variable: LocalVariableNode, val scopeNumber: Int, val inlineNesting: Int)
+    private class InlineScopeNode(
+        // The marker variable is only null for the root node
+        val markerVariable: LocalVariableNode?,
+        val scopeNumber: Int,
+        var inlineNesting: Int,
+        val parent: InlineScopeNode?
+    ) {
+        var callSiteLineNumber: Int? = null
+        var surroundingScopeNumber: Int? = null
 
-    private data class MarkerVariableInfo(val callSiteLineNumber: Int, val surroundingScopeNumber: Int?, val inlineNesting: Int)
+        val variables = mutableListOf<LocalVariableNode>()
+        val children = mutableListOf<InlineScopeNode>()
+
+        val isRoot: Boolean
+            get() = parent == null
+
+        init {
+            parent?.children?.add(this)
+        }
+    }
 
     private abstract inner class VariableRenamer {
-        val inlineScopesStack = mutableListOf<ScopeInfo>()
+        abstract fun computeInlineScopeInfo(node: InlineScopeNode)
 
-        abstract fun visitMarkerVariable(
-            variable: LocalVariableNode,
-            scopeNumber: Int,
-            inlineNesting: Int
-        ): MarkerVariableInfo
-
-        abstract fun shouldPostponeAddingAScopeNumber(variable: LocalVariableNode, inlineNesting: Int): Boolean
+        abstract fun LocalVariableNode.belongsToInlineScope(node: InlineScopeNode): Boolean
 
         open fun shouldSkipVariable(variable: LocalVariableNode): Boolean = false
 
         open fun inlineNesting(): Int = -1
 
-        fun renameVariables(node: MethodNode): Int {
-            val localVariables = node.localVariables ?: return 0
-            val labelToIndex = node.getLabelToIndexMap()
+        fun renameVariables(methodNode: MethodNode): Int {
+            val rootNode = computeInlineScopesTree(methodNode)
+            return renameVariables(rootNode)
+        }
+
+        private fun computeInlineScopesTree(methodNode: MethodNode): InlineScopeNode {
+            val rootNode = InlineScopeNode(null, 0, inlineNesting(), null)
+            val localVariables = methodNode.localVariables ?: return rootNode
 
             // Inline function and lambda parameters are introduced before the corresponding inline marker variable,
-            // so we need to keep track of them to assign the correct scope number later.
+            // so we need to keep track of them to assign to the correct scope later.
             val variablesWithNotMatchingDepth = mutableListOf<LocalVariableNode>()
-            var seenInlineScopesNumber = 0
 
+            val labelToIndex = methodNode.getLabelToIndexMap()
             val sortedVariables = localVariables.sortedBy { labelToIndex[it.start.label] }
-            var currentInlineScopeNumber: Int
-            var currentInlineNesting: Int
+
+            var seenInlineScopesNumber = 0
+            var currentNode = rootNode
             for (variable in sortedVariables) {
-                dropToClosestSurroundingScope(variable, labelToIndex)
+                currentNode = currentNode.findClosestSurroundingScope(variable, labelToIndex)
 
                 val name = variable.name
-                if (inlineScopesStack.isNotEmpty()) {
-                    val info = inlineScopesStack.last()
-                    currentInlineScopeNumber = info.scopeNumber
-                    currentInlineNesting = info.inlineNesting
-                } else if (shouldSkipVariable(variable)) {
-                    continue
-                } else {
-                    // The number 0 belongs to the top frame
-                    currentInlineScopeNumber = 0
-                    currentInlineNesting = inlineNesting()
-                }
-
                 if (isFakeLocalVariableForInline(name)) {
                     seenInlineScopesNumber += 1
-                    currentInlineScopeNumber = seenInlineScopesNumber
 
-                    val (callSiteLineNumber, surroundingScopeNumber, inlineNesting) = visitMarkerVariable(
-                        variable,
-                        currentInlineScopeNumber,
-                        currentInlineNesting
-                    )
+                    val newNode = InlineScopeNode(variable, seenInlineScopesNumber, currentNode.inlineNesting, currentNode)
+                    computeInlineScopeInfo(newNode)
+                    currentNode = newNode
 
-                    inlineScopesStack += ScopeInfo(variable, currentInlineScopeNumber, inlineNesting)
+                    for (variableWithNotMatchingDepth in variablesWithNotMatchingDepth) {
+                        currentNode.variables.add(variableWithNotMatchingDepth)
+                    }
+                    variablesWithNotMatchingDepth.clear()
+                } else if (!currentNode.isRoot || !shouldSkipVariable(variable)) {
+                    if (variable.belongsToInlineScope(currentNode)) {
+                        currentNode.variables.add(variable)
+                    } else {
+                        variablesWithNotMatchingDepth.add(variable)
+                    }
+                }
+            }
 
-                    variable.name = computeNewVariableName(
-                        name,
-                        currentInlineScopeNumber + inlinedScopes,
+            return rootNode
+        }
+
+        private fun renameVariables(rootNode: InlineScopeNode): Int {
+            var seenInlineScopesNumber = 0
+            val nodeStack = mutableListOf<InlineScopeNode>()
+            nodeStack.addAll(rootNode.children)
+            while (nodeStack.isNotEmpty()) {
+                val node = nodeStack.removeLast()
+                seenInlineScopesNumber += 1
+                with(node) {
+                    markerVariable!!.name = computeNewVariableName(
+                        markerVariable.name,
+                        scopeNumber + inlinedScopes,
                         callSiteLineNumber,
                         surroundingScopeNumber
                     )
-
-                    for (variableWithNotMatchingDepth in variablesWithNotMatchingDepth) {
-                        variableWithNotMatchingDepth.name =
-                            computeNewVariableName(variableWithNotMatchingDepth.name, currentInlineScopeNumber + inlinedScopes, null, null)
-                    }
-                    variablesWithNotMatchingDepth.clear()
-                } else {
-                    if (shouldPostponeAddingAScopeNumber(variable, currentInlineNesting)) {
-                        variablesWithNotMatchingDepth.add(variable)
-                    } else {
-                        variable.name = computeNewVariableName(name, currentInlineScopeNumber + inlinedScopes, null, null)
-                    }
                 }
+
+                for (variable in node.variables) {
+                    variable.name = computeNewVariableName(
+                        variable.name,
+                        node.scopeNumber + inlinedScopes,
+                        null,
+                        null
+                    )
+                }
+
+                nodeStack.addAll(node.children)
             }
 
             return seenInlineScopesNumber
         }
 
-        private fun dropToClosestSurroundingScope(variable: LocalVariableNode, labelToIndex: Map<Label, Int>) {
+        private fun InlineScopeNode.findClosestSurroundingScope(
+            variable: LocalVariableNode,
+            labelToIndex: Map<Label, Int>
+        ): InlineScopeNode {
             fun LocalVariableNode.contains(other: LocalVariableNode): Boolean {
                 val startIndex = labelToIndex[start.label] ?: return false
                 val endIndex = labelToIndex[end.label] ?: return false
@@ -108,9 +134,11 @@ class InlineScopesGenerator {
                 return startIndex < otherStartIndex && endIndex >= otherEndIndex
             }
 
-            while (inlineScopesStack.isNotEmpty() && !inlineScopesStack.last().variable.contains(variable)) {
-                inlineScopesStack.removeLast()
+            var node = this
+            while (!node.isRoot && !node.markerVariable!!.contains(variable)) {
+                node = node.parent!!
             }
+            return node
         }
     }
 
@@ -142,16 +170,13 @@ class InlineScopesGenerator {
     }
 
     private fun addInlineScopesInfoFromScopeNumbers(node: MethodNode) {
-        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
         val renamer = object : VariableRenamer() {
-            override fun visitMarkerVariable(
-                variable: LocalVariableNode,
-                scopeNumber: Int,
-                oldScopeNumberOfCurrentMarkerVariable: Int
-            ): MarkerVariableInfo {
-                val name = variable.name
+            override fun computeInlineScopeInfo(node: InlineScopeNode) {
+                val name = node.markerVariable!!.name
+                val scopeNumber = node.scopeNumber
                 val info = name.getInlineScopeInfo()
-                val callSiteLineNumber =
+                node.inlineNesting = info?.scopeNumber ?: 0
+                node.callSiteLineNumber =
                     if (scopeNumber == 1) {
                         currentCallSiteLineNumber
                     } else {
@@ -160,7 +185,7 @@ class InlineScopesGenerator {
 
                 if (name.isInlineLambdaName) {
                     val surroundingScopeNumber = info?.surroundingScopeNumber
-                    val newSurroundingScopeNumber =
+                    node.surroundingScopeNumber =
                         when {
                             // The first encountered inline scope belongs to the lambda, which means
                             // that its surrounding scope is the function where the lambda is being inlined to.
@@ -173,20 +198,16 @@ class InlineScopesGenerator {
                             // This situation shouldn't happen, so add invalid info here
                             else -> -1
                         }
-                    return MarkerVariableInfo(callSiteLineNumber, newSurroundingScopeNumber, info?.scopeNumber ?: 0)
                 }
-                return MarkerVariableInfo(callSiteLineNumber, null, info?.scopeNumber ?: 0)
             }
 
-            override fun shouldPostponeAddingAScopeNumber(
-                variable: LocalVariableNode,
-                oldScopeNumberOfCurrentMarkerVariable: Int
-            ): Boolean {
-                val scopeNumber = variable.name.getInlineScopeInfo()?.scopeNumber
+            override fun LocalVariableNode.belongsToInlineScope(node: InlineScopeNode): Boolean {
+                val scopeNumber = name.getInlineScopeInfo()?.scopeNumber
+                val oldScopeNumberOfCurrentMarkerVariable = node.inlineNesting
                 if (scopeNumber != null) {
-                    return scopeNumber != oldScopeNumberOfCurrentMarkerVariable
+                    return scopeNumber == oldScopeNumberOfCurrentMarkerVariable
                 }
-                return inlineScopesStack.isEmpty()
+                return !node.isRoot
             }
         }
 
@@ -196,18 +217,20 @@ class InlineScopesGenerator {
     private fun addInlineScopesInfoFromIVSuffixes(node: MethodNode) {
         val labelToLineNumber = node.getLabelToLineNumberMap()
 
-        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
         val renamer = object : VariableRenamer() {
-            override fun visitMarkerVariable(variable: LocalVariableNode, scopeNumber: Int, ivDepth: Int): MarkerVariableInfo {
+            override fun computeInlineScopeInfo(node: InlineScopeNode) {
+                val variable = node.markerVariable!!
                 val name = variable.name
-                val currentIVDepth =
+                val ivDepth = node.inlineNesting
+                val scopeNumber = node.scopeNumber
+                node.inlineNesting =
                     if (name.isInlineLambdaName) {
                         getInlineDepth(name)
                     } else {
                         ivDepth + 1
                     }
 
-                val callSiteLineNumber =
+                node.callSiteLineNumber =
                     if (scopeNumber == 1) {
                         currentCallSiteLineNumber
                     } else {
@@ -219,14 +242,12 @@ class InlineScopesGenerator {
                     }
 
                 if (name.isInlineLambdaName) {
-                    val newSurroundingScopeNumber = computeSurroundingScopeNumber(inlineScopesStack, scopeNumber, currentIVDepth)
-                    return MarkerVariableInfo(callSiteLineNumber, newSurroundingScopeNumber, currentIVDepth)
+                    node.surroundingScopeNumber = computeSurroundingScopeNumber(node)
                 }
-                return MarkerVariableInfo(callSiteLineNumber, null, currentIVDepth)
             }
 
-            override fun shouldPostponeAddingAScopeNumber(variable: LocalVariableNode, ivDepth: Int): Boolean =
-                inlineScopesStack.isEmpty() || getInlineDepth(variable.name) != ivDepth
+            override fun LocalVariableNode.belongsToInlineScope(node: InlineScopeNode): Boolean =
+                !node.isRoot && getInlineDepth(name) == node.inlineNesting
         }
 
         inlinedScopes += renamer.renameVariables(node)
@@ -242,7 +263,6 @@ class InlineScopesGenerator {
         // start offset and not rely on the `currentCallSiteLineNumber` field. Also, when computing surrounding
         // scope numbers we assign surrounding scope 0 (that represents the top frame) to inline lambda
         // marker variables that don't have a surrounding scope.
-        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
         val renamer = object : VariableRenamer() {
             // Here inline nesting means depth in $iv suffixes.
             // On contrary with the situation when we are inlining a function,
@@ -251,39 +271,51 @@ class InlineScopesGenerator {
             override fun inlineNesting(): Int = 0
 
             override fun shouldSkipVariable(variable: LocalVariableNode): Boolean =
-                !isFakeLocalVariableForInline(variable.name) && !variable.name.contains(INLINE_FUN_VAR_SUFFIX)
+                !variable.name.contains(INLINE_FUN_VAR_SUFFIX)
 
-            override fun visitMarkerVariable(variable: LocalVariableNode, scopeNumber: Int, ivDepth: Int): MarkerVariableInfo {
+            override fun computeInlineScopeInfo(node: InlineScopeNode) {
+                val variable = node.markerVariable!!
+                val ivDepth = node.inlineNesting
                 val name = variable.name
-                val currentIVDepth =
+                node.inlineNesting =
                     if (name.isInlineLambdaName) {
                         getInlineDepth(name)
                     } else {
                         ivDepth + 1
                     }
 
-                val callSiteLineNumber = labelToLineNumber[variable.start.label] ?: 0
+                node.callSiteLineNumber = labelToLineNumber[variable.start.label] ?: 0
                 if (name.isInlineLambdaName) {
-                    val newSurroundingScopeNumber = computeSurroundingScopeNumber(inlineScopesStack, scopeNumber, currentIVDepth)
-                    return MarkerVariableInfo(callSiteLineNumber, newSurroundingScopeNumber, currentIVDepth)
+                    node.surroundingScopeNumber = computeSurroundingScopeNumber(node)
                 }
-                return MarkerVariableInfo(callSiteLineNumber, null, currentIVDepth)
             }
 
-            override fun shouldPostponeAddingAScopeNumber(variable: LocalVariableNode, ivDepth: Int): Boolean =
-                inlineScopesStack.isEmpty() || getInlineDepth(variable.name) != ivDepth
+            override fun LocalVariableNode.belongsToInlineScope(node: InlineScopeNode): Boolean =
+                !node.isRoot && getInlineDepth(name) == node.inlineNesting
         }
 
         renamer.renameVariables(node)
     }
 
-    private fun computeSurroundingScopeNumber(inlineScopesStack: List<ScopeInfo>, scopeNumber: Int, currentIVDepth: Int): Int =
+    private fun computeSurroundingScopeNumber(currentNode: InlineScopeNode): Int {
+        val scopeNumber = currentNode.scopeNumber
+        val currentIVDepth = currentNode.inlineNesting
         if (scopeNumber == 1) {
-            0
-        } else {
-            val surroundingScopeNumber = inlineScopesStack.lastOrNull { it.inlineNesting == currentIVDepth }?.scopeNumber
-            surroundingScopeNumber?.plus(inlinedScopes) ?: 0
+            return 0
         }
+
+        var surroundingScopeNumber: Int? = null
+        var node = currentNode.parent
+        while (node != null && !node.isRoot) {
+            if (node.inlineNesting == currentIVDepth) {
+                surroundingScopeNumber = node.scopeNumber
+                break
+            }
+            node = node.parent
+        }
+
+        return surroundingScopeNumber?.plus(inlinedScopes) ?: 0
+    }
 
     private fun computeNewVariableName(
         name: String,
