@@ -9,15 +9,22 @@
 #include "ThreadData.hpp"
 #include "ThreadState.hpp"
 
+#if __has_feature(thread_sanitizer)
+#include <sanitizer/tsan_interface.h>
+#endif
+
 using namespace kotlin;
 
 OBJ_GETTER(mm::AllocateObject, ThreadData* threadData, const TypeInfo* typeInfo) noexcept {
     AssertThreadState(threadData, ThreadState::kRunnable);
     // TODO: Make this work with GCs that can stop thread at any point.
     auto* object = threadData->allocator().allocateObject(typeInfo);
+    threadData->gc().onAllocation(object);
     // Prevents unsafe class publication (see KT-58995).
     std::atomic_thread_fence(std::memory_order_release);
-    threadData->gc().onAllocation(object);
+#if __has_feature(thread_sanitizer)
+    __tsan_release(object);
+#endif
     RETURN_OBJ(object);
 }
 
@@ -25,8 +32,11 @@ OBJ_GETTER(mm::AllocateArray, ThreadData* threadData, const TypeInfo* typeInfo, 
     AssertThreadState(threadData, ThreadState::kRunnable);
     // TODO: Make this work with GCs that can stop thread at any point.
     auto* array = threadData->allocator().allocateArray(typeInfo, static_cast<uint32_t>(elements));
+    threadData->gc().onAllocation(array->obj());
     // Prevents unsafe class publication (see KT-58995).
     std::atomic_thread_fence(std::memory_order_release);
-    threadData->gc().onAllocation(array->obj());
+#if __has_feature(thread_sanitizer)
+    __tsan_release(array->obj());
+#endif
     RETURN_OBJ(array->obj());
 }

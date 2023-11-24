@@ -13,96 +13,103 @@
 #include "ThreadData.hpp"
 #include "ThreadRegistry.hpp"
 
+#if __has_feature(thread_sanitizer)
+#include <sanitizer/tsan_interface.h>
+#endif
+
 using namespace kotlin;
+
+inline constexpr auto kTagBarriers = logging::Tag::kBarriers;
+#define BarriersLogDebug(active, format, ...) RuntimeLogDebug({kTagBarriers}, "%s" format, active ? "[active] " : "", ##__VA_ARGS__)
 
 namespace {
 
-std::atomic<ObjHeader* (*)(ObjHeader*)> weakRefBarrier = nullptr;
-std::atomic<int64_t> weakProcessingEpoch = 0;
-
-ObjHeader* weakRefBarrierImpl(ObjHeader* weakReferee) noexcept {
-    if (!weakReferee) return nullptr;
-    // When weak ref barriers are enabled, marked state cannot change and the
-    // object cannot be deleted.
-    if (!gc::isMarked(weakReferee)) {
-        return nullptr;
-    }
-    return weakReferee;
-}
-
-NO_INLINE ObjHeader* weakRefReadSlowPath(std::atomic<ObjHeader*>& weakReferee) noexcept {
-    // reread an action to avoid register pollution outside the function
-    auto barrier = weakRefBarrier.load(std::memory_order_seq_cst);
-    auto* weak = weakReferee.load(std::memory_order_relaxed);
-    return barrier ? barrier(weak) : weak;
-}
+std::atomic<bool> markBarriersEnabled = false;
+std::atomic<int64_t> markingEpoch = 0;
 
 } // namespace
 
-void gc::BarriersThreadData::onThreadRegistration() noexcept {
-    if (weakRefBarrier.load(std::memory_order_acquire) != nullptr) {
-        startMarkingNewObjects(GCHandle::getByEpoch(weakProcessingEpoch.load(std::memory_order_relaxed)));
+void gc::barriers::BarriersThreadData::onThreadRegistration() noexcept {
+    if (markBarriersEnabled.load(std::memory_order_acquire)) {
+        startMarkingNewObjects(GCHandle::getByEpoch(markingEpoch.load(std::memory_order_relaxed)));
     }
 }
 
-ALWAYS_INLINE void gc::BarriersThreadData::onSafePoint() noexcept {}
+ALWAYS_INLINE void gc::barriers::BarriersThreadData::onSafePoint() noexcept {}
 
-void gc::BarriersThreadData::startMarkingNewObjects(gc::GCHandle gcHandle) noexcept {
-    RuntimeAssert(weakRefBarrier.load(std::memory_order_relaxed) != nullptr, "New allocations marking may only be requested by weak ref barriers");
+void gc::barriers::BarriersThreadData::startMarkingNewObjects(gc::GCHandle gcHandle) noexcept {
+    RuntimeAssert(markBarriersEnabled.load(std::memory_order_relaxed), "New allocations marking may only be requested by mark barriers");
     markHandle_ = gcHandle.mark();
 }
 
-void gc::BarriersThreadData::stopMarkingNewObjects() noexcept {
-    RuntimeAssert(weakRefBarrier.load(std::memory_order_relaxed) == nullptr, "New allocations marking could only been requested by weak ref barriers");
+void gc::barriers::BarriersThreadData::stopMarkingNewObjects() noexcept {
+    RuntimeAssert(!markBarriersEnabled.load(std::memory_order_relaxed), "New allocations marking could only been requested by mark barriers");
     markHandle_ = std::nullopt;
 }
 
-bool gc::BarriersThreadData::shouldMarkNewObjects() const noexcept {
+bool gc::barriers::BarriersThreadData::shouldMarkNewObjects() const noexcept {
     return markHandle_.has_value();
 }
 
-ALWAYS_INLINE void gc::BarriersThreadData::onAllocation(ObjHeader* allocated) {
-    if (compiler::concurrentWeakSweep()) {
-        bool shouldMark = shouldMarkNewObjects();
-        bool barriersEnabled = weakRefBarrier.load(std::memory_order_relaxed) != nullptr;
-        RuntimeAssert(shouldMark == barriersEnabled, "New allocations marking must happen with and only with weak ref barriers");
-        if (shouldMark) {
-            auto& objectData = alloc::objectDataForObject(allocated);
-            objectData.markUncontended();
-            markHandle_->addObject();
-        }
+ALWAYS_INLINE void gc::barriers::BarriersThreadData::onAllocation(ObjHeader* allocated) {
+    bool shouldMark = shouldMarkNewObjects();
+    RuntimeAssert(shouldMark == markBarriersEnabled.load(std::memory_order_relaxed), "New allocations marking must happen with and only with mark barriers");
+    if (shouldMark) {
+        auto& objectData = alloc::objectDataForObject(allocated);
+        objectData.markUncontended();
+        markHandle_->addObject();
     }
 }
 
-void gc::EnableWeakRefBarriers(int64_t epoch) noexcept {
+void gc::barriers::enableMarkBarriers(int64_t epoch) noexcept {
+    // TODO assert STW
     auto mutators = mm::ThreadRegistry::Instance().LockForIter();
-    weakProcessingEpoch.store(epoch, std::memory_order_relaxed);
-    weakRefBarrier.store(weakRefBarrierImpl, std::memory_order_seq_cst);
+    markingEpoch.store(epoch, std::memory_order_relaxed);
+    markBarriersEnabled.store(true, std::memory_order_release); // FIXME why seq_cst?
     for (auto& mutator: mutators) {
         mutator.gc().impl().gc().barriers().startMarkingNewObjects(GCHandle::getByEpoch(epoch));
     }
 }
 
-void gc::DisableWeakRefBarriers() noexcept {
+void gc::barriers::disableMarkBarriers() noexcept {
+    // TODO assert STW
     auto mutators = mm::ThreadRegistry::Instance().LockForIter();
-    weakRefBarrier.store(nullptr, std::memory_order_seq_cst);
+    markBarriersEnabled.store(false, std::memory_order_release); // FIXME why seq_cst?
     for (auto& mutator: mutators) {
         mutator.gc().impl().gc().barriers().stopMarkingNewObjects();
     }
 }
 
-OBJ_GETTER(gc::WeakRefRead, std::atomic<ObjHeader*>& weakReferee) noexcept {
-    if (!compiler::concurrentWeakSweep()) {
-        RETURN_OBJ(weakReferee.load(std::memory_order_relaxed));
-    }
+namespace {
 
-    // Copying the scheme from SafePoint.cpp: branch + indirect call.
-    auto barrier = weakRefBarrier.load(std::memory_order_relaxed);
-    ObjHeader* result;
-    if (__builtin_expect(barrier != nullptr, false)) {
-        result = weakRefReadSlowPath(weakReferee);
-    } else {
-        result = weakReferee.load(std::memory_order_relaxed);
+// TODO decide whether it's beneficial to NO_INLINE the slow path
+void beforeHeapRefUpdateSlowPath(mm::DirectRefAccessor ref, ObjHeader* value) noexcept {
+    auto prev = ref.loadAtomic(std::memory_order_consume);
+    BarriersLogDebug(true, "Write *%p <- %p (%p overwritten)", ref.location(), value, prev);
+    if (prev != nullptr) {
+#if __has_feature(thread_sanitizer)
+        // Tell TSAN, that we acquire here the object's memory,
+        // released previously on allocation with atomic_thread_fence and __tsan_release workaround.
+        __tsan_acquire(prev);
+#endif
+        // FIXME Redundant if the destination object is black.
+        //       Yet at the moment there is now efficient way to distinguish black and gray objects.
+
+        auto& objectData = alloc::objectDataForObject(prev);
+
+        // TODO This is just a dummy. Replace with enqueueing when thread-local mark queues will be implemented.
+        objectData.tryMark();
+        // TODO Note that we should not add the marked abject to mark statistics at this point.
+        //      The object will be counted on dequeue instead.
     }
-    RETURN_OBJ(result);
+}
+
+} // namespace
+
+ALWAYS_INLINE void gc::barriers::beforeHeapRefUpdate(mm::DirectRefAccessor ref, ObjHeader* value) noexcept {
+    if (__builtin_expect(markBarriersEnabled.load(std::memory_order_acquire), false)) {
+        beforeHeapRefUpdateSlowPath(ref, value);
+    } else {
+        BarriersLogDebug(false, "Write *%p <- %p (%p overwritten)", ref.location(), value, ref.load());
+    }
 }

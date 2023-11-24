@@ -96,9 +96,9 @@ public:
     RefAccessor() = delete;
     RefAccessor& operator=(const RefAccessor&) = delete;
 
-    explicit RefAccessor(ObjHeader*& fieldRef) noexcept : direct_(fieldRef) {}
-    explicit RefAccessor(ObjHeader** fieldPtr) noexcept : RefAccessor(*fieldPtr) {}
-    RefAccessor(const RefAccessor& other) noexcept : direct_(other.direct_) {}
+    explicit RefAccessor(ObjHeader*& fieldRef) noexcept: direct_(fieldRef) {}
+    explicit RefAccessor(ObjHeader** fieldPtr) noexcept: RefAccessor(*fieldPtr) {}
+    RefAccessor(const RefAccessor& other) noexcept: direct_(other.direct_) {}
 
     DirectRefAccessor direct() const noexcept { return direct_; }
 
@@ -125,7 +125,10 @@ public:
         return result;
     }
 
-    ALWAYS_INLINE ObjHeader* operator=(ObjHeader* desired) noexcept { store(desired); return desired; }
+    ALWAYS_INLINE ObjHeader* operator=(ObjHeader* desired) noexcept {
+        store(desired);
+        return desired;
+    }
 
     ALWAYS_INLINE void store(ObjHeader* desired) noexcept {
         AssertThreadState(ThreadState::kRunnable);
@@ -200,6 +203,6 @@ private:
     ObjHeader* value_ = nullptr;
 };
 
-OBJ_GETTER(weakRefReadBarrier, std::atomic<ObjHeader*>& referee) noexcept;
+OBJ_GETTER(weakRefReadBarrier, std::atomic<ObjHeader*>& weakReferee) noexcept;
 
 }
