@@ -126,11 +126,12 @@ internal class SourceSetVisibilityProvider(
         }
 
         val visibleSourceSetNames = visiblePlatformVariantNames
-            .map { platformVariants ->
+            .mapNotNull { platformVariants ->
                 platformVariants
-                    .mapNotNull { dependencyProjectStructureMetadata.sourceSetNamesByVariantName[it] }
+                    .map { dependencyProjectStructureMetadata.sourceSetNamesByVariantName[it].orEmpty() }
                     // join together visible source sets from multiple variants of the same platform
                     .fold(emptySet<String>()) { acc, item -> acc union item }
+                    .ifEmpty { null }
             }
             // intersect visible variants from different platforms
             .reduce { acc, item -> acc intersect item }
