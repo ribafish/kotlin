@@ -108,7 +108,6 @@ internal object TestDirectives : SimpleDirectivesContainer() {
     val INPUT_DATA_FILE by stringDirective(
         description = """
             Specify the file which contains the text to be passed to process' input (stdin).
-            Note that this directive makes sense only in combination with // KIND: STANDALONE_NO_TR
         """.trimIndent()
     )
 

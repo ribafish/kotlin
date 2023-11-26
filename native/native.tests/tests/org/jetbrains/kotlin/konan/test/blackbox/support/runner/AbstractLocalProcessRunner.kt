@@ -113,7 +113,8 @@ internal abstract class LocalResultHandler<R>(
                         "testReport is expected to be non-null"
                     }
                     verifyExpectation(!testReport!!.isEmpty()) {
-                        "testReport is expected to be non-empty"
+                        "testReport is wrongly empty: severe test malfunction. " +
+                        "Consider not ignoring the test, but disabling it with unconditional or conditional DISABLE_NATIVE* directives"
                     }
                     verifyExpectation(testReport.failedTests.isNotEmpty()) {
                         "Test did not fail as expected"

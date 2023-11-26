@@ -42,12 +42,14 @@ internal open class BaseTestRunProvider {
             TestKind.STANDALONE -> {
                 add(TestRunParameter.WithTCTestLogger)
                 addIfNotNull(testName?.let(TestRunParameter::WithTestFilter))
+                addIfNotNull(testCase.extras<TestCase.WithTestRunnerExtras>().inputDataFile?.let(TestRunParameter::WithInputData))
             }
             TestKind.REGULAR -> {
                 add(TestRunParameter.WithTCTestLogger)
                 addIfNotNull(
                     testName?.let(TestRunParameter::WithTestFilter) ?: TestRunParameter.WithPackageFilter(testCase.nominalPackageName)
                 )
+                addIfNotNull(testCase.extras<TestCase.WithTestRunnerExtras>().inputDataFile?.let(TestRunParameter::WithInputData))
             }
         }
     }
