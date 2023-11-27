@@ -27351,6 +27351,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("intersectionOverrideWithProtectedAbstract.kt")
+            public void testIntersectionOverrideWithProtectedAbstract() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/intersectionOverrideWithProtectedAbstract.kt");
+            }
+
+            @Test
             @TestMetadata("InvisiblePotentialOverride.kt")
             public void testInvisiblePotentialOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/InvisiblePotentialOverride.kt");
