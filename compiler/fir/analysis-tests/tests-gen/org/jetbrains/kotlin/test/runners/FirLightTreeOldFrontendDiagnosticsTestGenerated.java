@@ -42653,6 +42653,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("invokeRecieverUnsafe.kt")
+            public void testInvokeRecieverUnsafe() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/invokeRecieverUnsafe.kt");
+            }
+
+            @Test
             @TestMetadata("kt10463.kt")
             public void testKt10463() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/kt10463.kt");
