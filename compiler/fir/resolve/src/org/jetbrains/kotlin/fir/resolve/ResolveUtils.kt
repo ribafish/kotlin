@@ -373,6 +373,16 @@ fun BodyResolveComponents.transformQualifiedAccessUsingSmartcastInfo(
     return transformExpressionUsingSmartcastInfo(qualifiedAccessExpression, stability, typesFromSmartCast) ?: qualifiedAccessExpression
 }
 
+fun BodyResolveComponents.transformQualifiedAccessUsingSmartcastInfo(
+    qualifiedAccessExpression: FirQualifiedAccessExpression,
+    ignoreCallArguments: Boolean,
+): FirExpression {
+    val (stability, typesFromSmartCast) = dataFlowAnalyzer.getTypeUsingSmartcastInfo(qualifiedAccessExpression, ignoreCallArguments)
+        ?: return qualifiedAccessExpression
+
+    return transformExpressionUsingSmartcastInfo(qualifiedAccessExpression, stability, typesFromSmartCast) ?: qualifiedAccessExpression
+}
+
 fun BodyResolveComponents.transformWhenSubjectExpressionUsingSmartcastInfo(
     whenSubjectExpression: FirWhenSubjectExpression,
 ): FirExpression {

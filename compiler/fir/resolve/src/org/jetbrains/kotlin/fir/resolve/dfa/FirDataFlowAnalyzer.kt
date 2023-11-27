@@ -130,9 +130,22 @@ abstract class FirDataFlowAnalyzer(
         context.variableAssignmentAnalyzer.isAccessToUnstableLocalVariable(expression)
 
     open fun getTypeUsingSmartcastInfo(expression: FirExpression): Pair<PropertyStability, MutableList<ConeKotlinType>>? {
-        val flow = graphBuilder.lastNode.flow
-        val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(flow, expression) ?: return null
-        val types = flow.getTypeStatement(variable)?.exactType?.ifEmpty { null } ?: return null
+        return graphBuilder.lastNode.flow.getTypeUsingSmartcastInfo(expression)
+    }
+
+    open fun getTypeUsingSmartcastInfo(
+        expression: FirExpression,
+        ignoreCallArguments: Boolean,
+    ): Pair<PropertyStability, MutableList<ConeKotlinType>>? {
+        // TODO always ignore call arguments?
+        return graphBuilder.lastNode
+            .let { if (ignoreCallArguments && it is FunctionCallArgumentsExitNode) it.enterNode else it }
+            .flow.getTypeUsingSmartcastInfo(expression)
+    }
+
+    private fun Flow.getTypeUsingSmartcastInfo(expression: FirExpression): Pair<PropertyStability, MutableList<ConeKotlinType>>? {
+        val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(this, expression) ?: return null
+        val types = getTypeStatement(variable)?.exactType?.ifEmpty { null } ?: return null
         return variable.stability to types.toMutableList()
     }
 
@@ -871,14 +884,26 @@ abstract class FirDataFlowAnalyzer(
     }
 
     fun enterCallArguments(call: FirStatement, arguments: List<FirExpression>) {
+        graphBuilder.enterCall()
+
         val lambdas = arguments.mapNotNull { it.unwrapAnonymousFunctionExpression() }
         context.variableAssignmentAnalyzer.enterFunctionCall(lambdas)
-        graphBuilder.enterCall()
-        graphBuilder.enterCallArguments(call, lambdas)
+        graphBuilder.enterCallArguments(call, lambdas)?.mergeIncomingFlow()
     }
 
     fun exitCallArguments() {
-        graphBuilder.exitCallArguments()?.mergeIncomingFlow()
+        val (splitNode, exitNode) = graphBuilder.exitCallArguments()
+        splitNode?.mergeIncomingFlow()
+
+        if (exitNode != null) {
+            exitNode.mergeIncomingFlow()
+
+            // Reset implicit receivers back to their state *before* call arguments as tower resolve will use receiver types to lookup
+            // functions after call arguments have been processed.
+            val flow = exitNode.enterNode.flow
+            updateAllReceivers(currentReceiverState, flow)
+            currentReceiverState = flow
+        }
     }
 
     fun exitFunctionCall(functionCall: FirFunctionCall, callCompleted: Boolean) {
