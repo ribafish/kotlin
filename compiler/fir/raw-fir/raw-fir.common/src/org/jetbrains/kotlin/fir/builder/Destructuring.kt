@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
-import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.Name
@@ -26,13 +25,14 @@ interface DestructuringContext<T> {
 }
 
 context(DestructuringContext<T>)
-fun <T> MutableList<FirStatement>.addDestructuringStatements(
+fun <T> MutableList<in FirVariable>.addDestructuringVariables(
     moduleData: FirModuleData,
     container: FirVariable,
     entries: List<T>,
     isVar: Boolean,
     tmpVariable: Boolean,
     localEntries: Boolean,
+    configure: (FirVariable) -> Unit = {}
 ) {
     if (tmpVariable) {
         this += container
@@ -50,6 +50,6 @@ fun <T> MutableList<FirStatement>.addDestructuringStatements(
             isLocal = localEntries
             status = FirDeclarationStatusImpl(if (localEntries) Visibilities.Local else Visibilities.Public, Modality.FINAL)
             entry.extractAnnotationsTo(this)
-        }
+        }.also(configure)
     }
 }
