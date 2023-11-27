@@ -104,7 +104,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
         nodeArgs: List<String> = listOf(),
         args: List<String>
     ) {
-        exec.workingDir = dir.get().asFile
+        exec.workingDir(dir)
         exec.executable = nodeExecutable
         exec.args = nodeArgs + require(tool) + args
     }
