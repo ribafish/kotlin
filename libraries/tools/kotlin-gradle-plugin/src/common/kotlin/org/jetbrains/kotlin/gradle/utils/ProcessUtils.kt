@@ -6,12 +6,12 @@
 package org.jetbrains.kotlin.gradle.utils
 
 import org.gradle.api.logging.Logger
-import java.io.IOException
 import kotlin.concurrent.thread
 
 internal fun runCommand(
     command: List<String>,
     logger: Logger? = null,
+    fallback: ((retCode: Int, output: String) -> String?)? = null,
     errorHandler: ((retCode: Int, output: String, process: Process) -> String?)? = null,
     processConfiguration: ProcessBuilder.() -> Unit = { }
 ): String {
@@ -45,6 +45,13 @@ internal fun runCommand(
             |${inputText}
         """.trimMargin()
     )
+
+    if (retCode != 0 && fallback != null) {
+        val fallbackText = fallback(retCode, inputText.ifBlank { errorText })
+        if (fallbackText != null) {
+            return fallbackText
+        }
+    }
 
     check(retCode == 0) {
         errorHandler?.invoke(retCode, inputText.ifBlank { errorText }, process)
