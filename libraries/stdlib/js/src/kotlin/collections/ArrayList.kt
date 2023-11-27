@@ -179,7 +179,7 @@ public actual open class ArrayList<E> internal constructor(private var array: Ar
     }
 
     @ExperimentalJsExport
-    override fun asJsArrayMutableView() = array.unsafeCast<JsMutableArray<E>>()
+    override fun asJsArrayMutableView(): JsMutableArray<E> = array.unsafeCast<JsMutableArray<E>>()
 
     internal override fun checkIsMutable() {
         if (isReadOnly) throw UnsupportedOperationException()

@@ -6,19 +6,19 @@
 package kotlin.js
 
 @JsName("ReadonlyArray")
-external interface JsImmutableArray<out E>
+public external interface JsImmutableArray<out E>
 
 @JsName("Array")
-external open class JsMutableArray<E> : JsImmutableArray<E>
+public external open class JsMutableArray<E> : JsImmutableArray<E>
 
 @JsName("ReadonlySet")
-external interface JsImmutableSet<out E>
+public external interface JsImmutableSet<out E>
 
 @JsName("Set")
-external open class JsMutableSet<E> : JsImmutableSet<E>
+public external open class JsMutableSet<E> : JsImmutableSet<E>
 
 @JsName("ReadonlyMap")
-external interface JsImmutableMap<K, out V>
+public external interface JsImmutableMap<K, out V>
 
 @JsName("Map")
-external open class JsMutableMap<K, V> : JsImmutableMap<K, V>
+public external open class JsMutableMap<K, V> : JsImmutableMap<K, V>
