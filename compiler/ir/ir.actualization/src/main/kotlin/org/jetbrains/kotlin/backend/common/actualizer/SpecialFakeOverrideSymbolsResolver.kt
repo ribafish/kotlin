@@ -41,6 +41,7 @@ class SpecialFakeOverrideSymbolsResolver(val expectActualMap: Map<IrSymbol, IrSy
     }
 
     private fun processClass(irClass: IrClass) {
+        require(!irClass.isExpect) { "There should be no references to expect classes at this point" }
         if (!processedClasses.add(irClass)) return
         for (declaration in irClass.declarations) {
             if (declaration !is IrOverridableDeclaration<*>) continue

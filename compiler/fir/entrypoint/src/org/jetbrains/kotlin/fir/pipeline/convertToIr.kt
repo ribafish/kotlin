@@ -64,91 +64,57 @@ fun FirResult.convertToIrAndActualize(
     actualizerTypeContextProvider: (IrBuiltIns) -> IrTypeSystemContext,
     fir2IrResultPostCompute: (ModuleCompilerAnalyzedOutput, Fir2IrResult) -> Unit = { _, _ -> },
 ): Fir2IrActualizedResult {
-    val fir2IrResult: Fir2IrResult
-    val actualizationResult: IrActualizedResult?
-
     val commonMemberStorage = Fir2IrCommonMemberStorage(signatureComposer, firMangler)
 
-    when (outputs.size) {
-        0 -> error("No modules found")
-        1 -> {
-            val output = outputs.single()
-            fir2IrResult = convertToIr(
-                output,
-                fir2IrExtensions,
-                fir2IrConfiguration,
-                commonMemberStorage = commonMemberStorage,
-                irBuiltIns = null,
-                irMangler,
-                visibilityConverter,
-                kotlinBuiltIns,
-                actualizerTypeContextProvider,
-            ).also { result ->
-                fir2IrResultPostCompute(output, result)
-            }
-            if (fir2IrConfiguration.useIrFakeOverrideBuilder) {
-                fir2IrResult.components.fakeOverrideBuilder.buildForAll(listOf(fir2IrResult.irModuleFragment))
-            }
-            actualizationResult = null
-        }
-        else -> {
-            val platformOutput = outputs.last()
-            val commonOutputs = outputs.dropLast(1)
-            var irBuiltIns: IrBuiltInsOverFir? = null
-            val commonIrOutputs = commonOutputs.map {
-                convertToIr(
-                    it,
-                    // We need to build all modules before rebuilding fake overrides
-                    // to avoid fixing declaration storages
-                    fir2IrExtensions,
-                    fir2IrConfiguration.copy(useIrFakeOverrideBuilder = false),
-                    commonMemberStorage = commonMemberStorage,
-                    irBuiltIns = irBuiltIns,
-                    irMangler,
-                    visibilityConverter,
-                    kotlinBuiltIns,
-                    actualizerTypeContextProvider,
-                ).also { result ->
-                    fir2IrResultPostCompute(it, result)
-                    if (irBuiltIns == null) {
-                        irBuiltIns = result.components.irBuiltIns
-                    }
-                }
-            }
-            fir2IrResult = convertToIr(
-                platformOutput,
-                fir2IrExtensions,
-                fir2IrConfiguration,
-                commonMemberStorage = commonMemberStorage,
-                irBuiltIns = irBuiltIns!!,
-                irMangler,
-                visibilityConverter,
-                kotlinBuiltIns,
-                actualizerTypeContextProvider,
-            ).also {
-                fir2IrResultPostCompute(platformOutput, it)
-            }
+    require(outputs.isNotEmpty()) { error("No modules found") }
 
-            actualizationResult = IrActualizer.actualize(
-                fir2IrResult.irModuleFragment,
-                commonIrOutputs.map { it.irModuleFragment },
-                KtDiagnosticReporterWithImplicitIrBasedContext(
-                    fir2IrConfiguration.diagnosticReporter,
-                    fir2IrConfiguration.languageVersionSettings
-                ),
-                actualizerTypeContextProvider(fir2IrResult.irModuleFragment.irBuiltins),
-                fir2IrResult.components.fakeOverrideBuilder,
-                fir2IrConfiguration.useIrFakeOverrideBuilder,
-                fir2IrConfiguration.expectActualTracker,
-            )
+    var irBuiltIns: IrBuiltInsOverFir? = null
+    val irOutputs = outputs.map {
+        convertToIr(
+            it,
+            // We need to build all modules before rebuilding fake overrides
+            // to avoid fixing declaration storages
+            fir2IrExtensions,
+            fir2IrConfiguration,
+            commonMemberStorage = commonMemberStorage,
+            irBuiltIns = irBuiltIns,
+            irMangler,
+            visibilityConverter,
+            kotlinBuiltIns,
+            actualizerTypeContextProvider,
+        ).also { result ->
+            fir2IrResultPostCompute(it, result)
+            if (irBuiltIns == null) {
+                irBuiltIns = result.components.irBuiltIns
+            }
         }
     }
 
-    val (irModuleFragment, components, pluginContext) = fir2IrResult
+    val (irModuleFragment, components, pluginContext) = irOutputs.last()
+    val allIrModules = irOutputs.map { it.irModuleFragment }
+
+    val irActualizer = if (allIrModules.size == 1) null else IrActualizer(
+        KtDiagnosticReporterWithImplicitIrBasedContext(
+            fir2IrConfiguration.diagnosticReporter,
+            fir2IrConfiguration.languageVersionSettings
+        ),
+        actualizerTypeContextProvider(irModuleFragment.irBuiltins),
+        fir2IrConfiguration.expectActualTracker,
+        fir2IrConfiguration.useIrFakeOverrideBuilder,
+        irModuleFragment,
+        allIrModules.dropLast(1),
+    )
+
+    if (fir2IrConfiguration.useIrFakeOverrideBuilder) {
+        irActualizer?.actualizeClassifiers()
+        components.fakeOverrideBuilder.buildForAll(allIrModules)
+    }
+    val expectActualMap = irActualizer?.actualizeCallablesAndMergeModules() ?: emptyMap()
     if (components.configuration.useIrFakeOverrideBuilder) {
-        irModuleFragment.acceptVoid(SpecialFakeOverrideSymbolsResolver(actualizationResult?.expectActualMap ?: emptyMap()))
+        irModuleFragment.acceptVoid(SpecialFakeOverrideSymbolsResolver(expectActualMap))
     }
     Fir2IrConverter.evaluateConstants(irModuleFragment, components)
+    val actualizationResult = irActualizer?.runChecksAndFinalize(expectActualMap)
     pluginContext.applyIrGenerationExtensions(irModuleFragment, irGeneratorExtensions)
     return Fir2IrActualizedResult(irModuleFragment, components, pluginContext, actualizationResult)
 }

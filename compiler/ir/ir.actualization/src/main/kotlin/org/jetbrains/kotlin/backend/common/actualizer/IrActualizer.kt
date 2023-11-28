@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.backend.common.actualizer.checker.IrExpectActualCheckers
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder
-import org.jetbrains.kotlin.ir.overrides.buildForAll
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -31,75 +29,59 @@ data class IrActualizedResult(
  *
  * See `/docs/fir/k2_kmp.md`
  */
-object IrActualizer {
-    fun actualize(
-        mainFragment: IrModuleFragment,
-        dependentFragments: List<IrModuleFragment>,
-        ktDiagnosticReporter: IrDiagnosticReporter,
-        typeSystemContext: IrTypeSystemContext,
-        fakeOverrideBuilder: IrFakeOverrideBuilder,
-        useIrFakeOverrideBuilder: Boolean,
-        expectActualTracker: ExpectActualTracker?
-    ): IrActualizedResult {
+class IrActualizer(
+    val ktDiagnosticReporter: IrDiagnosticReporter,
+    val typeSystemContext: IrTypeSystemContext,
+    expectActualTracker: ExpectActualTracker?,
+    val useIrFakeOverrideBuilder: Boolean,
+    val mainFragment: IrModuleFragment,
+    val dependentFragments: List<IrModuleFragment>
+) {
+    private val collector = ExpectActualCollector(
+        mainFragment,
+        dependentFragments,
+        typeSystemContext,
+        ktDiagnosticReporter,
+        expectActualTracker,
+    )
 
-        val collector = ExpectActualCollector(
-            mainFragment,
-            dependentFragments,
-            typeSystemContext,
-            ktDiagnosticReporter,
-            expectActualTracker
-        )
+    private val classActualizationInfo = collector.collectClassActualizationInfo()
 
-        // The ir modules processing is performed phase-to-phase:
-        //   1. Collect expect-actual links for top-level declarations from dependent fragments
-        val classActualizationInfo = collector.collectClassActualizationInfo()
-
-
-        if (useIrFakeOverrideBuilder) {
-            // 2. Actualize class links inside dependent modules
-            val classSymbolRemapper = object : SymbolRemapper.Empty() {
-                override fun getReferencedClass(symbol: IrClassSymbol): IrClassSymbol {
-                    if (!symbol.owner.isExpect) return symbol
-                    val classId = symbol.owner.classIdOrFail
-                    classActualizationInfo.actualTypeAliases[classId]?.let { return it.owner.expandedType.classOrFail }
-                    classActualizationInfo.actualClasses[classId]?.let { return it }
-                    shouldNotBeCalled("There is no actual class for ${classId}, but this should be already rejected by frontend upto this point")
-                }
-                override fun getReferencedClassOrNull(symbol: IrClassSymbol?): IrClassSymbol? {
-                    if (symbol == null) return null
-                    return getReferencedClass(symbol)
-                }
-
-                override fun getReferencedClassifier(symbol: IrClassifierSymbol): IrClassifierSymbol {
-                    if (symbol !is IrClassSymbol) return symbol
-                    return getReferencedClass(symbol)
-                }
+    fun actualizeClassifiers() {
+        val classSymbolRemapper = object : SymbolRemapper.Empty() {
+            override fun getReferencedClass(symbol: IrClassSymbol): IrClassSymbol {
+                if (!symbol.owner.isExpect) return symbol
+                val classId = symbol.owner.classIdOrFail
+                classActualizationInfo.actualTypeAliases[classId]?.let { return it.owner.expandedType.classOrFail }
+                classActualizationInfo.actualClasses[classId]?.let { return it }
+                shouldNotBeCalled("There is no actual class for ${classId}, but this should be already rejected by frontend upto this point")
             }
-            val classTypeRemapper = DeepCopyTypeRemapper(classSymbolRemapper)
-            val classActualizerVisitor = ActualizerVisitor(classSymbolRemapper, classTypeRemapper)
-            dependentFragments.forEach { it.transform(classActualizerVisitor, null) }
 
-            // 3. Build fake overrides
-            fakeOverrideBuilder.buildForAll(dependentFragments + mainFragment)
+            override fun getReferencedClassOrNull(symbol: IrClassSymbol?): IrClassSymbol? {
+                if (symbol == null) return null
+                return getReferencedClass(symbol)
+            }
+
+            override fun getReferencedClassifier(symbol: IrClassifierSymbol): IrClassifierSymbol {
+                if (symbol !is IrClassSymbol) return symbol
+                return getReferencedClass(symbol)
+            }
         }
+        val classTypeRemapper = DeepCopyTypeRemapper(classSymbolRemapper)
+        val classActualizerVisitor = ActualizerVisitor(classSymbolRemapper, classTypeRemapper)
+        dependentFragments.forEach { it.transform(classActualizerVisitor, null) }
+    }
 
-        // 4. Collect expect-actual links for members of classes found on step 1.
+    fun actualizeCallablesAndMergeModules(): Map<IrSymbol, IrSymbol> {
+        // 1. Collect expect-actual links for members of classes found on step 1.
         val expectActualMap = collector.collect(classActualizationInfo)
 
-        // 5. Check if collected links are correct, or report some errors.
-        IrExpectActualCheckers(expectActualMap, classActualizationInfo, typeSystemContext, ktDiagnosticReporter).check()
-
-        //   6. Remove top-only expect declarations since they are not needed anymore and should not be presented in the final IrFragment
-        //      Expect fake-overrides from non-expect classes remain untouched since they will be actualized in the next phase.
-        //      Also, it doesn't remove unactualized expect declarations marked with @OptionalExpectation
-        val removedExpectDeclarations = removeExpectDeclarations(dependentFragments, expectActualMap)
-
         if (!useIrFakeOverrideBuilder) {
-            //   7. Actualize expect fake overrides in non-expect classes inside common or multi-platform module.
+            //   3. Actualize expect fake overrides in non-expect classes inside common or multi-platform module.
             //      It's probably important to run FakeOverridesActualizer before ActualFakeOverridesAdder
             FakeOverridesActualizer(expectActualMap).apply { dependentFragments.forEach { visitModuleFragment(it) } }
 
-            //   8. Add fake overrides to non-expect classes inside common or multi-platform module,
+            //   4. Add fake overrides to non-expect classes inside common or multi-platform module,
             //      taken from these non-expect classes actualized super classes.
             ActualFakeOverridesAdder(
                 expectActualMap,
@@ -108,18 +90,26 @@ object IrActualizer {
             ).apply { dependentFragments.forEach { visitModuleFragment(it) } }
         }
 
-        //   9. Copy and actualize function parameter default values from expect functions
+        //   5. Copy and actualize function parameter default values from expect functions
         val symbolRemapper = ActualizerSymbolRemapper(expectActualMap)
         val typeRemapper = DeepCopyTypeRemapper(symbolRemapper)
         FunctionDefaultParametersActualizer(symbolRemapper, typeRemapper, expectActualMap).actualize()
 
-        //   10. Actualize expect calls in dependent fragments using info obtained in the previous steps
+        //   6. Actualize expect calls in dependent fragments using info obtained in the previous steps
         val actualizerVisitor = ActualizerVisitor(symbolRemapper, typeRemapper)
         dependentFragments.forEach { it.transform(actualizerVisitor, null) }
 
-        //   11. Merge dependent fragments into the main one
+        //   8. Move all declarations to mainFragment
         mergeIrFragments(mainFragment, dependentFragments)
+        return expectActualMap
+    }
 
+    fun runChecksAndFinalize(expectActualMap: Map<IrSymbol, IrSymbol>) : IrActualizedResult {
+        //   Remove top-only expect declarations since they are not needed anymore and should not be presented in the final IrFragment
+        //   Also, it doesn't remove unactualized expect declarations marked with @OptionalExpectation
+        val removedExpectDeclarations = removeExpectDeclarations(dependentFragments, expectActualMap)
+
+        IrExpectActualCheckers(expectActualMap, classActualizationInfo, typeSystemContext, ktDiagnosticReporter).check()
         return IrActualizedResult(removedExpectDeclarations, expectActualMap)
     }
 
