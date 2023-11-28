@@ -38,12 +38,6 @@ public class FirJsES6CodegenWasmJsInteropTestGenerated extends AbstractFirJsES6C
     }
 
     @Test
-    @TestMetadata("externals.kt")
-    public void testExternals() throws Exception {
-        runTest("compiler/testData/codegen/boxWasmJsInterop/externals.kt");
-    }
-
-    @Test
     @TestMetadata("functionTypes.kt")
     public void testFunctionTypes() throws Exception {
         runTest("compiler/testData/codegen/boxWasmJsInterop/functionTypes.kt");

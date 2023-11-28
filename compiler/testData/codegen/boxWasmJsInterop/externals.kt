@@ -1,3 +1,4 @@
+// TARGET_BACKEND: WASM
 // FILE: externals.js
 function createObject() {
     return {
