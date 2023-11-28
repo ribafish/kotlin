@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder
 import org.jetbrains.kotlin.ir.overrides.buildForAll
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.classOrFail
@@ -63,6 +64,15 @@ object IrActualizer {
                     classActualizationInfo.actualTypeAliases[classId]?.let { return it.owner.expandedType.classOrFail }
                     classActualizationInfo.actualClasses[classId]?.let { return it }
                     shouldNotBeCalled("There is no actual class for ${classId}, but this should be already rejected by frontend upto this point")
+                }
+                override fun getReferencedClassOrNull(symbol: IrClassSymbol?): IrClassSymbol? {
+                    if (symbol == null) return null
+                    return getReferencedClass(symbol)
+                }
+
+                override fun getReferencedClassifier(symbol: IrClassifierSymbol): IrClassifierSymbol {
+                    if (symbol !is IrClassSymbol) return symbol
+                    return getReferencedClass(symbol)
                 }
             }
             val classTypeRemapper = DeepCopyTypeRemapper(classSymbolRemapper)
