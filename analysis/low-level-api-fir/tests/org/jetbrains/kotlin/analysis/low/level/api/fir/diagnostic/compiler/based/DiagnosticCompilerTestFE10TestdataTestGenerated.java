@@ -34591,6 +34591,40 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/smartCasts/lambdasWithCallInPlace")
+            @TestDataPath("$PROJECT_ROOT")
+            public class LambdasWithCallInPlace {
+                @Test
+                public void testAllFilesPresentInLambdasWithCallInPlace() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/smartCasts/lambdasWithCallInPlace"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("lambdaWithCallInPlace.kt")
+                public void testLambdaWithCallInPlace() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithCallInPlace/lambdaWithCallInPlace.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaWithCallInPlaceAndBounds.kt")
+                public void testLambdaWithCallInPlaceAndBounds() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithCallInPlace/lambdaWithCallInPlaceAndBounds.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaWithCallInPlaceAndDelegate.kt")
+                public void testLambdaWithCallInPlaceAndDelegate() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithCallInPlace/lambdaWithCallInPlaceAndDelegate.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaWithCallInPlaceAndOperators.kt")
+                public void testLambdaWithCallInPlaceAndOperators() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithCallInPlace/lambdaWithCallInPlaceAndOperators.kt");
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/smartCasts/loops")
             @TestDataPath("$PROJECT_ROOT")
             public class Loops {

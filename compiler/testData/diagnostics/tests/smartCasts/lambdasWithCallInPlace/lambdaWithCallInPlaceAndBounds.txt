@@ -1,0 +1,43 @@
+package
+
+@kotlin.Suppress(names = {"OPT_IN_USAGE_ERROR", "OPT_IN_USAGE_FUTURE_ERROR"}) public fun atLeastOnce(/*0*/ block: () -> kotlin.Unit): kotlin.Unit
+    CallsInPlace(block, AT_LEAST_ONCE)
+
+@kotlin.Suppress(names = {"OPT_IN_USAGE_ERROR", "OPT_IN_USAGE_FUTURE_ERROR"}) public fun exactlyOnce(/*0*/ block: () -> kotlin.Unit): kotlin.Unit
+    CallsInPlace(block, EXACTLY_ONCE)
+
+public fun </*0*/ R> materialize(): R
+public fun runWithoutContract(/*0*/ block: () -> kotlin.Unit): kotlin.Unit
+public fun test1(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test10(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test11(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test12(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test13(): kotlin.Unit
+public fun test14(): kotlin.Unit
+public fun test15(): kotlin.Unit
+public fun test16(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test17(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test18(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test19(/*0*/ x: kotlin.Any?): kotlin.Unit
+public fun test2(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test20(/*0*/ x: kotlin.Any?): kotlin.Unit
+public fun test21(/*0*/ x: kotlin.Any?): kotlin.Unit
+public fun test22(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test23(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test24(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test25(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test26(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test27(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test28(): kotlin.Unit
+public fun test29(): kotlin.Unit
+public fun test3(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test30(): kotlin.Unit
+public fun test31(): kotlin.Unit
+public fun test32(): kotlin.Unit
+public fun test33(): kotlin.Unit
+public fun test4(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test5(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test6(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test7(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test8(/*0*/ x: kotlin.Any): kotlin.Unit
+public fun test9(/*0*/ x: kotlin.Any): kotlin.Unit
