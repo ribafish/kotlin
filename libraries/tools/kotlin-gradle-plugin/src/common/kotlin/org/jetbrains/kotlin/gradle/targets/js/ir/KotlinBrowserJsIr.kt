@@ -126,7 +126,7 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
 
                     val npmProject = compilation.npmProject
                     val resourcesDir = compilation.output.resourcesDir
-                    task.devServer.convention(
+                    task.devServerProperty.convention(
                         npmProject.dist.zip(npmProject.dir) { distDirectory, dir ->
                             KotlinWebpackConfig.DevServer(
                                 open = true,

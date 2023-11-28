@@ -57,7 +57,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
         val gradleNodeModulesProvider: Provider<GradleNodeModulesCache> = GradleNodeModulesCache.registerIfAbsent(
             project,
             project.projectDir,
-            nodeJs.nodeModulesGradleCacheDir
+            nodeJs.nodeModulesGradleCacheDirProvider
         )
 
         val setupFileHasherTask = project.registerTask<KotlinNpmCachesSetup>(KotlinNpmCachesSetup.NAME) {
@@ -91,7 +91,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
             project.version.toString(),
             TasksRequirements(),
             nodeJs.versions,
-            nodeJs.projectPackagesDir,
+            nodeJs.projectPackagesDirProvider,
             nodeJs.rootProjectDir,
         )
 
@@ -108,7 +108,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
                 }
             )
             it.parameters.gradleNodeModulesProvider.set(gradleNodeModulesProvider)
-            it.parameters.packagesDir.set(nodeJs.projectPackagesDir)
+            it.parameters.packagesDir.set(nodeJs.projectPackagesDirProvider)
         }
 
         YarnPlugin.apply(project)

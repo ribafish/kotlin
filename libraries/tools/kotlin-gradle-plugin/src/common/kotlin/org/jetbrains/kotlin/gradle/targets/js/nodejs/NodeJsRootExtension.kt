@@ -98,13 +98,34 @@ open class NodeJsRootExtension(
 
     lateinit var resolver: KotlinRootNpmResolver
 
-    val rootPackageDir: Provider<Directory> = project.layout.buildDirectory.dir("js")
+    val rootPackageDirProvider: Provider<Directory> = project.layout.buildDirectory.dir("js")
 
-    val projectPackagesDir: Provider<Directory>
-        get() = rootPackageDir.map { it.dir("packages") }
+    @Deprecated(
+        "This property is deprecated and will be removed in future. Use rootPackageDirProvider instead",
+        replaceWith = ReplaceWith("rootPackageDirProvider")
+    )
+    val rootPackageDir: File
+        get() = rootPackageDirProvider.getFile()
 
-    val nodeModulesGradleCacheDir: Provider<Directory>
-        get() = rootPackageDir.map { it.dir("packages_imported") }
+    val projectPackagesDirProvider: Provider<Directory>
+        get() = rootPackageDirProvider.map { it.dir("packages") }
+
+    @Deprecated(
+        "This property is deprecated and will be removed in future. Use projectPackagesDirProvider instead",
+        replaceWith = ReplaceWith("projectPackagesDirProvider")
+    )
+    val projectPackagesDir: File
+        get() = projectPackagesDirProvider.getFile()
+
+    val nodeModulesGradleCacheDirProvider: Provider<Directory>
+        get() = rootPackageDirProvider.map { it.dir("packages_imported") }
+
+    @Deprecated(
+        "This property is deprecated and will be removed in future. Use nodeModulesGradleCacheDirProvider instead",
+        replaceWith = ReplaceWith("nodeModulesGradleCacheDirProvider")
+    )
+    val nodeModulesGradleCacheDir: File
+        get() = nodeModulesGradleCacheDirProvider.getFile()
 
     internal val platform: org.gradle.api.provider.Property<Platform> = project.objects.property<Platform>()
 
@@ -133,7 +154,7 @@ open class NodeJsRootExtension(
         return NodeJsEnv(
             download = download,
             cleanableStore = cleanableStore,
-            rootPackageDir = rootPackageDir.getFile(),
+            rootPackageDir = rootPackageDirProvider.getFile(),
             dir = nodeDir,
             nodeBinDir = nodeBinDir,
             nodeExecutable = getExecutable("node", nodeCommand, "exe"),

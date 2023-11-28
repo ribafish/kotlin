@@ -57,7 +57,7 @@ constructor(
     @Transient
     private val nodeJs = project.rootProject.kotlinNodeJsExtension
     private val versions = nodeJs.versions
-    private val rootPackageDir by lazy { nodeJs.rootPackageDir }
+    private val rootPackageDir by lazy { nodeJs.rootPackageDirProvider }
 
     private val npmProject = compilation.npmProject
 
@@ -200,7 +200,10 @@ constructor(
     val devServerProperty: Property<KotlinWebpackConfig.DevServer> = project.objects.property(KotlinWebpackConfig.DevServer::class.java)
 
     @get:Internal
-    @Deprecated("Use devServerProperty instead. This will be removed in future", replaceWith = ReplaceWith("devServerProperty"))
+    @Deprecated(
+        "This property is deprecated and will be removed in future. Use devServerProperty instead",
+        replaceWith = ReplaceWith("devServerProperty")
+    )
     var devServer: KotlinWebpackConfig.DevServer
         get() = devServerProperty.get()
         set(value) = devServerProperty.set(value)
@@ -241,7 +244,7 @@ constructor(
         outputFileName = mainOutputFileName.get(),
         configDirectory = configDirectory,
         rules = rules,
-        devServer = devServer,
+        devServer = devServerProperty,
         devtool = devtool,
         sourceMaps = sourceMaps,
         resolveFromModulesFirst = resolveFromModulesFirst,

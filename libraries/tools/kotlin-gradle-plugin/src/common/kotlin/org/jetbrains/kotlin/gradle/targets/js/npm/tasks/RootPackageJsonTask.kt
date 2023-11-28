@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
+import org.jetbrains.kotlin.gradle.utils.getFile
+import java.io.File
 
 @DisableCachingByDefault
 abstract class RootPackageJsonTask :
@@ -42,7 +44,7 @@ abstract class RootPackageJsonTask :
         get() = nodeJs.resolver
 
     private val packagesDir: Provider<Directory>
-        get() = nodeJs.projectPackagesDir
+        get() = nodeJs.projectPackagesDirProvider
 
     // -----
 
@@ -55,8 +57,17 @@ abstract class RootPackageJsonTask :
     }
 
     @get:OutputFile
-    val rootPackageJson: Provider<RegularFile> =
-        nodeJs.rootPackageDir.map { it.file(NpmProject.PACKAGE_JSON) }
+    val rootPackageJsonProvider: Provider<RegularFile> =
+        nodeJs.rootPackageDirProvider.map { it.file(NpmProject.PACKAGE_JSON) }
+
+
+    @Deprecated(
+        "This property is deprecated and will be removed in future. Use rootPackageJsonProvider instead",
+        replaceWith = ReplaceWith("rootPackageJsonProvider")
+    )
+    @get:Internal
+    val rootPackageJson: File
+        get() = rootPackageJsonProvider.getFile()
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:IgnoreEmptyDirectories

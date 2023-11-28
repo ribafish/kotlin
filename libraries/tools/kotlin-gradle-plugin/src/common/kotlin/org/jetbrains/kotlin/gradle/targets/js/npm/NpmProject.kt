@@ -56,7 +56,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
         project.rootProject.kotlinNodeJsExtension
     }
 
-    val dir: Provider<Directory> = nodeJs.projectPackagesDir.map { it.dir(name) }
+    val dir: Provider<Directory> = nodeJs.projectPackagesDirProvider.map { it.dir(name) }
 
     val target: KotlinJsTargetDsl
         get() = compilation.target as KotlinJsTargetDsl

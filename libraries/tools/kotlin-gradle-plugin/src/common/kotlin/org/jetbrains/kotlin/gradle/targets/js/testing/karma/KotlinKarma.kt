@@ -44,7 +44,6 @@ import org.jetbrains.kotlin.gradle.utils.property
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.slf4j.Logger
 import java.io.File
-import java.nio.file.Path
 
 class KotlinKarma(
     @Transient override val compilation: KotlinJsIrCompilation,
@@ -59,7 +58,7 @@ class KotlinKarma(
 
     @Transient
     private val nodeJs = project.rootProject.kotlinNodeJsExtension
-    private val nodeRootPackageDir by lazy { nodeJs.rootPackageDir }
+    private val nodeRootPackageDir by lazy { nodeJs.rootPackageDirProvider }
     private val versions = nodeJs.versions
 
     private val config: KarmaConfig = KarmaConfig()

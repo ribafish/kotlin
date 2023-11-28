@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
+import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.File
 
 @DisableCachingByDefault
@@ -52,7 +53,7 @@ abstract class KotlinNpmInstallTask :
         get() = nodeJs.resolver
 
     private val packagesDir: Provider<Directory>
-        get() = nodeJs.projectPackagesDir
+        get() = nodeJs.projectPackagesDirProvider
 
     // -----
 
@@ -92,12 +93,20 @@ abstract class KotlinNpmInstallTask :
     )
 
     @get:OutputFile
-    val yarnLock: Provider<RegularFile> = nodeJs.rootPackageDir.map { it.file("yarn.lock") }
+    val yarnLockProvider: Provider<RegularFile> = nodeJs.rootPackageDirProvider.map { it.file("yarn.lock") }
+
+    @Deprecated(
+        "This property is deprecated and will be removed in future. yarnLockProvider nodeModulesGradleCacheDirProvider instead",
+        replaceWith = ReplaceWith("yarnLockProvider")
+    )
+    @get:Internal
+    val yarnLock: File
+        get() = yarnLockProvider.getFile()
 
     // node_modules as OutputDirectory is performance problematic
     // so input will only be existence of its directory
     @get:Internal
-    val nodeModules: Provider<Directory> = nodeJs.rootPackageDir.map { it.dir("node_modules") }
+    val nodeModules: Provider<Directory> = nodeJs.rootPackageDirProvider.map { it.dir("node_modules") }
 
     @TaskAction
     fun resolve() {
