@@ -80,7 +80,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
             }
 
             npmInstall.outputs.upToDateWhen {
-                npmInstall.nodeModules.get().asFile.exists()
+                npmInstall.nodeModules.getFile().exists()
             }
         }
 

@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
+import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.io.File
 import java.io.Serializable
@@ -89,7 +90,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
         get() = compilation.disambiguateName(PublicPackageJsonTask.NAME)
 
     internal val modules by lazy {
-        NpmProjectModules(dir.get().asFile)
+        NpmProjectModules(dir.getFile())
     }
 
     private val nodeExecutable by lazy {

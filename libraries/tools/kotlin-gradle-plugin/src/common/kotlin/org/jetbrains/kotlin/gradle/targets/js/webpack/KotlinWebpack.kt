@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.build.report.metrics.BuildMetricsReporterImpl
 import org.jetbrains.kotlin.build.report.metrics.GradleBuildPerformanceMetric
 import org.jetbrains.kotlin.build.report.metrics.GradleBuildTime
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.utils.archivesName
 import org.jetbrains.kotlin.gradle.report.UsesBuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWebpackRulesContainer
@@ -38,7 +37,8 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
-import org.jetbrains.kotlin.gradle.utils.getValue
+import org.jetbrains.kotlin.gradle.utils.*
+import org.jetbrains.kotlin.gradle.utils.archivesName
 import org.jetbrains.kotlin.gradle.utils.injected
 import org.jetbrains.kotlin.gradle.utils.property
 import org.jetbrains.kotlin.gradle.utils.providerWithLazyConvention
@@ -197,7 +197,13 @@ constructor(
 
     @Input
     @Optional
-    val devServer: Property<KotlinWebpackConfig.DevServer> = project.objects.property(KotlinWebpackConfig.DevServer::class.java)
+    val devServerProperty: Property<KotlinWebpackConfig.DevServer> = project.objects.property(KotlinWebpackConfig.DevServer::class.java)
+
+    @get:Internal
+    @Deprecated("Use devServerProperty instead. This will be removed in future", replaceWith = ReplaceWith("devServerProperty"))
+    var devServer: KotlinWebpackConfig.DevServer
+        get() = devServerProperty.get()
+        set(value) = devServerProperty.set(value)
 
     @Input
     @Optional
@@ -290,7 +296,7 @@ constructor(
             runner.copy(
                 config = runner.config.copy(
                     progressReporter = true,
-                    progressReporterPathFilter = rootPackageDir.get().asFile
+                    progressReporterPathFilter = rootPackageDir.getFile()
                 )
             ).execute(services)
 

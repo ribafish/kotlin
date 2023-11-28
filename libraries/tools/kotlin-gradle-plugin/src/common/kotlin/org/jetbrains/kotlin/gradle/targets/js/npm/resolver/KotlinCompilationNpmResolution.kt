@@ -14,6 +14,7 @@ import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.Serializable
 
 class KotlinCompilationNpmResolution(
@@ -140,7 +141,7 @@ class KotlinCompilationNpmResolution(
             it.execute(packageJson)
         }
 
-        packageJson.saveTo(resolution.npmProjectDir.get().asFile.resolve(NpmProject.PACKAGE_JSON))
+        packageJson.saveTo(resolution.npmProjectDir.getFile().resolve(NpmProject.PACKAGE_JSON))
     }
 
     private fun disambiguateDependencies(

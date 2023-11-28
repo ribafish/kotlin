@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.gradle.targets.js.testing.*
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import org.jetbrains.kotlin.gradle.tasks.KotlinTest
 import org.jetbrains.kotlin.gradle.utils.appendLine
+import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.getValue
 import org.jetbrains.kotlin.gradle.utils.property
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
@@ -97,7 +98,7 @@ class KotlinKarma(
         devtool = null,
         export = false,
         progressReporter = true,
-        progressReporterPathFilter = nodeRootPackageDir.get().asFile,
+        progressReporterPathFilter = nodeRootPackageDir.getFile(),
         rules = project.objects.webpackRulesContainer(),
         experiments = mutableSetOf("topLevelAwait")
     )
@@ -337,7 +338,7 @@ class KotlinKarma(
         nodeJsArgs: MutableList<String>,
         debug: Boolean,
     ): TCServiceMessagesTestExecutionSpec {
-        val file = task.inputFileProperty.get().asFile
+        val file = task.inputFileProperty.getFile()
         val fileString = file.toString()
 
         config.files.add(npmProject.require("kotlin-test-js-runner/kotlin-test-karma-runner.js"))
@@ -354,10 +355,10 @@ class KotlinKarma(
                     )
                 )
                 config.files.add(
-                    createLoadWasm(npmProject.dir.get().asFile, file).normalize().absolutePath
+                    createLoadWasm(npmProject.dir.getFile(), file).normalize().absolutePath
                 )
 
-                config.proxies["/${wasmFile.name}"] = basify(npmProjectDir.get().asFile, wasmFile)
+                config.proxies["/${wasmFile.name}"] = basify(npmProjectDir.getFile(), wasmFile)
 
                 config.customContextFile = npmProject.require("kotlin-test-js-runner/static/context.html")
                 config.customDebugFile = npmProject.require("kotlin-test-js-runner/static/debug.html")
@@ -399,7 +400,7 @@ class KotlinKarma(
             escapeTCMessagesInLog = isTeamCity.isPresent
         )
 
-        config.basePath = npmProjectDir.get().asFile.absolutePath
+        config.basePath = npmProjectDir.getFile().absolutePath
 
         configurators.forEach {
             it(task)
@@ -412,7 +413,7 @@ class KotlinKarma(
 
         config.client.args.addAll(cliArgs.toList())
 
-        val karmaConfJs = npmProject.dir.get().asFile.resolve("karma.conf.js")
+        val karmaConfJs = npmProject.dir.getFile().resolve("karma.conf.js")
         karmaConfJs.printWriter().use { confWriter ->
             envJsCollector.forEach { (envVar, value) ->
                 //language=JavaScript 1.8
@@ -587,7 +588,7 @@ class KotlinKarma(
     private fun createDebuggerJs(
         file: String,
     ): File {
-        val adapterJs = npmProject.dir.get().asFile.resolve("debugger.js")
+        val adapterJs = npmProject.dir.getFile().resolve("debugger.js")
         adapterJs.printWriter().use { writer ->
             // It is necessary for debugger attaching (--inspect-brk analogue)
             writer.println("debugger;")
