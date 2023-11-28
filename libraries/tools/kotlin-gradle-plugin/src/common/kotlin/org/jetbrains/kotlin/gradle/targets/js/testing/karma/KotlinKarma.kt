@@ -8,7 +8,9 @@ package org.jetbrains.kotlin.gradle.targets.js.testing.karma
 import com.google.gson.GsonBuilder
 import jetbrains.buildServer.messages.serviceMessages.BaseTestSuiteMessage
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
 import org.gradle.api.internal.tasks.testing.TestResultProcessor
+import org.gradle.api.provider.Provider
 import org.gradle.internal.logging.progress.ProgressLogger
 import org.gradle.internal.service.ServiceRegistry
 import org.gradle.process.ProcessForkOptions
@@ -77,8 +79,8 @@ class KotlinKarma(
     override val requiredNpmDependencies: Set<RequiredKotlinJsDependency>
         get() = requiredDependencies + webpackConfig.getRequiredDependencies(versions)
 
-    override val workingDir: Path
-        get() = npmProjectDir.get().asFile.toPath()
+    override val workingDir: Provider<Directory>
+        get() = npmProjectDir
 
     override fun getPath() = "$basePath:kotlinKarma"
 

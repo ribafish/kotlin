@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.gradle.targets.js.testing.mocha
 
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
+import org.gradle.api.provider.Provider
 import org.gradle.process.ProcessForkOptions
 import org.jetbrains.kotlin.gradle.internal.testing.TCServiceMessagesClientSettings
 import org.jetbrains.kotlin.gradle.internal.testing.TCServiceMessagesTestExecutionSpec
@@ -31,8 +33,8 @@ class KotlinMocha(@Transient override val compilation: KotlinJsIrCompilation, pr
     private val isTeamCity = project.providers.gradleProperty(TCServiceMessagesTestExecutor.TC_PROJECT_PROPERTY)
     private val npmProjectDir by project.provider { npmProject.dir }
 
-    override val workingDir: Path
-        get() = npmProjectDir.get().asFile.toPath()
+    override val workingDir: Provider<Directory>
+        get() = npmProjectDir
 
     override val settingsState: String
         get() = "mocha"
