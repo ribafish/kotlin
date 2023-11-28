@@ -61,7 +61,7 @@ fun box(): String {
 
     // JsBigInt
     val jsBigInt10: JsBigInt = 10L.toJsBigInt()
-    val anotherJsBigInt10: JsBigInt = 10.toJsBigInt()
+    val anotherJsBigInt10: JsBigInt = 10L.toJsBigInt()
     assertTrue(jsBigInt10 == anotherJsBigInt10)
     assertTrue(jsBigInt10.toLong() == 10L)
     assertTrue(anotherJsBigInt10.toLong() == 10L)
@@ -69,9 +69,9 @@ fun box(): String {
     assertTrue(jsBigIntAsJsAny == anotherJsBigInt10)
     assertTrue(jsBigIntAsJsAny is JsBigInt)
     assertTrue(jsBigIntAsJsAny !is JsNumber)
-    assertTrue(jsNumAsJsAny !is JsString)
-    assertTrue(jsNumAsJsAny !is JsBoolean)
-    assertTrue((jsNumAsJsAny as JsBigInt).toLong() == 10L)
+    assertTrue(jsBigIntAsJsAny !is JsString)
+    assertTrue(jsBigIntAsJsAny !is JsBoolean)
+    assertTrue((jsBigIntAsJsAny as JsBigInt).toLong() == 10L)
     val jsBigIntAsAny: Any = jsBigInt10
     assertTrue(jsBigIntAsAny == anotherJsBigInt10)
     assertTrue(jsBigIntAsAny is JsBigInt)

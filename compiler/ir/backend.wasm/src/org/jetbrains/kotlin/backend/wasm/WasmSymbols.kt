@@ -338,10 +338,6 @@ class WasmSymbols(
 
         val kotlinIntToExternRefAdapter = getInternalFunction("kotlinIntToExternRefAdapter")
         val kotlinBooleanToExternRefAdapter = getInternalFunction("kotlinBooleanToExternRefAdapter")
-        val kotlinUByteToExternRefAdapter = getInternalFunction("kotlinUByteToExternRefAdapter")
-        val kotlinUShortToExternRefAdapter = getInternalFunction("kotlinUShortToExternRefAdapter")
-        val kotlinUIntToExternRefAdapter = getInternalFunction("kotlinUIntToExternRefAdapter")
-        val kotlinULongToExternRefAdapter = getInternalFunction("kotlinULongToExternRefAdapter")
         val kotlinLongToExternRefAdapter = getInternalFunction("kotlinLongToExternRefAdapter")
         val kotlinFloatToExternRefAdapter = getInternalFunction("kotlinFloatToExternRefAdapter")
         val kotlinDoubleToExternRefAdapter = getInternalFunction("kotlinDoubleToExternRefAdapter")

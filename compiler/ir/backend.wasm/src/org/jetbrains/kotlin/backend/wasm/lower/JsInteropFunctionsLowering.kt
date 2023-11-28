@@ -210,17 +210,19 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
     val primitivesToExternRefAdapters: Map<IrType, InteropTypeAdapter> by lazy {
         mapOf(
             builtIns.byteType to adapters.kotlinByteToExternRefAdapter,
-            symbols.uByteType to adapters.kotlinUByteToExternRefAdapter,
+            symbols.uByteType to adapters.kotlinUByteToJsNumber,
             builtIns.shortType to adapters.kotlinShortToExternRefAdapter,
-            symbols.uShortType to adapters.kotlinUShortToExternRefAdapter,
+            symbols.uShortType to adapters.kotlinUShortToJsNumber,
             builtIns.charType to adapters.kotlinCharToExternRefAdapter,
             builtIns.intType to adapters.kotlinIntToExternRefAdapter,
-            symbols.uIntType to adapters.kotlinUIntToExternRefAdapter,
+            symbols.uIntType to adapters.kotlinUIntToJsNumber,
             builtIns.longType to adapters.kotlinLongToExternRefAdapter,
-            symbols.uLongType to adapters.kotlinULongToExternRefAdapter,
+            symbols.uLongType to adapters.kotlinULongToJsBigInt,
             builtIns.floatType to adapters.kotlinFloatToExternRefAdapter,
             builtIns.doubleType to adapters.kotlinDoubleToExternRefAdapter,
-        ).mapValues { FunctionBasedAdapter(it.value.owner) }
+        ).mapValues {
+            FunctionBasedAdapter(it.value.owner)
+        }
     }
 
     private fun IrType.kotlinToJsAdapterIfNeeded(isReturn: Boolean): InteropTypeAdapter? {
@@ -392,7 +394,7 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
 
         val notNullType = makeNotNull()
         val valueAdapter = notNullType.jsToKotlinAdapterIfNeededNotNullable(isReturn)
-        val isPrimitiveOrUnsigned = (valueAdapter?.fromType ?: notNullType).let { isPrimitiveType() || isUnsigned() }
+        val isPrimitiveOrUnsigned = (valueAdapter?.fromType ?: notNullType).let { it.isPrimitiveType() || it.isUnsigned() }
 
         return if (isNullable())
             createNullableAdapter(notNullType, isPrimitiveOrUnsigned, valueAdapter)
