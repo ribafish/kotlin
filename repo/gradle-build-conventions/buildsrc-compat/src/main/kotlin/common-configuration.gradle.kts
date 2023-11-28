@@ -169,9 +169,14 @@ fun Project.configureKotlinCompilationOptions() {
                 }
 
             // Workaround to avoid remote build cache misses due to absolute paths in relativePathBaseArg
-            doFirst {
-                if (relativePathBaseArg != null) {
-                    kotlinOptions.freeCompilerArgs += relativePathBaseArg
+            // This is a workaround for KT-50876, but with no clear explanation why doFirst is used.
+            // However, KGP with Native targets is used in the native-xctest project, and this code fails with
+            //  The value for property 'freeCompilerArgs' is final and cannot be changed any further.
+            if (project.path != ":native:kotlin-test-native-xctest") {
+                doFirst {
+                    if (relativePathBaseArg != null) {
+                        kotlinOptions.freeCompilerArgs += relativePathBaseArg
+                    }
                 }
             }
         }
