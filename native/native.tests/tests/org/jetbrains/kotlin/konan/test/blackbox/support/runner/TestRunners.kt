@@ -12,19 +12,34 @@ import org.jetbrains.kotlin.native.executors.EmulatorExecutor
 import org.jetbrains.kotlin.native.executors.Executor
 import org.jetbrains.kotlin.native.executors.RosettaExecutor
 import org.jetbrains.kotlin.native.executors.XcodeSimulatorExecutor
+import org.jetbrains.kotlin.native.executors.XCTestHostExecutor
+import org.jetbrains.kotlin.native.executors.XCTestSimulatorExecutor
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import java.util.concurrent.ConcurrentHashMap
 
 internal object TestRunners {
-    fun createProperTestRunner(testRun: TestRun, settings: Settings): Runner<Unit> = with(settings) {
-        if (get<ForcedNoopTestRunner>().value) {
+    fun createProperTestRunner(testRun: TestRun, settings: Settings): Runner<Unit> =
+        if (settings.get<ForcedNoopTestRunner>().value) {
             NoopTestRunner
-        } else with(get<KotlinNativeTargets>()) {
-            if (testTarget == hostTarget) {
+        } else with(settings.get<KotlinNativeTargets>()) {
+            val configurables = settings.configurables
+
+            if (settings.get<XCTestRunner>().isEnabled) {
+                // Forcibly run tests with XCTest
+                check(configurables is AppleConfigurables) {
+                    "Running tests with XCTest is not supported on non-Apple $configurables"
+                }
+                val executor = cached(
+                    if (testTarget == hostTarget) {
+                        XCTestHostExecutor(configurables)
+                    } else {
+                        XCTestSimulatorExecutor(configurables)
+                    }
+                )
+                RunnerWithExecutor(executor, testRun)
+            } else if (testTarget == hostTarget) {
                 LocalTestRunner(testRun)
             } else {
-                val configurables = configurables
-
                 val executor = cached(
                     when {
                         configurables is ConfigurablesWithEmulator -> EmulatorExecutor(configurables)
@@ -37,7 +52,6 @@ internal object TestRunners {
                 RunnerWithExecutor(executor, testRun)
             }
         }
-    }
 
     private val runnersCache: ConcurrentHashMap<String, Executor> = ConcurrentHashMap()
 
