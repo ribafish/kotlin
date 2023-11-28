@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
@@ -61,15 +62,17 @@ abstract class RootPackageJsonTask :
     @get:IgnoreEmptyDirectories
     @get:NormalizeLineEndings
     @get:InputFiles
-    val packageJsonFiles: Collection<Provider<RegularFile>> by lazy {
-        rootResolver.projectResolvers.values
-            .flatMap { it.compilationResolvers }
-            .map { it.compilationNpmResolution }
-            .map { resolution ->
-                val name = resolution.npmProjectName
-                packagesDir.map { it.dir(name).file(NpmProject.PACKAGE_JSON) }
-            }
-    }
+    val packageJsonFiles: FileCollection = project.objects.fileCollection().from(
+        {
+            rootResolver.projectResolvers.values
+                .flatMap { it.compilationResolvers }
+                .map { it.compilationNpmResolution }
+                .map { resolution ->
+                    val name = resolution.npmProjectName
+                    packagesDir.map { it.dir(name).file(NpmProject.PACKAGE_JSON) }
+                }
+        }
+    )
 
     @TaskAction
     fun resolve() {
