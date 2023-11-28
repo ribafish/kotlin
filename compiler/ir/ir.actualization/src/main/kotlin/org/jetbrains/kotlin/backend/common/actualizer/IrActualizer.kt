@@ -51,6 +51,7 @@ class IrActualizer(
         val classSymbolRemapper = object : SymbolRemapper.Empty() {
             override fun getReferencedClass(symbol: IrClassSymbol): IrClassSymbol {
                 if (!symbol.owner.isExpect) return symbol
+                if (symbol.owner.containsOptionalExpectation()) return symbol
                 val classId = symbol.owner.classIdOrFail
                 classActualizationInfo.actualTypeAliases[classId]?.let { return it.owner.expandedType.classOrFail }
                 classActualizationInfo.actualClasses[classId]?.let { return it }
