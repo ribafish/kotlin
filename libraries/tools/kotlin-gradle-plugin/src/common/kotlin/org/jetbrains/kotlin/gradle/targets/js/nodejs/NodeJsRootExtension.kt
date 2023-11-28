@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.RootPackageJsonTask
 import org.jetbrains.kotlin.gradle.targets.js.yarn.Yarn
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask
 import org.jetbrains.kotlin.gradle.tasks.internal.CleanableStore
+import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.property
 import java.io.File
 
@@ -132,7 +133,7 @@ open class NodeJsRootExtension(
         return NodeJsEnv(
             download = download,
             cleanableStore = cleanableStore,
-            rootPackageDir = rootPackageDir.get().asFile,
+            rootPackageDir = rootPackageDir.getFile(),
             dir = nodeDir,
             nodeBinDir = nodeBinDir,
             nodeExecutable = getExecutable("node", nodeCommand, "exe"),
