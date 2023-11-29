@@ -65,13 +65,14 @@ class KotlinLibraryResolverImpl<L : KotlinLibrary> internal constructor(
     }
 
     /**
-     * Leaves only distinct libraries (by absolute path), warns on duplicated paths.
+     * Leaves only distinct libraries (by absolute path).
      */
-    private fun List<KotlinLibrary>.leaveDistinct() =
-        this.groupBy { it.libraryFile.absolutePath }.let { groupedByAbsolutePath ->
-            warnOnLibraryDuplicates(groupedByAbsolutePath.filter { it.value.size > 1 }.keys)
-            groupedByAbsolutePath.map { it.value.first() }
-        }
+    private fun List<KotlinLibrary>.leaveDistinct(): List<KotlinLibrary> {
+        if (size <= 1) return this
+
+        val deduplicatedLibraries: Map<String, List<KotlinLibrary>> = groupByTo(linkedMapOf()) { it.libraryFile.absolutePath }
+        return deduplicatedLibraries.values.map { it.first() }
+    }
 
     /**
      * Having two libraries with the same uniqName we only keep the first one.
@@ -80,16 +81,17 @@ class KotlinLibraryResolverImpl<L : KotlinLibrary> internal constructor(
      */
     private fun List<KotlinLibrary>.omitDuplicateNames() =
         this.groupBy { it.uniqueName }.let { groupedByUniqName ->
-            warnOnLibraryDuplicateNames(groupedByUniqName.filter { it.value.size > 1 }.keys)
-            groupedByUniqName.map { it.value.first() }
+            val librariesWithDuplicatedUniqueNames = groupedByUniqName.filterValues { it.size > 1 }
+            librariesWithDuplicatedUniqueNames.entries.sortedBy { it.key }.forEach { (uniqueName, libraries) ->
+                warnOnLibraryDuplicateNames(uniqueName, libraries.map { it.libraryFile.absolutePath })
+            }
+            groupedByUniqName.map { it.value.first() } // TODO: this line is the reason of such issues as KT-63573
         }
 
-    private fun warnOnLibraryDuplicates(duplicatedPaths: Iterable<String>) {
-        duplicatedPaths.forEach { logger.warning("library included more than once: $it") }
-    }
-
-    private fun warnOnLibraryDuplicateNames(duplicatedPaths: Iterable<String>) {
-        duplicatedPaths.forEach { logger.warning("duplicate library name: $it") }
+    private fun warnOnLibraryDuplicateNames(uniqueName: String, duplicatedPaths: Iterable<String>) {
+        logger.warning(
+            "The same 'unique_name=$uniqueName' found in more than one library: ${duplicatedPaths.sorted().joinToString()}"
+        )
     }
 
     /**
