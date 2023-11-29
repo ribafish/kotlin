@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.scopes.impl
 
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.*
@@ -118,12 +119,13 @@ object FirFakeOverrideGenerator {
         newModality: Modality? = null,
         newVisibility: Visibility? = null,
         callableCopySubstitutionForTypeUpdater: CallableCopySubstitution? = null,
+        source: KtSourceElement? = derivedClassLookupTag?.toSymbol(session)?.source ?: baseFunction.source,
         copyDefaultValues: Boolean = false,
     ): FirSimpleFunction {
         checkStatusIsResolved(baseFunction)
 
         return buildSimpleFunction {
-            source = derivedClassLookupTag?.toSymbol(session)?.source ?: baseFunction.source
+            this.source = source
             moduleData = session.nullableModuleData ?: baseFunction.moduleData
             this.origin = origin
             name = baseFunction.name
@@ -378,11 +380,12 @@ object FirFakeOverrideGenerator {
         newModality: Modality? = null,
         newVisibility: Visibility? = null,
         callableCopySubstitutionForTypeUpdater: CallableCopySubstitution? = null,
+        source: KtSourceElement? = derivedClassLookupTag?.toSymbol(session)?.source ?: baseProperty.source,
     ): FirProperty {
         checkStatusIsResolved(baseProperty)
 
         return buildProperty {
-            source = derivedClassLookupTag?.toSymbol(session)?.source ?: baseProperty.source
+            this.source = source
             moduleData = session.nullableModuleData ?: baseProperty.moduleData
             this.origin = origin
             name = baseProperty.name
