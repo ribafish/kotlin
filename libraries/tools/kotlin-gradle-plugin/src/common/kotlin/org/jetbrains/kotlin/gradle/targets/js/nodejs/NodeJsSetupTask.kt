@@ -117,7 +117,7 @@ abstract class NodeJsSetupTask : DefaultTask() {
                 it.into(destination)
             }
 
-            fixBrokenSymlinks(destination, env.isWindows, fixBrokenSymLinks)
+        fixBrokenSymlinks(this.destination, env.isWindows, fixBrokenSymLinks)
 
             if (!env.isWindows) {
                 File(env.nodeExecutable).setExecutable(true)
@@ -137,7 +137,7 @@ abstract class NodeJsSetupTask : DefaultTask() {
         name: String,
         nodeBinDirPath: Path,
         nodeDirProvider: File,
-        isWindows: Boolean
+        isWindows: Boolean,
     ) {
         val script = nodeBinDirPath.resolve(name)
         val scriptFile = computeNpmScriptFile(nodeDirProvider, name, isWindows)
