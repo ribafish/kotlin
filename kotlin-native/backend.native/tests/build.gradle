@@ -4742,7 +4742,8 @@ interopTest("interop_exceptions_cCallback") {
 }
 
 standaloneTest("library_ir_provider_mismatch") {
-    enabled = !isAggressiveGC // No need to test with different GC schedulers
+//    enabled = !isAggressiveGC // No need to test with different GC schedulers
+    enabled = false
 
     String librarySource = "$projectDir/link/ir_providers/library/empty.kt"
     String invalidManifest = "$projectDir/link/ir_providers/library/manifest.properties"

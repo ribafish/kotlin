@@ -30,7 +30,7 @@ object ToolingSingleFileKlibResolveStrategy : SingleFileKlibResolveStrategy {
         tryResolve(libraryFile, logger)
             ?: fakeLibrary(libraryFile)
 
-    fun tryResolve(libraryFile: File, logger: Logger): KotlinLibrary? =
+    fun tryResolve(libraryFile: File, @Suppress("UNUSED_PARAMETER") logger: Logger): KotlinLibrary? =
         withSafeAccess(libraryFile) { localRoot ->
             if (localRoot.looksLikeKlibComponent) {
                 // old style library
@@ -45,12 +45,10 @@ object ToolingSingleFileKlibResolveStrategy : SingleFileKlibResolveStrategy {
                     }
                     else -> { // TODO: choose the best fit among all available candidates
                         // mimic as old style library and warn
-                        logger.warning(
+                        error(
                             "KLIB resolver: Library '$libraryFile' can not be read." +
                                     " Multiple components found: ${components.map { it.path.substringAfter(localRoot.path) }}"
                         )
-
-                        null
                     }
                 }
             }

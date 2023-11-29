@@ -201,8 +201,8 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
                     when (val lookupResult = searchRoot.lookUp(given)) {
                         is LookupResult.Found -> lookupResult.library
                         is LookupResult.FoundWithWarning -> {
-                            logger.warning(lookupResult.warningText)
-                            lookupResult.library
+                            error(lookupResult.warningText)
+                            //lookupResult.library
                         }
                         LookupResult.NotFound -> null
                     }
@@ -216,8 +216,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
 
     private fun Sequence<File>.filterOutPre_1_4_libraries(): Sequence<File> = this.filter {
         if (it.isPre_1_4_Library) {
-            logger.warning("KLIB resolver: Skipping '$it'. This is a pre 1.4 library.")
-            false
+            error("KLIB resolver: Skipping '$it'. This is a pre 1.4 library.")
         } else {
             true
         }
@@ -262,8 +261,11 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
                 //    the library is resolved or the side effect takes place. The latter (side effect) affects the execution
                 //    flow of the program and should not be a responsibility of SearchPathResolver.
                 // 3. Finally, we are going to drop SearchPathResolver which is a part of KLIB resolver.
-                @Suppress("DEPRECATION")
-                logger.fatal("KLIB resolver: Could not find \"${unresolved.path}\" in ${searchRoots.map { it.searchRootPath.absolutePath }}")
+                //@Suppress("DEPRECATION")
+                error(
+                    "KLIB resolver: Could not find \"${unresolved.path}\" in ${searchRoots.map { it.searchRootPath.absolutePath }}\n" +
+                            Throwable().stackTraceToString()
+                )
             }
     }
 
@@ -338,22 +340,19 @@ abstract class KotlinLibraryProperResolverWithAttributes<L : KotlinLibrary>(
         // Please, don't add checks for other versions here. For example, check for the metadata version should be
         // implemented in KlibDeserializedContainerSource.incompatibility
         if (candidateAbiVersion?.isCompatible() != true) {
-            logger.warning("KLIB resolver: Skipping '$candidatePath'. Incompatible ABI version. The current default is '${KotlinAbiVersion.CURRENT}', found '${candidateAbiVersion}'. The library was produced by '$candidateCompilerVersion' compiler.")
-            return false
+            error("KLIB resolver: Skipping '$candidatePath'. Incompatible ABI version. The current default is '${KotlinAbiVersion.CURRENT}', found '${candidateAbiVersion}'. The library was produced by '$candidateCompilerVersion' compiler.")
         }
 
         if (candidateLibraryVersion != unresolved.libraryVersion &&
             candidateLibraryVersion != null &&
             unresolved.libraryVersion != null
         ) {
-            logger.warning("KLIB resolver: Skipping '$candidatePath'. Library versions don't match. Expected '${unresolved.libraryVersion}', found '${candidateLibraryVersion}'.")
-            return false
+            error("KLIB resolver: Skipping '$candidatePath'. Library versions don't match. Expected '${unresolved.libraryVersion}', found '${candidateLibraryVersion}'.")
         }
 
         candidate.irProviderName?.let {
             if (it !in knownIrProviders) {
-                logger.warning("KLIB resolver: Skipping '$candidatePath'. The library requires unknown IR provider: $it")
-                return false
+                error("KLIB resolver: Skipping '$candidatePath'. The library requires unknown IR provider: $it")
             }
         }
 
