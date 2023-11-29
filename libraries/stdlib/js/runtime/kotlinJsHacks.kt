@@ -52,5 +52,8 @@ internal annotation class JsFun(val code: String)
 @Target(AnnotationTarget.CLASS)
 internal annotation class JsImplicitExport
 
+/**
+ * The annotation is needed for annotating function declarations that should be compiled as ES6 generators
+ */
 @Target(AnnotationTarget.FUNCTION)
 internal annotation class JsGenerator

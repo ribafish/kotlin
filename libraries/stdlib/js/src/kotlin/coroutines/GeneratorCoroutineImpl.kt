@@ -44,10 +44,14 @@ internal class GeneratorCoroutineImpl(val resultContinuation: Continuation<Any?>
     public override val context: CoroutineContext get() = _context!!
 
     @InlineOnly
-    public inline fun dropLastIterator(): Unit = jsIterators.asDynamic().pop()
+    public inline fun dropLastIterator() {
+        jsIterators.asDynamic().pop()
+    }
 
     @InlineOnly
-    public inline fun addNewIterator(iterator: JsIterator<Any?>): Unit = jsIterators.asDynamic().push(iterator)
+    public inline fun addNewIterator(iterator: JsIterator<Any?>) {
+        jsIterators.asDynamic().push(iterator)
+    }
 
     @InlineOnly
     private inline val isCompleted: Boolean get() = jsIterators.size == 0
