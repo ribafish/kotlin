@@ -38,7 +38,7 @@ class KotlinLibraryResolverImpl<L : KotlinLibrary> internal constructor(
         noEndorsedLibs: Boolean,
     ) = findLibraries(unresolvedLibraries, noStdLib, noDefaultLibs, noEndorsedLibs)
         .leaveDistinct()
-        .omitDuplicateNames()
+        .warnOnDuplicatedUniqueNames()
 
     /**
      * Returns the list of libraries based on [libraryNames], [noStdLib], [noDefaultLibs] and [noEndorsedLibs] criteria.
@@ -75,23 +75,23 @@ class KotlinLibraryResolverImpl<L : KotlinLibrary> internal constructor(
     }
 
     /**
-     * Having two libraries with the same uniqName we only keep the first one.
-     * TODO: The old JS plugin passes libraries with the same uniqName twice,
-     * so make it a warning for now.
+     * Warn if there are several libraries with the same `unique_name`.
+     * TODO: consider dropping this along with the KLIB resolver.
      */
-    private fun List<KotlinLibrary>.omitDuplicateNames() =
-        this.groupBy { it.uniqueName }.let { groupedByUniqName ->
-            val librariesWithDuplicatedUniqueNames = groupedByUniqName.filterValues { it.size > 1 }
+    private fun List<KotlinLibrary>.warnOnDuplicatedUniqueNames(): List<KotlinLibrary> {
+        if (size <= 1) return this
+
+        val librariesWithDuplicatedUniqueNames: Map<String, List<KotlinLibrary>> = groupBy { it.uniqueName }.filterValues { it.size > 1 }
+        if (librariesWithDuplicatedUniqueNames.isNotEmpty()) {
             librariesWithDuplicatedUniqueNames.entries.sortedBy { it.key }.forEach { (uniqueName, libraries) ->
-                warnOnLibraryDuplicateNames(uniqueName, libraries.map { it.libraryFile.absolutePath })
+                logger.warning(
+                    "KLIB resolver: The same 'unique_name=$uniqueName' found in more than one library: " +
+                            libraries.map { it.libraryFile.absolutePath }.sorted().joinToString()
+                )
             }
-            groupedByUniqName.map { it.value.first() } // TODO: this line is the reason of such issues as KT-63573
         }
 
-    private fun warnOnLibraryDuplicateNames(uniqueName: String, duplicatedPaths: Iterable<String>) {
-        logger.warning(
-            "The same 'unique_name=$uniqueName' found in more than one library: ${duplicatedPaths.sorted().joinToString()}"
-        )
+        return this
     }
 
     /**
