@@ -377,6 +377,7 @@ class FirTypeIntersectionScopeContext(
             newVisibility = newVisibility,
             newDispatchReceiverType = dispatchReceiverType,
             newReturnType = if (!forClassUseSiteScope) intersectReturnTypes(mostSpecific) else null,
+            copyDefaultValues = false,
         ).apply {
             originalForIntersectionOverrideAttr = keyFir
         }
