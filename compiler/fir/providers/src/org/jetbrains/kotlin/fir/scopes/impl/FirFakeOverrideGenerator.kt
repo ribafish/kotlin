@@ -96,8 +96,7 @@ object FirFakeOverrideGenerator {
             newReceiverType,
             newContextReceiverTypes,
             newReturnType,
-            callableCopySubstitutionForTypeUpdater = callableCopySubstitutionForTypeUpdater,
-            copyDefaultValues = true,
+            callableCopySubstitutionForTypeUpdater = callableCopySubstitutionForTypeUpdater
         ).apply {
             originalForSubstitutionOverrideAttr = baseFunction
         }
