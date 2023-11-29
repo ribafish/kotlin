@@ -24,16 +24,15 @@ import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.fir.FirModuleData
-import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.FirSessionComponent
+import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.analysis.checkers.getTargetAnnotation
 import org.jetbrains.kotlin.fir.caches.FirCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.expressions.FirConstExpression
-import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
@@ -50,6 +49,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.resolve.jvm.KotlinFinderMarker
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
+import org.jetbrains.kotlin.utils.KOTLIN_TO_JAVA_ANNOTATION_TARGETS
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 val FirSession.javaElementFinder: FirJavaElementFinder? by FirSession.nullableSessionComponentAccessor<FirJavaElementFinder>()
@@ -166,7 +166,19 @@ class FirJavaElementFinder(
             buildFieldStubForConst(it, stub)
         }
 
-        PsiModifierListStubImpl(stub, firClass.packFlags())
+        val modifierListStub = PsiModifierListStubImpl(stub, firClass.packFlags())
+
+        if (firClass.classKind == ClassKind.ANNOTATION_CLASS) {
+            val targets = firClass.getTargetAnnotation(session)?.findTargets()
+            if (targets != null) {
+                val annotationString = buildString {
+                    append("@java.lang.annotation.Target({")
+                    targets.mapNotNull { KOTLIN_TO_JAVA_ANNOTATION_TARGETS[it] }.joinTo(this) { "java.lang.annotation.ElementType.$it" }
+                    append("})")
+                }
+                PsiAnnotationStubImpl(modifierListStub, annotationString)
+            }
+        }
 
         newTypeParameterList(
             stub,
@@ -185,6 +197,10 @@ class FirJavaElementFinder(
         }
 
         return stub
+    }
+
+    private fun FirAnnotation.findTargets(): List<String> = buildList {
+        forEachAnnotationTarget { add(it.identifier) }
     }
 
     private fun buildFieldStubForConst(firProperty: FirProperty, classStub: PsiClassStubImpl<ClsClassImpl>) {
