@@ -96,7 +96,8 @@ object FirFakeOverrideGenerator {
             newReceiverType,
             newContextReceiverTypes,
             newReturnType,
-            callableCopySubstitutionForTypeUpdater = callableCopySubstitutionForTypeUpdater
+            callableCopySubstitutionForTypeUpdater = callableCopySubstitutionForTypeUpdater,
+            copyDefaultValues = true,
         ).apply {
             originalForSubstitutionOverrideAttr = baseFunction
         }
@@ -118,7 +119,7 @@ object FirFakeOverrideGenerator {
         newModality: Modality? = null,
         newVisibility: Visibility? = null,
         callableCopySubstitutionForTypeUpdater: CallableCopySubstitution? = null,
-        copyDefaultValues: Boolean = true,
+        copyDefaultValues: Boolean = false,
     ): FirSimpleFunction {
         checkStatusIsResolved(baseFunction)
 
@@ -185,7 +186,8 @@ object FirFakeOverrideGenerator {
                 newContextReceiverTypes,
                 newReturnType,
                 callableCopySubstitutionForTypeUpdater,
-                fakeOverrideSymbol
+                fakeOverrideSymbol,
+                copyDefaultValues = true,
             )
 
             dispatchReceiverType = newDispatchReceiverType
@@ -209,7 +211,7 @@ object FirFakeOverrideGenerator {
         newReturnType: ConeKotlinType?,
         callableCopySubstitutionForTypeUpdater: CallableCopySubstitution?,
         symbolForOverride: FirFunctionSymbol<*>,
-        copyDefaultValues: Boolean = true,
+        copyDefaultValues: Boolean = false,
     ): List<FirTypeParameterRef> {
         return when {
             baseFunction.typeParameters.isEmpty() -> {
@@ -280,7 +282,7 @@ object FirFakeOverrideGenerator {
         newReturnType: ConeKotlinType?,
         callableCopySubstitutionForTypeUpdater: CallableCopySubstitution?,
         origin: FirDeclarationOrigin,
-        copyDefaultValues: Boolean = true,
+        copyDefaultValues: Boolean = false,
     ) {
         annotations += baseFunction.annotations
 
