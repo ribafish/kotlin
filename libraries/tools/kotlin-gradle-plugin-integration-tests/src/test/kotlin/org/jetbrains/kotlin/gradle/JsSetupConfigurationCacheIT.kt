@@ -29,13 +29,13 @@ class JsSetupConfigurationCacheIT : KGPBaseTest() {
     @GradleTest
     fun checkNodeJsSetup(gradleVersion: GradleVersion) {
         project("kotlin-js-browser-project", gradleVersion) {
-            build("kotlinUpgradeYarnLock") {
-                assertTasksExecuted(":kotlinUpgradeYarnLock")
+            build("kotlinUpgradePackageLock") {
+                assertTasksExecuted(":kotlinUpgradePackageLock")
                 assertConfigurationCacheStored()
             }
 
-            build("kotlinUpgradeYarnLock") {
-                assertTasksUpToDate(":kotlinUpgradeYarnLock")
+            build("kotlinUpgradePackageLock") {
+                assertTasksUpToDate(":kotlinUpgradePackageLock")
                 assertConfigurationCacheReused()
             }
         }

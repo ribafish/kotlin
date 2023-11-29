@@ -114,7 +114,7 @@ class JsIrConfigurationCacheIT : KGPBaseTest() {
     fun testTestDependencies(gradleVersion: GradleVersion) {
         project("kotlin-js-project-with-test-dependencies", gradleVersion) {
             assertSimpleConfigurationCacheScenarioWorks(
-                "assemble", "kotlinStoreYarnLock",
+                "assemble", "kotlinStorePackageLock",
                 buildOptions = defaultBuildOptions,
                 executedTaskNames = listOf(":rootPackageJson")
             )
