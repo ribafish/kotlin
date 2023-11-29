@@ -37,6 +37,10 @@ public:
 
     void wakeUp() noexcept { CFRunLoopWakeUp(runLoop_.load(std::memory_order_relaxed)); }
 
+    void schedule(std::function<void()> f) noexcept {
+        CFRunLoopPerformBlock(runLoop_.load(std::memory_order_relaxed), kCFRunLoopDefaultMode, ^{ return f(); });
+    }
+
 private:
     std::atomic<CFRunLoopRef> runLoop_ = nullptr;
     ScopedThread thread_;
