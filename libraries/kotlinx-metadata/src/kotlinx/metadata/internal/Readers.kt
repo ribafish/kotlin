@@ -303,26 +303,26 @@ private fun ProtoBuf.Type.toKmType(c: ReadContext): KmType {
 private fun readVersionRequirement(id: Int, c: ReadContext): KmVersionRequirement {
     val v = KmVersionRequirement()
     val message = VersionRequirement.create(id, c.strings, c.versionRequirements)
-        ?: throw InconsistentKotlinMetadataException("No VersionRequirement with the given id in the table")
 
-    val kind = when (message.kind) {
+    val kind = when (message?.kind) {
         ProtoBuf.VersionRequirement.VersionKind.LANGUAGE_VERSION -> KmVersionRequirementVersionKind.LANGUAGE_VERSION
         ProtoBuf.VersionRequirement.VersionKind.COMPILER_VERSION -> KmVersionRequirementVersionKind.COMPILER_VERSION
         ProtoBuf.VersionRequirement.VersionKind.API_VERSION -> KmVersionRequirementVersionKind.API_VERSION
+        null -> KmVersionRequirementVersionKind.UNKNOWN
     }
 
-    val level = when (message.level) {
+    val level = when (message?.level) {
         DeprecationLevel.WARNING -> KmVersionRequirementLevel.WARNING
         DeprecationLevel.ERROR -> KmVersionRequirementLevel.ERROR
-        DeprecationLevel.HIDDEN -> KmVersionRequirementLevel.HIDDEN
+        DeprecationLevel.HIDDEN, null -> KmVersionRequirementLevel.HIDDEN
     }
 
     v.kind = kind
     v.level = level
-    v.errorCode = message.errorCode
-    v.message = message.message
+    v.errorCode = message?.errorCode
+    v.message = message?.message
 
-    val (major, minor, patch) = message.version
+    val (major, minor, patch) = message?.version ?: VersionRequirement.Version.INFINITY
     v.version = KmVersion(major, minor, patch)
     return v
 }
