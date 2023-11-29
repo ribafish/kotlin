@@ -62,7 +62,7 @@ abstract class AbstractKotlinSirContextTestBase : AbstractAnalysisApiBasedTest()
             module.declarations
                 .filterIsInstance<SirForeignFunction>()
                 .forEach {
-                    appendLine("${(it.origin as SirOrigin.KotlinEntity).path}")
+                    appendLine("${(it.origin as SirOrigin.KotlinEntity.Function).name()}")
                 }
         }
 

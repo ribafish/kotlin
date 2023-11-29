@@ -19,7 +19,7 @@ class SirFunctionBuilder {
     var origin: SirOrigin = SirOrigin.Unknown
     var visibility: SirVisibility = SirVisibility.PUBLIC
     lateinit var name: String
-    val parameters: MutableList<SirParameter> = mutableListOf()
+    lateinit var parameters: MutableList<SirParameter>
     lateinit var returnType: SirType
 
     fun build(): SirFunction {
