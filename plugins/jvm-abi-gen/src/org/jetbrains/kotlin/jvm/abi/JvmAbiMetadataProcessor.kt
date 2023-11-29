@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.jvm.abi
 
-import kotlinx.metadata.*
-import kotlinx.metadata.jvm.KotlinClassMetadata
-import kotlinx.metadata.jvm.Metadata
-import kotlinx.metadata.jvm.localDelegatedProperties
+import kotlin.metadata.*
+import kotlin.metadata.jvm.*
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes

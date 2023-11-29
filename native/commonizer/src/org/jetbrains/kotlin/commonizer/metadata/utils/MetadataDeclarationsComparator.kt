@@ -6,9 +6,9 @@
 package org.jetbrains.kotlin.commonizer.metadata.utils
 
 import com.intellij.util.containers.FactoryMap
-import kotlinx.metadata.*
-import kotlinx.metadata.internal.common.KmModuleFragment
-import kotlinx.metadata.klib.*
+import kotlin.metadata.*
+import kotlin.metadata.internal.common.KmModuleFragment
+import kotlin.metadata.klib.*
 import org.jetbrains.kotlin.commonizer.metadata.utils.MetadataDeclarationsComparator.EntityKind.*
 import org.jetbrains.kotlin.commonizer.metadata.utils.MetadataDeclarationsComparator.Mismatch
 import org.jetbrains.kotlin.commonizer.metadata.utils.MetadataDeclarationsComparator.Result
@@ -27,6 +27,8 @@ import kotlin.check
 import kotlin.contracts.ExperimentalContracts
 import kotlin.error
 import kotlin.let
+import kotlin.metadata.klib.KlibEnumEntry
+import kotlin.metadata.klib.KlibModuleMetadata
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
@@ -317,16 +319,16 @@ class MetadataDeclarationsComparator private constructor(private val config: Con
 
     private fun compareAnnotationLists(
         containerContext: Context,
-        annotationListA: List<KmAnnotation>,
-        annotationListB: List<KmAnnotation>,
+        annotationListA: List<kotlin.metadata.KmAnnotation>,
+        annotationListB: List<kotlin.metadata.KmAnnotation>,
         annotationKind: AnnotationKind = AnnotationKind.REGULAR
     ) {
         compareRepetitiveEntityLists(
             entityListA = annotationListA,
             entityListB = annotationListB,
             groupingKeySelector = { _, annotation -> annotation.className },
-            groupedEntityListsComparator = { annotationClassName: ClassName, annotationsA: List<KmAnnotation>, annotationsB: List<KmAnnotation> ->
-                @Suppress("NAME_SHADOWING") val annotationsB: Deque<KmAnnotation> = LinkedList(annotationsB)
+            groupedEntityListsComparator = { annotationClassName: ClassName, annotationsA: List<kotlin.metadata.KmAnnotation>, annotationsB: List<kotlin.metadata.KmAnnotation> ->
+                @Suppress("NAME_SHADOWING") val annotationsB: Deque<kotlin.metadata.KmAnnotation> = LinkedList(annotationsB)
 
                 // TODO: compare annotation arguments?
 

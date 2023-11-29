@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.commonizer
 
-import kotlinx.metadata.klib.ChunkedKlibModuleFragmentWriteStrategy
+import kotlin.metadata.klib.ChunkedKlibModuleFragmentWriteStrategy
 import org.jetbrains.kotlin.commonizer.ResultsConsumer.Status
 import org.jetbrains.kotlin.commonizer.cir.CirEntityId
 import org.jetbrains.kotlin.commonizer.core.CommonizationVisitor

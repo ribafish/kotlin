@@ -6,9 +6,9 @@
 package org.jetbrains.kotlin.commonizer.tree.deserializer
 
 import com.intellij.util.containers.FactoryMap
-import kotlinx.metadata.*
-import kotlinx.metadata.internal.common.KmModuleFragment
-import kotlinx.metadata.klib.klibEnumEntries
+import kotlin.metadata.*
+import kotlin.metadata.internal.common.KmModuleFragment
+import kotlin.metadata.klib.klibEnumEntries
 import org.jetbrains.kotlin.commonizer.cir.CirEntityId
 import org.jetbrains.kotlin.commonizer.cir.CirName
 import org.jetbrains.kotlin.commonizer.utils.NON_EXISTING_CLASSIFIER_ID
@@ -24,7 +24,7 @@ internal class ClassesToProcess {
 
         data class EnumEntry(
             override val classId: CirEntityId,
-            val annotations: List<KmAnnotation>,
+            val annotations: List<kotlin.metadata.KmAnnotation>,
             val enumClassId: CirEntityId,
             val enumClass: KmClass
         ) : ClassEntry()

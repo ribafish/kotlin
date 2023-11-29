@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.commonizer.metadata.utils
 
-import kotlinx.metadata.klib.KlibModuleMetadata
+import kotlin.metadata.klib.KlibModuleMetadata
 import org.jetbrains.kotlin.library.MetadataLibrary
 import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
 import org.jetbrains.kotlin.library.resolveSingleFileKlib

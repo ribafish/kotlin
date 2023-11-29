@@ -4,7 +4,7 @@
  */
 package org.jetbrains.kotlin.native.interop.gen
 
-import kotlinx.metadata.klib.KlibModuleMetadata
+import kotlin.metadata.klib.KlibModuleMetadata
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_EXPORT_FORWARD_DECLARATIONS
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_INCLUDED_FORWARD_DECLARATIONS
 import org.jetbrains.kotlin.native.interop.gen.jvm.GenerationMode

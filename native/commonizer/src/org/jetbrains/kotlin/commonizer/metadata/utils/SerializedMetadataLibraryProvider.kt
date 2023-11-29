@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.commonizer.metadata.utils
 
-import kotlinx.metadata.klib.KlibModuleMetadata
+import kotlin.metadata.klib.KlibModuleMetadata
 import org.jetbrains.kotlin.library.SerializedMetadata
 
 private typealias FragmentPartContents = ByteArray

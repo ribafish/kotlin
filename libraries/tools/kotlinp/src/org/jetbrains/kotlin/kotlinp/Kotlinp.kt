@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.kotlinp
 
-import kotlinx.metadata.jvm.KotlinClassMetadata
-import kotlinx.metadata.jvm.KotlinModuleMetadata
-import kotlinx.metadata.jvm.UnstableMetadataApi
+import kotlin.metadata.jvm.KotlinClassMetadata
+import kotlin.metadata.jvm.KotlinModuleMetadata
+import kotlin.metadata.jvm.UnstableMetadataApi
 import java.io.File
 
 class Kotlinp(private val settings: KotlinpSettings) {

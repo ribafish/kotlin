@@ -5,14 +5,14 @@
 
 package org.jetbrains.kotlin.commonizer.metadata
 
-import kotlinx.metadata.*
-import kotlinx.metadata.Modality as KmModality
-import kotlinx.metadata.Visibility as KmVisibility
-import kotlinx.metadata.ClassKind as KmClassKind
-import kotlinx.metadata.klib.annotations
-import kotlinx.metadata.klib.compileTimeValue
-import kotlinx.metadata.klib.getterAnnotations
-import kotlinx.metadata.klib.setterAnnotations
+import kotlin.metadata.*
+import kotlin.metadata.Modality as KmModality
+import kotlin.metadata.Visibility as KmVisibility
+import kotlin.metadata.ClassKind as KmClassKind
+import kotlin.metadata.klib.annotations
+import kotlin.metadata.klib.compileTimeValue
+import kotlin.metadata.klib.getterAnnotations
+import kotlin.metadata.klib.setterAnnotations
 import org.jetbrains.kotlin.commonizer.cir.*
 import org.jetbrains.kotlin.commonizer.utils.*
 import org.jetbrains.kotlin.descriptors.*
@@ -22,7 +22,7 @@ object CirDeserializers {
     private fun annotations(
         hasAnnotations: Boolean,
         typeResolver: CirTypeResolver,
-        annotations: () -> List<KmAnnotation>,
+        annotations: () -> List<kotlin.metadata.KmAnnotation>,
     ): List<CirAnnotation> {
         return if (!hasAnnotations)
             emptyList()
@@ -30,7 +30,7 @@ object CirDeserializers {
             annotations().compactMap { annotation(it, typeResolver) }
     }
 
-    private fun annotation(source: KmAnnotation, typeResolver: CirTypeResolver): CirAnnotation {
+    private fun annotation(source: kotlin.metadata.KmAnnotation, typeResolver: CirTypeResolver): CirAnnotation {
         val classId = CirEntityId.create(source.className)
         val clazz: CirProvided.RegularClass = typeResolver.resolveClassifier(classId)
 
@@ -49,7 +49,7 @@ object CirDeserializers {
             isMarkedNullable = false
         )
 
-        val allValueArguments: Map<String, KmAnnotationArgument> = source.arguments
+        val allValueArguments: Map<String, kotlin.metadata.KmAnnotationArgument> = source.arguments
         if (allValueArguments.isEmpty())
             return CirAnnotation.createInterned(type = type, constantValueArguments = emptyMap(), annotationValueArguments = emptyMap())
 
@@ -58,7 +58,7 @@ object CirDeserializers {
 
         allValueArguments.forEach { (name, constantValue) ->
             val cirName = CirName.create(name)
-            if (constantValue is KmAnnotationArgument.AnnotationValue)
+            if (constantValue is kotlin.metadata.KmAnnotationArgument.AnnotationValue)
                 annotationValueArguments[cirName] = annotation(source = constantValue.annotation, typeResolver)
             else
                 constantValueArguments[cirName] = constantValue(
@@ -193,7 +193,7 @@ object CirDeserializers {
         )
 
     private fun constantValue(
-        constantValue: KmAnnotationArgument?,
+        constantValue: kotlin.metadata.KmAnnotationArgument?,
         constantName: CirName? = null,
         owner: Any,
     ): CirConstantValue = constantValue(
@@ -203,34 +203,34 @@ object CirDeserializers {
 
     @OptIn(ExperimentalUnsignedTypes::class)
     private fun constantValue(
-        constantValue: KmAnnotationArgument?,
+        constantValue: kotlin.metadata.KmAnnotationArgument?,
         location: () -> String
     ): CirConstantValue = when (constantValue) {
         null -> CirConstantValue.NullValue
 
-        is KmAnnotationArgument.StringValue -> CirConstantValue.StringValue(constantValue.value)
-        is KmAnnotationArgument.CharValue -> CirConstantValue.CharValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.StringValue -> CirConstantValue.StringValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.CharValue -> CirConstantValue.CharValue(constantValue.value)
 
-        is KmAnnotationArgument.ByteValue -> CirConstantValue.ByteValue(constantValue.value)
-        is KmAnnotationArgument.ShortValue -> CirConstantValue.ShortValue(constantValue.value)
-        is KmAnnotationArgument.IntValue -> CirConstantValue.IntValue(constantValue.value)
-        is KmAnnotationArgument.LongValue -> CirConstantValue.LongValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.ByteValue -> CirConstantValue.ByteValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.ShortValue -> CirConstantValue.ShortValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.IntValue -> CirConstantValue.IntValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.LongValue -> CirConstantValue.LongValue(constantValue.value)
 
-        is KmAnnotationArgument.UByteValue -> CirConstantValue.UByteValue(constantValue.value)
-        is KmAnnotationArgument.UShortValue -> CirConstantValue.UShortValue(constantValue.value)
-        is KmAnnotationArgument.UIntValue -> CirConstantValue.UIntValue(constantValue.value)
-        is KmAnnotationArgument.ULongValue -> CirConstantValue.ULongValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.UByteValue -> CirConstantValue.UByteValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.UShortValue -> CirConstantValue.UShortValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.UIntValue -> CirConstantValue.UIntValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.ULongValue -> CirConstantValue.ULongValue(constantValue.value)
 
-        is KmAnnotationArgument.FloatValue -> CirConstantValue.FloatValue(constantValue.value)
-        is KmAnnotationArgument.DoubleValue -> CirConstantValue.DoubleValue(constantValue.value)
-        is KmAnnotationArgument.BooleanValue -> CirConstantValue.BooleanValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.FloatValue -> CirConstantValue.FloatValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.DoubleValue -> CirConstantValue.DoubleValue(constantValue.value)
+        is kotlin.metadata.KmAnnotationArgument.BooleanValue -> CirConstantValue.BooleanValue(constantValue.value)
 
-        is KmAnnotationArgument.EnumValue -> CirConstantValue.EnumValue(
+        is kotlin.metadata.KmAnnotationArgument.EnumValue -> CirConstantValue.EnumValue(
             CirEntityId.create(constantValue.enumClassName),
             CirName.create(constantValue.enumEntryName)
         )
 
-        is KmAnnotationArgument.ArrayValue -> CirConstantValue.ArrayValue(
+        is kotlin.metadata.KmAnnotationArgument.ArrayValue -> CirConstantValue.ArrayValue(
             constantValue.elements.compactMapIndexed { index, innerConstantValue ->
                 constantValue(
                     constantValue = innerConstantValue,
@@ -260,7 +260,7 @@ object CirDeserializers {
 
     fun defaultEnumEntry(
         name: CirName,
-        annotations: List<KmAnnotation>,
+        annotations: List<kotlin.metadata.KmAnnotation>,
         enumClassId: CirEntityId,
         hasEnumEntries: Boolean,
         typeResolver: CirTypeResolver

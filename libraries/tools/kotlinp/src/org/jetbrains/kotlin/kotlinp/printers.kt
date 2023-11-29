@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.kotlinp
 
-import kotlinx.metadata.*
-import kotlinx.metadata.jvm.*
+import kotlin.metadata.*
+import kotlin.metadata.jvm.*
 import kotlin.contracts.ExperimentalContracts
 
 private object SpecialCharacters {

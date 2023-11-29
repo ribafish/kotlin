@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.commonizer.utils
 
-import kotlinx.metadata.klib.KlibModuleMetadata
-import kotlinx.metadata.klib.annotations
+import kotlin.metadata.klib.KlibModuleMetadata
+import kotlin.metadata.klib.annotations
 import org.jetbrains.kotlin.commonizer.CommonizerTarget
 import org.jetbrains.kotlin.commonizer.identityString
 import org.jetbrains.kotlin.commonizer.metadata.utils.MetadataDeclarationsComparator

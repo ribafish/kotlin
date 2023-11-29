@@ -7,7 +7,7 @@ plugins {
     id("jps-compatible")
 }
 
-group = "org.jetbrains.kotlinx"
+group = "org.jetbrains.kotlin"
 
 val deployVersion = findProperty("kotlinxMetadataKlibDeployVersion") as String?
 version = deployVersion ?: "0.0.1-SNAPSHOT"
@@ -42,9 +42,15 @@ if (deployVersion != null) {
 runtimeJarWithRelocation {
     from(mainSourceSet.output)
     exclude("**/*.proto")
-    relocate("org.jetbrains.kotlin", "kotlinx.metadata.internal")
+    relocate("org.jetbrains.kotlin", "kotlin.metadata.internal")
 }
 
 sourcesJar()
 
 javadocJar()
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xallow-kotlin-package")
+    }
+}

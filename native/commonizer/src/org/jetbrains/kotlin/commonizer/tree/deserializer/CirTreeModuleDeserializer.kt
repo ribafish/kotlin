@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.commonizer.tree.deserializer
 
-import kotlinx.metadata.internal.common.KmModuleFragment
-import kotlinx.metadata.klib.KlibModuleMetadata
-import kotlinx.metadata.klib.fqName
+import kotlin.metadata.internal.common.KmModuleFragment
+import kotlin.metadata.klib.KlibModuleMetadata
+import kotlin.metadata.klib.fqName
 import org.jetbrains.kotlin.commonizer.cir.CirModule
 import org.jetbrains.kotlin.commonizer.cir.CirName
 import org.jetbrains.kotlin.commonizer.cir.CirPackageName

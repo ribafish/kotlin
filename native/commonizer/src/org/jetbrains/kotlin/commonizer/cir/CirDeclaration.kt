@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.commonizer.cir
 
-import kotlinx.metadata.*
-import kotlinx.metadata.klib.KlibModuleMetadata
+import kotlin.metadata.*
+import kotlin.metadata.klib.KlibModuleMetadata
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility

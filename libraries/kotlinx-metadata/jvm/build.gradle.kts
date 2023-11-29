@@ -20,7 +20,7 @@ plugins {
  *      - `-PdeployRepoUsername=username`: (optional) the username to authenticate in the deployment repository
  *      - `-PdeployRepoPassword=password`: (optional) the password to authenticate in the deployment repository
  */
-group = "org.jetbrains.kotlinx"
+group = "org.jetbrains.kotlin"
 val deployVersion = findProperty("kotlinxMetadataDeployVersion") as String?
 version = deployVersion ?: "0.1-SNAPSHOT"
 
@@ -52,6 +52,9 @@ dependencies {
 
 kotlin {
     explicitApi()
+    compilerOptions {
+        freeCompilerArgs.add("-Xallow-kotlin-package")
+    }
 }
 
 if (deployVersion != null) {
@@ -61,7 +64,7 @@ if (deployVersion != null) {
 val runtimeJar = runtimeJarWithRelocation {
     from(mainSourceSet.output)
     exclude("**/*.proto")
-    relocate("org.jetbrains.kotlin", "kotlinx.metadata.internal")
+    relocate("org.jetbrains.kotlin", "kotlin.metadata.internal")
 }
 
 tasks.apiBuild {
@@ -69,11 +72,11 @@ tasks.apiBuild {
 }
 
 apiValidation {
-    ignoredPackages.add("kotlinx.metadata.internal")
+    ignoredPackages.add("kotlin.metadata.internal")
     nonPublicMarkers.addAll(
         listOf(
-            "kotlinx.metadata.internal.IgnoreInApiDump",
-            "kotlinx.metadata.jvm.internal.IgnoreInApiDump"
+            "kotlin.metadata.internal.IgnoreInApiDump",
+            "kotlin.metadata.jvm.internal.IgnoreInApiDump"
         )
     )
 }
@@ -97,7 +100,7 @@ tasks.dokkaHtml.configure {
         failOnWarning.set(true)
 
         perPackageOption {
-            matchingRegex.set("kotlinx\\.metadata\\.internal(\$|\\.).*")
+            matchingRegex.set("kotlin\\.metadata\\.internal(\$|\\.).*")
             suppress.set(true)
             reportUndocumented.set(false)
         }

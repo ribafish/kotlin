@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.kotlinp
 
-import kotlinx.metadata.jvm.Metadata
+import kotlin.metadata.jvm.Metadata
 import org.jetbrains.org.objectweb.asm.*
 import java.io.File
 import java.io.FileInputStream

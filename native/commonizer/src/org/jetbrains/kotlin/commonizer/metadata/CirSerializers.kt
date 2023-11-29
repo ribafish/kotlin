@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.commonizer.metadata
 
-import kotlinx.metadata.*
-import kotlinx.metadata.internal.common.KmModuleFragment
-import kotlinx.metadata.klib.*
+import kotlin.metadata.*
+import kotlin.metadata.internal.common.KmModuleFragment
+import kotlin.metadata.klib.*
 import org.jetbrains.kotlin.commonizer.cir.*
 import org.jetbrains.kotlin.commonizer.metadata.TypeAliasExpansion.*
 import org.jetbrains.kotlin.commonizer.utils.DEFAULT_SETTER_VALUE_NAME
@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.commonizer.utils.compactMap
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.DYNAMIC_TYPE_DESERIALIZER_ID
 import org.jetbrains.kotlin.types.Variance
+import kotlin.metadata.klib.KlibEnumEntry
+import kotlin.metadata.klib.KlibModuleMetadata
 
 internal fun CirModule.serializeModule(
     fragments: Collection<KmModuleFragment>
@@ -191,8 +193,8 @@ internal fun CirFunction.serializeFunction(
     function.returnType = returnType.serializeType(context)
 }
 
-private fun CirAnnotation.serializeAnnotation(): KmAnnotation {
-    val arguments = LinkedHashMap<String, KmAnnotationArgument>(constantValueArguments.size + annotationValueArguments.size, 1F)
+private fun CirAnnotation.serializeAnnotation(): kotlin.metadata.KmAnnotation {
+    val arguments = LinkedHashMap<String, kotlin.metadata.KmAnnotationArgument>(constantValueArguments.size + annotationValueArguments.size, 1F)
 
     constantValueArguments.forEach { (name: CirName, value: CirConstantValue) ->
         arguments[name.name] = value.serializeConstantValue()
@@ -200,38 +202,38 @@ private fun CirAnnotation.serializeAnnotation(): KmAnnotation {
     }
 
     annotationValueArguments.forEach { (name: CirName, nested: CirAnnotation) ->
-        arguments[name.name] = KmAnnotationArgument.AnnotationValue(nested.serializeAnnotation())
+        arguments[name.name] = kotlin.metadata.KmAnnotationArgument.AnnotationValue(nested.serializeAnnotation())
     }
 
-    return KmAnnotation(
+    return kotlin.metadata.KmAnnotation(
         className = type.classifierId.toString(),
         arguments = arguments
     )
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-private fun CirConstantValue.serializeConstantValue(): KmAnnotationArgument? = when (this) {
-    is CirConstantValue.StringValue -> KmAnnotationArgument.StringValue(value)
-    is CirConstantValue.CharValue -> KmAnnotationArgument.CharValue(value)
+private fun CirConstantValue.serializeConstantValue(): kotlin.metadata.KmAnnotationArgument? = when (this) {
+    is CirConstantValue.StringValue -> kotlin.metadata.KmAnnotationArgument.StringValue(value)
+    is CirConstantValue.CharValue -> kotlin.metadata.KmAnnotationArgument.CharValue(value)
 
-    is CirConstantValue.ByteValue -> KmAnnotationArgument.ByteValue(value)
-    is CirConstantValue.ShortValue -> KmAnnotationArgument.ShortValue(value)
-    is CirConstantValue.IntValue -> KmAnnotationArgument.IntValue(value)
-    is CirConstantValue.LongValue -> KmAnnotationArgument.LongValue(value)
+    is CirConstantValue.ByteValue -> kotlin.metadata.KmAnnotationArgument.ByteValue(value)
+    is CirConstantValue.ShortValue -> kotlin.metadata.KmAnnotationArgument.ShortValue(value)
+    is CirConstantValue.IntValue -> kotlin.metadata.KmAnnotationArgument.IntValue(value)
+    is CirConstantValue.LongValue -> kotlin.metadata.KmAnnotationArgument.LongValue(value)
 
-    is CirConstantValue.UByteValue -> KmAnnotationArgument.UByteValue(value)
-    is CirConstantValue.UShortValue -> KmAnnotationArgument.UShortValue(value)
-    is CirConstantValue.UIntValue -> KmAnnotationArgument.UIntValue(value)
-    is CirConstantValue.ULongValue -> KmAnnotationArgument.ULongValue(value)
+    is CirConstantValue.UByteValue -> kotlin.metadata.KmAnnotationArgument.UByteValue(value)
+    is CirConstantValue.UShortValue -> kotlin.metadata.KmAnnotationArgument.UShortValue(value)
+    is CirConstantValue.UIntValue -> kotlin.metadata.KmAnnotationArgument.UIntValue(value)
+    is CirConstantValue.ULongValue -> kotlin.metadata.KmAnnotationArgument.ULongValue(value)
 
-    is CirConstantValue.FloatValue -> KmAnnotationArgument.FloatValue(value)
-    is CirConstantValue.DoubleValue -> KmAnnotationArgument.DoubleValue(value)
-    is CirConstantValue.BooleanValue -> KmAnnotationArgument.BooleanValue(value)
+    is CirConstantValue.FloatValue -> kotlin.metadata.KmAnnotationArgument.FloatValue(value)
+    is CirConstantValue.DoubleValue -> kotlin.metadata.KmAnnotationArgument.DoubleValue(value)
+    is CirConstantValue.BooleanValue -> kotlin.metadata.KmAnnotationArgument.BooleanValue(value)
 
-    is CirConstantValue.EnumValue -> KmAnnotationArgument.EnumValue(enumClassId.toString(), enumEntryName.name)
+    is CirConstantValue.EnumValue -> kotlin.metadata.KmAnnotationArgument.EnumValue(enumClassId.toString(), enumEntryName.name)
     is CirConstantValue.NullValue -> null
 
-    is CirConstantValue.ArrayValue -> KmAnnotationArgument.ArrayValue(elements.compactMap { element ->
+    is CirConstantValue.ArrayValue -> kotlin.metadata.KmAnnotationArgument.ArrayValue(elements.compactMap { element ->
         element.serializeConstantValue() ?: error("Unexpected <null> constant value inside of $this")
     })
 }
