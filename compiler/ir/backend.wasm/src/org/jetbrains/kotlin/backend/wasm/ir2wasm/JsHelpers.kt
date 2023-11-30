@@ -15,12 +15,9 @@ data class JsModuleAndQualifierReference(
     val module: String?,
     val qualifier: String?,
 ) {
-    // Encode variable name as base64 to have a valid unique JS identifier
-    private val encoder = Base64.getEncoder().withoutPadding()
+    private val moduleBase64 = module?.let { encode(it) }.orEmpty()
 
-    private val moduleBase64 = module?.let { encoder.encodeToString(module.encodeToByteArray()) }.orEmpty()
-
-    private val qualifierBase64 = qualifier?.let { encoder.encodeToString(qualifier.encodeToByteArray()) }.orEmpty()
+    private val qualifierBase64 = qualifier?.let { encode(it) }.orEmpty()
 
     val jsVariableName = run {
         "_ref_${moduleBase64}_$qualifierBase64"
@@ -28,5 +25,14 @@ data class JsModuleAndQualifierReference(
 
     val importVariableName = run {
         "_import_${moduleBase64}_$qualifierBase64"
+    }
+
+    companion object {
+        // Encode variable name as base64 to have a valid unique JS identifier
+        val encoder = Base64.getEncoder().withoutPadding()
+
+        fun encode(value: String): String {
+            return encoder.encodeToString(value.encodeToByteArray())
+        }
     }
 }

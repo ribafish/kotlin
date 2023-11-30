@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.backend.wasm
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.PhaserState
-import org.jetbrains.kotlin.backend.common.phaser.invokeToplevel
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.JsModuleAndQualifierReference
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmCompiledModuleFragment
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmModuleFragmentGenerator
@@ -227,13 +226,30 @@ fun WasmCompiledModuleFragment.generateAsyncJsWrapper(
 
     val jsCodeBodyIndented = jsCodeBody.prependIndent("        ")
 
-    val imports = jsModuleImports
+    val importedModules = jsModuleImports
         .toList()
         .sorted()
-        .joinToString("") {
+        .map {
             val moduleSpecifier = it.toJsStringLiteral()
-            "        $moduleSpecifier: imports[$moduleSpecifier] ?? await import($moduleSpecifier),\n"
+            val importVariableString = JsModuleAndQualifierReference.encode(it)
+            moduleSpecifier to importVariableString
         }
+
+    val importsImportedSection = importedModules
+        .map {
+            buildString {
+                append("import * as ")
+                append(it.second)
+                append(" from ")
+                append(it.first)
+                append(";")
+            }
+        }
+        .joinToString("\n")
+
+    val imports = importedModules.joinToString("") {
+        "        ${it.first}: ${it.second},\n"
+    }
 
     val referencesToImportedDeclarations = jsModuleAndQualifierReferences
         .filter { it.module != null }
@@ -279,8 +295,9 @@ fun WasmCompiledModuleFragment.generateAsyncJsWrapper(
     //language=js
     return """
 $referencesToImportedDeclarations
+$importsImportedSection
 
-export async function instantiate(imports={}, runInitializer=true) {
+export async function instantiate(runInitializer=true) {
     const externrefBoxes = new WeakMap();
     // ref must be non-null
     function tryGetOrSetExternrefBox(ref, ifNotCached) {
