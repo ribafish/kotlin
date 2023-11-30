@@ -48,8 +48,7 @@ internal class IrConstOnlyNecessaryTransformer(
             return expression
         }
 
-        val isConstGetter = expression.symbol.owner.property.isConst
-        if (data.inConstantExpression || isConstGetter) {
+        if (data.inConstantExpression) {
             return super.visitCall(expression, data.copy(inConstantExpression = true))
         }
         expression.transformChildren(this, data)

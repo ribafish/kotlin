@@ -1,0 +1,3 @@
+val test: Int
+  field = Companion.<get-MIN_VALUE>()
+  get
