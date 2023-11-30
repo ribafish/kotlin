@@ -25,6 +25,18 @@ fun eiAsAny(ei: EI): JsReference<Any> = ei.toJsReference()
 fun anyAsEI(any: JsReference<Any>): EI = any.get() as EI
 
 @JsExport
+fun provideUByte(): UByte = UByte.MAX_VALUE
+
+@JsExport
+fun provideNullableUByte(nullable: Boolean): UByte? = if (nullable) null else UByte.MAX_VALUE
+
+@JsExport
+fun consumeUByte(x: UByte) = x.toString()
+
+@JsExport
+fun consumeNullableUByte(x: UByte?) = x?.toString()
+
+@JsExport
 fun provideUShort(): UShort = UShort.MAX_VALUE
 
 @JsExport
@@ -83,103 +95,136 @@ if (main.anyAsEI(main.eiAsAny({x:10})).x !== 10) {
     throw "Fail 4";
 }
 
-if (main.provideUShort() != 65535) {
+if (main.provideUByte() != 255) {
     throw "Fail 5";
 }
-if (main.provideUInt() != 4294967295) {
+if (main.provideUShort() != 65535) {
     throw "Fail 6";
 }
-if (main.provideULong() != 18446744073709551615n) {
+if (main.provideUInt() != 4294967295) {
     throw "Fail 7";
 }
-
-if (main.provideNullableUShort(false) != 65535) {
+if (main.provideULong() != 18446744073709551615n) {
     throw "Fail 8";
 }
-if (main.provideNullableUShort(true) != null) {
+
+if (main.provideNullableUByte(false) != 255) {
     throw "Fail 9";
 }
-if (main.provideNullableUInt(false) != 4294967295) {
+if (main.provideNullableUByte(true) != null) {
     throw "Fail 10";
 }
-if (main.provideNullableUInt(true) != null) {
+if (main.provideNullableUShort(false) != 65535) {
     throw "Fail 11";
 }
-if (main.provideNullableULong(false) != 18446744073709551615n) {
+if (main.provideNullableUShort(true) != null) {
     throw "Fail 12";
 }
-if (main.provideNullableULong(true) != null) {
+if (main.provideNullableUInt(false) != 4294967295) {
     throw "Fail 13";
 }
-
-if (main.consumeUShort(-1) != "65535") {
+if (main.provideNullableUInt(true) != null) {
     throw "Fail 14";
 }
-if (main.consumeNullableUShort(-1) != "65535") {
+if (main.provideNullableULong(false) != 18446744073709551615n) {
     throw "Fail 15";
 }
-if (main.consumeNullableUShort(null) != null) {
+if (main.provideNullableULong(true) != null) {
     throw "Fail 16";
 }
 
-if (main.consumeUInt(-1) != "4294967295") {
+if (main.consumeUByte(-1) != "255") {
     throw "Fail 17";
 }
-if (main.consumeNullableUInt(-1) != "4294967295") {
+if (main.consumeNullableUByte(-1) != "255") {
     throw "Fail 18";
 }
-if (main.consumeNullableUInt(null) != null) {
+if (main.consumeNullableUByte(null) != null) {
     throw "Fail 19";
 }
 
-if (main.consumeULong(-1n) != "18446744073709551615") {
+if (main.consumeUShort(-1) != "65535") {
     throw "Fail 20";
 }
-if (main.consumeNullableULong(-1n) != "18446744073709551615") {
+if (main.consumeNullableUShort(-1) != "65535") {
     throw "Fail 21";
 }
-if (main.consumeNullableULong(null) != null) {
+if (main.consumeNullableUShort(null) != null) {
     throw "Fail 22";
 }
 
-if (main.consumeUShort(65535) != "65535") {
+if (main.consumeUInt(-1) != "4294967295") {
     throw "Fail 23";
 }
-if (main.consumeNullableUShort(65535) != "65535") {
+if (main.consumeNullableUInt(-1) != "4294967295") {
     throw "Fail 24";
+}
+if (main.consumeNullableUInt(null) != null) {
+    throw "Fail 25";
+}
+
+if (main.consumeULong(-1n) != "18446744073709551615") {
+    throw "Fail 26";
+}
+if (main.consumeNullableULong(-1n) != "18446744073709551615") {
+    throw "Fail 27";
+}
+if (main.consumeNullableULong(null) != null) {
+    throw "Fail 28";
+}
+
+if (main.consumeUByte(255) != "255") {
+    throw "Fail 29";
+}
+if (main.consumeNullableUByte(255) != "255") {
+    throw "Fail 30";
+}
+
+if (main.consumeUShort(65535) != "65535") {
+    throw "Fail 31";
+}
+if (main.consumeNullableUShort(65535) != "65535") {
+    throw "Fail 32";
 }
 
 if (main.consumeUInt(4294967295) != "4294967295") {
-    throw "Fail 25";
+    throw "Fail 33";
 }
 if (main.consumeNullableUInt(4294967295) != "4294967295") {
-    throw "Fail 25";
+    throw "Fail 34";
 }
 
 if (main.consumeULong(18446744073709551615n) != "18446744073709551615") {
-    throw "Fail 26";
+    throw "Fail 35";
 }
 if (main.consumeNullableULong(18446744073709551615n) != "18446744073709551615") {
-    throw "Fail 27";
+    throw "Fail 36";
+}
+
+if (main.consumeUByte(256) != "0") {
+    throw "Fail 37";
+}
+if (main.consumeNullableUByte(256) != "0") {
+    throw "Fail 38";
 }
 
 if (main.consumeUShort(65536) != "0") {
-    throw "Fail 28";
+    throw "Fail 39";
 }
 if (main.consumeNullableUShort(65536) != "0") {
-    throw "Fail 29";
+    throw "Fail 40";
 }
 
 if (main.consumeUInt(4294967296) != "0") {
-    throw "Fail 30";
+    throw "Fail 41";
 }
 if (main.consumeNullableUInt(4294967296) != "0") {
-    throw "Fail 31";
+    throw "Fail 42";
 }
 
 if (main.consumeULong(18446744073709551616n) != "0") {
-    throw "Fail 32";
+    throw "Fail 43";
 }
 if (main.consumeNullableULong(18446744073709551616n) != "0") {
-    throw "Fail 33";
+    throw "Fail 44";
 }

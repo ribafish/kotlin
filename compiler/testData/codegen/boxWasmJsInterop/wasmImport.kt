@@ -22,6 +22,8 @@ export default sub;
 
 // FILE: 3.mjs
 
+export function provideUByte() { return -1 }
+
 export function provideUShort() { return -1 }
 
 export function provideUInt() { return -1 }
@@ -58,6 +60,9 @@ external fun sub5(x: Float, y: Float): Float
 @WasmImport("./2.mjs", "default")
 external fun sub6(x: Float, y: Float): Float
 
+@WasmImport("./3.mjs", "provideUByte")
+external fun provideUByte(): UByte
+
 @WasmImport("./3.mjs", "provideUShort")
 external fun provideUShort(): UShort
 
@@ -79,9 +84,10 @@ fun box(): String {
     if (sub5(5f, 6f) != -1f) return "Fail6"
     if (sub6(5f, 6f) != -1f) return "Fail7"
 
-    if (provideUShort() != UShort.MAX_VALUE) return "Fail8"
-    if (provideUInt() != UInt.MAX_VALUE) return "Fail9"
-    if (provideULong() != ULong.MAX_VALUE) return "Fail10"
+    if (provideUByte() != UByte.MAX_VALUE) return "Fail9"
+    if (provideUShort() != UShort.MAX_VALUE) return "Fail10"
+    if (provideUInt() != UInt.MAX_VALUE) return "Fail11"
+    if (provideULong() != ULong.MAX_VALUE) return "Fail12"
 
     return "OK"
 }
