@@ -34,7 +34,7 @@ dependencies {
     implementation(project(path = ":kotlin-native:endorsedLibraries:kotlinx.cli", configuration = "jvmRuntimeElements"))
 
     api(project(":kotlin-stdlib"))
-    implementation(project(":kotlinx-metadata-klib"))
+    implementation(project(":kotlin-metadata-klib"))
     implementation(project(":native:kotlin-native-utils"))
     implementation(project(":compiler:util"))
     implementation(project(":compiler:ir.serialization.common"))

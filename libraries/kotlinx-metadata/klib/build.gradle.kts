@@ -23,7 +23,7 @@ configurations.getByName("testApi").extendsFrom(embedded)
 
 dependencies {
     api(kotlinStdlib())
-    embedded(project(":kotlinx-metadata"))
+    embedded(project(":kotlin-metadata"))
     embedded(project(":core:compiler.common"))
     embedded(project(":core:metadata"))
     embedded(project(":core:deserialization"))

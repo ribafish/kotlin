@@ -11,14 +11,14 @@ plugins {
 }
 
 /*
- * To publish this library use `:kotlinx-metadata-jvm:publish` task and specify the following parameters
+ * To publish this library use `:kotlin-metadata-jvm:publish` task and specify the following parameters
  *
  *      - `-PdeployVersion=1.2.nn`: the version of the standard library dependency to put into .pom
  *      - `-PkotlinxMetadataDeployVersion=0.0.n`: the version of the library itself
- *      - `-PdeployRepoUrl=repository_url`: (optional) the url of repository to deploy to;
+ *      - `-Pdeploy-url=repository_url`: (optional) the url of repository to deploy to;
  *          if not specified, the local directory repository `build/repo` will be used
- *      - `-PdeployRepoUsername=username`: (optional) the username to authenticate in the deployment repository
- *      - `-PdeployRepoPassword=password`: (optional) the password to authenticate in the deployment repository
+ *      - `-Pkotlin.build.deploy-username=username`: (optional) the username to authenticate in the deployment repository
+ *      - `-Pkotlin.build.deploy-password=password`: (optional) the password to authenticate in the deployment repository
  */
 group = "org.jetbrains.kotlin"
 val deployVersion = findProperty("kotlinxMetadataDeployVersion") as String?
@@ -40,7 +40,7 @@ configurations.getByName("testApi").extendsFrom(embedded)
 
 dependencies {
     api(kotlinStdlib())
-    embedded(project(":kotlinx-metadata"))
+    embedded(project(":kotlin-metadata"))
     embedded(project(":core:metadata"))
     embedded(project(":core:metadata.jvm"))
     embedded(protobufLite())
@@ -93,7 +93,7 @@ tasks.dokkaHtml.configure {
     dokkaSourceSets.configureEach {
         includes.from(project.file("dokka/moduledoc.md").path)
 
-        sourceRoots.from(project(":kotlinx-metadata").getSources())
+        sourceRoots.from(project(":kotlin-metadata").getSources())
 
         skipDeprecated.set(true)
         reportUndocumented.set(true)
