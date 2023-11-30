@@ -22,7 +22,7 @@ fun SirForeignFunction.toSir(): SirFunction? = buildFunction {
     origin = kotlinOrigin
     visibility = this@toSir.visibility
     name = kotlinOrigin.name().last()
-    parameters = kotlinOrigin.parameters().map { it.toSir() }.toMutableList()
+    kotlinOrigin.parameters().mapTo(parameters) { it.toSir() }
 
     returnType = kotlinOrigin.returnType().toSir()
 }

@@ -61,11 +61,7 @@ class MockSirFunction(
     ),
     override val returnType: SirType = SirNominalType(SirSwiftModule.int8)
 ) : SirFunction() {
-    override fun <R, D> acceptChildren(visitor: SirVisitor<R, D>, data: D) {
-        TODO("Not yet implemented")
-    }
+    override fun <R, D> acceptChildren(visitor: SirVisitor<R, D>, data: D) = TODO("Not yet implemented")
 
-    override fun <D> transformChildren(transformer: SirTransformer<D>, data: D) {
-        TODO("Not yet implemented")
-    }
+    override fun <D> transformChildren(transformer: SirTransformer<D>, data: D) = TODO("Not yet implemented")
 }
