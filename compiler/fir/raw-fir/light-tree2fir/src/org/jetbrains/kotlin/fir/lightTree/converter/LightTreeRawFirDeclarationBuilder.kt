@@ -137,7 +137,6 @@ class LightTreeRawFirDeclarationBuilder(
                 KtNodeTypes.PROPERTY -> container += convertPropertyDeclaration(node) as FirStatement
                 DESTRUCTURING_DECLARATION -> container += convertDestructingDeclaration(node).toFirDestructingDeclaration(baseModuleData)
                 TYPEALIAS -> container += convertTypeAlias(node) as FirStatement
-                CLASS_INITIALIZER -> container += convertAnonymousInitializer(node) as FirStatement
                 else -> if (node.isExpression()) container += expressionConverter.getAsFirStatement(node)
             }
         }
@@ -854,7 +853,7 @@ class LightTreeRawFirDeclarationBuilder(
                 KtNodeTypes.PROPERTY -> container += convertPropertyDeclaration(node, classWrapper)
                 TYPEALIAS -> container += convertTypeAlias(node)
                 OBJECT_DECLARATION -> container += convertClass(node)
-                CLASS_INITIALIZER -> container += convertAnonymousInitializer(node) //anonymousInitializer
+                CLASS_INITIALIZER -> container += convertAnonymousInitializer(node, classWrapper) //anonymousInitializer
                 SECONDARY_CONSTRUCTOR -> container += convertSecondaryConstructor(node, classWrapper)
                 MODIFIER_LIST -> modifierLists += node
                 DESTRUCTURING_DECLARATION -> container += buildErrorTopLevelDestructuringDeclaration(node.toFirSourceElement())
@@ -1003,7 +1002,10 @@ class LightTreeRawFirDeclarationBuilder(
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseMemberDeclarationRest
      * at INIT keyword
      */
-    private fun convertAnonymousInitializer(anonymousInitializer: LighterASTNode): FirDeclaration {
+    private fun convertAnonymousInitializer(
+        anonymousInitializer: LighterASTNode,
+        classWrapper: ClassWrapper
+    ): FirDeclaration {
         var firBlock: FirBlock? = null
         var modifiers = Modifier()
         anonymousInitializer.forEachChildren {
@@ -1020,7 +1022,7 @@ class LightTreeRawFirDeclarationBuilder(
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
             body = firBlock ?: buildEmptyExpressionBlock()
-            dispatchReceiverType = context.dispatchReceiverTypesStack.lastOrNull()
+            this.containingDeclarationSymbol = classWrapper.classBuilder.ownerRegularOrAnonymousObjectSymbol
             annotations += modifiers.annotations
         }
     }
