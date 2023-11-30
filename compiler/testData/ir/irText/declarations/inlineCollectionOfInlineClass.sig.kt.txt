@@ -27,7 +27,6 @@ value class IT {
   //   Mangled name: IT#equals(kotlin.Any?){}kotlin.Boolean
   //   Public signature: /IT.equals|722809408929142791[0]
   //   Public signature debug description: equals(kotlin.Any?){}kotlin.Boolean
-
   // CHECK JS_IR NATIVE:
   //   Mangled name: IT#equals(kotlin.Any?){}
   //   Public signature: /IT.equals|4638265728071529943[0]
@@ -85,19 +84,6 @@ value class InlineMutableSet : MutableSet<IT> {
   //   Mangled name: InlineMutableSet#equals(kotlin.Any?){}kotlin.Boolean
   //   Public signature: /InlineMutableSet.equals|722809408929142791[0]
   //   Public signature debug description: equals(kotlin.Any?){}kotlin.Boolean
-
-  // CHECK JS_IR NATIVE:
-  //   Mangled name: InlineMutableSet#asJsSetMutableView(){}
-  //   Public signature: /InlineMutableSet.asJsSetMutableView|-8664112628664896932[0]
-  //   Public signature debug description: asJsSetMutableView(){}
-  /* fake */ override fun asJsSetMutableView(): JsMutableSet<IT>
-
-  // CHECK JS_IR NATIVE:
-  //   Mangled name: InlineMutableSet#asJsSetView(){}
-  //   Public signature: /InlineMutableSet.asJsSetView|-25757746409772611[0]
-  //   Public signature debug description: asJsSetView(){}
-  /* fake */ override fun asJsSetView(): JsImmutableSet<IT>
-
   // CHECK JS_IR NATIVE:
   //   Mangled name: InlineMutableSet#equals(kotlin.Any?){}
   //   Public signature: /InlineMutableSet.equals|4638265728071529943[0]

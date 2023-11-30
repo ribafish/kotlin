@@ -27,13 +27,6 @@ open class ControlFlowInfo<K : Any?, V : Any?> : Map<K, V> {
   //   Mangled name: ControlFlowInfo#containsKey(1:0){}kotlin.Boolean
   //   Public signature: /ControlFlowInfo.containsKey|-2697616884574929105[0]
   //   Public signature debug description: containsKey(1:0){}kotlin.Boolean
-
-  // CHECK JS_IR NATIVE:
-  //   Mangled name: ControlFlowInfo#asJsMapView(){}
-  //   Public signature: /ControlFlowInfo.asJsMapView|-9136768301428338619[0]
-  //   Public signature debug description: asJsMapView(){}
-  override fun asJsMapView(): JsImmutableMap<K, V>
-
   // CHECK JS_IR NATIVE:
   //   Mangled name: ControlFlowInfo#containsKey(1:0){}
   //   Public signature: /ControlFlowInfo.containsKey|4378783437577239715[0]
@@ -146,13 +139,6 @@ class StringFlowInfo : ControlFlowInfo<String, String> {
   //   Mangled name: StringFlowInfo#containsKey(kotlin.String){}kotlin.Boolean
   //   Public signature: /StringFlowInfo.containsKey|8275396622473115435[0]
   //   Public signature debug description: containsKey(kotlin.String){}kotlin.Boolean
-
-  // CHECK JS_IR NATIVE:
-  //   Mangled name: StringFlowInfo#asJsMapView(){}
-  //   Public signature: /StringFlowInfo.asJsMapView|-9136768301428338619[0]
-  //   Public signature debug description: asJsMapView(){}
-  /* fake */ override fun asJsMapView(): JsImmutableMap<String, String>
-
   // CHECK JS_IR NATIVE:
   //   Mangled name: StringFlowInfo#containsKey(kotlin.String){}
   //   Public signature: /StringFlowInfo.containsKey|3677836291003130742[0]

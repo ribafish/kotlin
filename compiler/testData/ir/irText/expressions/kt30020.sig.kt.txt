@@ -30,7 +30,6 @@ abstract class AML : MutableList<Int> {
   //   Mangled name: AML#add(kotlin.Int){}kotlin.Boolean
   //   Public signature: /AML.add|-1806173376318726841[0]
   //   Public signature debug description: add(kotlin.Int){}kotlin.Boolean
-
   // CHECK JS_IR NATIVE:
   //   Mangled name: AML#add(kotlin.Int){}
   //   Public signature: /AML.add|4888650976871417104[0]
@@ -246,12 +245,10 @@ abstract class AML : MutableList<Int> {
 //   Mangled name: X
 //   Public signature: /X|null[0]
 interface X {
-
   // CHECK JVM_IR:
   //   Mangled name: X#f(){}kotlin.collections.MutableList<kotlin.Any>
   //   Public signature: /X.f|7644118277748321581[0]
   //   Public signature debug description: f(){}kotlin.collections.MutableList<kotlin.Any>
-
   // CHECK JS_IR NATIVE:
   //   Mangled name: X#f(){}
   //   Public signature: /X.f|5316533450599009716[0]
