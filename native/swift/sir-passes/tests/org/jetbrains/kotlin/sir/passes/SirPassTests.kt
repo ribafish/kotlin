@@ -7,12 +7,11 @@ package org.jetbrains.kotlin.sir.passes
 
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildForeignFunction
+import org.jetbrains.kotlin.sir.passes.asserts.assertSirFunctionsEquals
+import org.jetbrains.kotlin.sir.passes.mocks.MockSirFunction
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
-import org.jetbrains.kotlin.sir.visitors.SirTransformer
-import org.jetbrains.kotlin.sir.visitors.SirVisitor
 import org.jetbrains.sir.passes.translation.ForeignIntoSwiftFunctionTranslationPass
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class SirPassTests {
@@ -21,13 +20,59 @@ class SirPassTests {
         val mySirElement = buildForeignFunction {
             origin = SirOrigin.KotlinEntity.Function(
                 name = { listOf("foo") },
+                parameters = { mutableListOf() },
+                returnType = { SirOrigin.ExternallyDefined("kotlin/Boolean") },
+            )
+            visibility = SirVisibility.PUBLIC
+        }
+        val myPass = ForeignIntoSwiftFunctionTranslationPass()
+        val result = myPass.run(mySirElement, Unit)
+        assertNotNull(result, "SirFunction should be produced")
+        val exp = MockSirFunction(
+            name = "foo",
+            parameters = emptyList(),
+            returnType = SirNominalType(SirSwiftModule.bool),
+        )
+        assertSirFunctionsEquals(actual = result, expected = exp)
+    }
+
+    @Test
+    fun `foreign toplevel function with all params should be translated`() {
+        val mySirElement = buildForeignFunction {
+            origin = SirOrigin.KotlinEntity.Function(
+                name = { listOf("foo") },
                 parameters = {
                     mutableListOf(
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg1",
                             type = SirOrigin.ExternallyDefined("kotlin/Byte")
+                        ),
+                        SirOrigin.KotlinEntity.Parameter(
+                            name = "arg2",
+                            type = SirOrigin.ExternallyDefined("kotlin/Short")
+                        ),
+                        SirOrigin.KotlinEntity.Parameter(
+                            name = "arg3",
+                            type = SirOrigin.ExternallyDefined("kotlin/Int")
+                        ),
+                        SirOrigin.KotlinEntity.Parameter(
+                            name = "arg4",
+                            type = SirOrigin.ExternallyDefined("kotlin/Long")
+                        ),
+                        SirOrigin.KotlinEntity.Parameter(
+                            name = "arg5",
+                            type = SirOrigin.ExternallyDefined("kotlin/Double")
+                        ),
+                        SirOrigin.KotlinEntity.Parameter(
+                            name = "arg6",
+                            type = SirOrigin.ExternallyDefined("kotlin/Float")
+                        ),
+                        SirOrigin.KotlinEntity.Parameter(
+                            name = "arg7",
+                            type = SirOrigin.ExternallyDefined("kotlin/Boolean")
                         )
-                    )},
+                    )
+                },
                 returnType = { SirOrigin.ExternallyDefined("kotlin/Byte") },
             )
             visibility = SirVisibility.PUBLIC
@@ -35,33 +80,22 @@ class SirPassTests {
         val myPass = ForeignIntoSwiftFunctionTranslationPass()
         val result = myPass.run(mySirElement, Unit)
         assertNotNull(result, "SirFunction should be produced")
-        val exp = MockSirFunction()
-        assertEquals(
-            actual = result.name,
-            expected = exp.name
+        val exp = MockSirFunction(
+            name = "foo",
+            parameters = listOf(
+                SirParameter(argumentName = "arg1", type = SirNominalType(SirSwiftModule.int8)),
+                SirParameter(argumentName = "arg2", type = SirNominalType(SirSwiftModule.int16)),
+                SirParameter(argumentName = "arg3", type = SirNominalType(SirSwiftModule.int32)),
+                SirParameter(argumentName = "arg4", type = SirNominalType(SirSwiftModule.int64)),
+
+                SirParameter(argumentName = "arg5", type = SirNominalType(SirSwiftModule.double)),
+                SirParameter(argumentName = "arg6", type = SirNominalType(SirSwiftModule.float)),
+
+                SirParameter(argumentName = "arg7", type = SirNominalType(SirSwiftModule.bool)),
+            ),
+            returnType = SirNominalType(SirSwiftModule.int8),
         )
-        assertEquals(
-            actual = result.parameters,
-            expected = exp.parameters
-        )
-        assertEquals(
-            actual = result.returnType,
-            expected = exp.returnType
-        )
+        assertSirFunctionsEquals(actual = result, expected = exp)
     }
-}
 
-class MockSirFunction(
-    override val origin: SirOrigin = SirOrigin.Unknown,
-    override val visibility: SirVisibility = SirVisibility.PUBLIC,
-    override var parent: SirDeclarationParent = SirSwiftModule,
-    override val name: String = "foo",
-    override val parameters: List<SirParameter> = listOf(
-        SirParameter(argumentName = "arg1", type = SirNominalType(SirSwiftModule.int8))
-    ),
-    override val returnType: SirType = SirNominalType(SirSwiftModule.int8)
-) : SirFunction() {
-    override fun <R, D> acceptChildren(visitor: SirVisitor<R, D>, data: D) = TODO("Not yet implemented")
-
-    override fun <D> transformChildren(transformer: SirTransformer<D>, data: D) = TODO("Not yet implemented")
 }
