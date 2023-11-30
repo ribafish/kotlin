@@ -235,29 +235,51 @@ fun WasmCompiledModuleFragment.generateAsyncJsWrapper(
             "        $moduleSpecifier: imports[$moduleSpecifier] ?? await import($moduleSpecifier),\n"
         }
 
-    val referencesToQualifiedAndImportedDeclarations = jsModuleAndQualifierReferences
+    val referencesToImportedDeclarations = jsModuleAndQualifierReferences
+        .filter { it.module != null }
         .map {
-            val module = it.module
-            val qualifier = it.qualifier
+            val module = it.module!!
             buildString {
-                append("    const ")
-                append(it.jsVariableName)
-                append(" = ")
-                if (module != null) {
-                    append("(imports[${module.toJsStringLiteral()}] ?? await import(${module.toJsStringLiteral()}))")
-                    if (qualifier != null)
-                        append(".")
+                append("import ")
+                append("* as ")
+                if (it.qualifier != null) {
+                    append(it.importVariableName)
+                } else {
+                    append(it.jsVariableName)
                 }
-                if (qualifier != null) {
-                    append(qualifier)
-                }
+                append(" from ")
+                append(module.toJsStringLiteral())
+
                 append(";")
             }
-        }.sorted()
+        }
+        .sorted()
+        .joinToString("\n")
+
+    val referencesToQualifiedDeclarations = jsModuleAndQualifierReferences
+        .map {
+            val qualifier = it.qualifier
+            buildString {
+                if (qualifier != null) {
+                    append("    const ")
+                    append(it.jsVariableName)
+                    append(" = ")
+                    if (it.module != null) {
+                        append(it.importVariableName)
+                        append(".")
+                    }
+                    append(qualifier)
+                    append(";")
+                }
+            }
+        }
+        .sorted()
         .joinToString("\n")
 
     //language=js
     return """
+$referencesToImportedDeclarations
+
 export async function instantiate(imports={}, runInitializer=true) {
     const externrefBoxes = new WeakMap();
     // ref must be non-null
@@ -269,7 +291,7 @@ export async function instantiate(imports={}, runInitializer=true) {
         return ifNotCached;
     }
 
-$referencesToQualifiedAndImportedDeclarations
+$referencesToQualifiedDeclarations
     
     const js_code = {
 $jsCodeBodyIndented
