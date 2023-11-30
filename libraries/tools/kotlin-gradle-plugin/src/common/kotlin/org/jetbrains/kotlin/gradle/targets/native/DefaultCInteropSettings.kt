@@ -10,6 +10,7 @@ import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.RegularFile
 import org.gradle.api.internal.file.FileOperations
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -19,9 +20,10 @@ import org.jetbrains.kotlin.gradle.plugin.CInteropSettings
 import org.jetbrains.kotlin.gradle.plugin.CInteropSettings.IncludeDirectories
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropIdentifier
+import org.jetbrains.kotlin.gradle.utils.*
+import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.newInstance
-import org.jetbrains.kotlin.gradle.utils.property
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import java.io.File
 import javax.inject.Inject
@@ -71,14 +73,14 @@ abstract class DefaultCInteropSettings @Inject internal constructor(
 
     val interopProcessingTaskName get() = params.interopProcessingTaskName
 
-    val defFileProperty: Property<File> = params.services.objectFactory.property<File>().value(
+    val defFileProperty: Property<RegularFile> = params.services.objectFactory.fileProperty(
         params.services.projectLayout.projectDirectory.file("src/nativeInterop/cinterop/$name.def").asFile
     )
 
     var defFile: File
-        get() = defFileProperty.get()
+        get() = defFileProperty.getFile()
         set(value) {
-            defFileProperty.set(value)
+            defFileProperty.set(params.services.projectLayout.projectDirectory.file(value.absolutePath))
         }
 
     var packageName: String?
@@ -106,7 +108,8 @@ abstract class DefaultCInteropSettings @Inject internal constructor(
     // DSL methods.
 
     override fun defFile(file: Any) {
-        defFileProperty.set(params.services.fileOperations.file(file))
+        val filePath = params.services.fileOperations.file(file).absolutePath
+        defFileProperty.set(params.services.projectLayout.projectDirectory.file(filePath))
     }
 
     override fun packageName(value: String) {
