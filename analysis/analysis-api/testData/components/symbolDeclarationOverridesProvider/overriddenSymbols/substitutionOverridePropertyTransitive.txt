@@ -1,0 +1,5 @@
+ALL:
+  test/B.x: T
+  test/A.x: T
+DIRECT:
+  test/B.x: T

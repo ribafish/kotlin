@@ -117,4 +117,34 @@ public class FirIdeNormalAnalysisSourceModuleOverriddenDeclarationProviderTestGe
     public void testSequenceOfOverrides() throws Exception {
         runTest("analysis/analysis-api/testData/components/symbolDeclarationOverridesProvider/overriddenSymbols/sequenceOfOverrides.kt");
     }
+
+    @Test
+    @TestMetadata("substitutionOverrideFunctionParameter.kt")
+    public void testSubstitutionOverrideFunctionParameter() throws Exception {
+        runTest("analysis/analysis-api/testData/components/symbolDeclarationOverridesProvider/overriddenSymbols/substitutionOverrideFunctionParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("substitutionOverrideFunctionReturnType.kt")
+    public void testSubstitutionOverrideFunctionReturnType() throws Exception {
+        runTest("analysis/analysis-api/testData/components/symbolDeclarationOverridesProvider/overriddenSymbols/substitutionOverrideFunctionReturnType.kt");
+    }
+
+    @Test
+    @TestMetadata("substitutionOverrideFunctionTransitive.kt")
+    public void testSubstitutionOverrideFunctionTransitive() throws Exception {
+        runTest("analysis/analysis-api/testData/components/symbolDeclarationOverridesProvider/overriddenSymbols/substitutionOverrideFunctionTransitive.kt");
+    }
+
+    @Test
+    @TestMetadata("substitutionOverrideProperty.kt")
+    public void testSubstitutionOverrideProperty() throws Exception {
+        runTest("analysis/analysis-api/testData/components/symbolDeclarationOverridesProvider/overriddenSymbols/substitutionOverrideProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("substitutionOverridePropertyTransitive.kt")
+    public void testSubstitutionOverridePropertyTransitive() throws Exception {
+        runTest("analysis/analysis-api/testData/components/symbolDeclarationOverridesProvider/overriddenSymbols/substitutionOverridePropertyTransitive.kt");
+    }
 }
