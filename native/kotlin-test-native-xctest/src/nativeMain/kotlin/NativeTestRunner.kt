@@ -18,11 +18,11 @@ import platform.objc.*
 /**
  * An XCTest equivalent of the K/N TestCase.
  *
- * Wraps the [TestCase] that runs it with a special bridge method created by adding it to a metaclass.
+ * Wraps the [TestCase] that runs it with a special bridge method created by adding it to a class.
  * The idea is to make XCTest invoke them by the created invocation and show the selector as a test name.
- * This selector is created as `klass.method` that is than naturally represented in XCTest reports including XCode.
+ * This selector is created as `class.method` that is than naturally represented in XCTest reports including XCode.
  */
-@ExportObjCClass(name = "Kotlin/Native::Test")
+@ExportObjCClass(name = "KotlinNativeTest")
 class XCTestCaseWrapper(invocation: NSInvocation, val testCase: TestCase) : XCTestCase(invocation) {
     // Sets XCTest to continue running after failure to match Kotlin Test
     override fun continueAfterFailure(): Boolean = true
@@ -149,11 +149,11 @@ class XCTestCaseWrapper(invocation: NSInvocation, val testCase: TestCase) : XCTe
          *
          * For each kotlin-test's test case make an NSInvocation with an appropriate selector that represents test name:
          * - Create NSSelector from the given test name.
-         * - Create implementation method with block for runner method. This method accepts the instance of the XCTestWrapper
+         * - Create implementation method with block for runner method. This method accepts the instance of the XCTestCaseWrapper
          *  to run the actual test code.
          * - Create NSInvocation from the selector using NSMethodSignature.
          *
-         * Then this NSInvocation should be used to create an instance of XCTestWrapper that implements XCTestCase.
+         * Then this NSInvocation should be used to create an instance of XCTestCaseWrapper that implements XCTestCase.
          * When XCTest runs this instance, it invokes this invocation that passes Wrapper's instance to the `runner(...)` method.
          *
          * @see createRunMethod
