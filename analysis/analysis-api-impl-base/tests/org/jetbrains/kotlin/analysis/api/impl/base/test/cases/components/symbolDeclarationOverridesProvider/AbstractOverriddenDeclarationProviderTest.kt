@@ -42,7 +42,7 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBa
     }
 
     private fun KtAnalysisSession.renderSignature(symbol: KtCallableSymbol): String = buildString {
-        append(getPath(symbol))
+        append(renderDeclarationQualifiedName(symbol))
         if (symbol is KtFunctionSymbol) {
             append("(")
             symbol.valueParameters.forEachIndexed { index, parameter ->
@@ -59,21 +59,31 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBa
         append(symbol.returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
     }
 
-    @Suppress("unused")
-    private fun KtAnalysisSession.getPath(symbol: KtCallableSymbol): String = when (symbol) {
-        is KtSyntheticJavaPropertySymbol -> symbol.callableIdIfNonLocal?.toString()!!
-        else -> {
-            val ktDeclaration = symbol.psi as? KtDeclaration
-            if (ktDeclaration == null) {
-                symbol.callableIdIfNonLocal?.toString()!!
-            } else {
-                ktDeclaration
-                    .parentsOfType<KtDeclaration>(withSelf = true)
-                    .map { it.name ?: "<no name>" }
-                    .toList()
-                    .asReversed()
-                    .joinToString(separator = ".")
+    private fun KtAnalysisSession.renderDeclarationQualifiedName(symbol: KtCallableSymbol): String {
+        val parentsWithSelf = generateSequence<KtSymbol>(symbol) { it.getContainingSymbol() }
+            .toList()
+            .asReversed()
+
+        val chunks = mutableListOf<String>()
+
+        for ((index, parent) in parentsWithSelf.withIndex()) {
+            // Render qualified names for top-level declarations
+            if (index == 0) {
+                val qualifiedName = when (parent) {
+                    is KtClassLikeSymbol -> parent.classIdIfNonLocal?.toString()
+                    is KtCallableSymbol -> parent.callableIdIfNonLocal?.toString()
+                    else -> null
+                }
+
+                if (qualifiedName != null) {
+                    chunks += qualifiedName
+                    continue
+                }
             }
+
+            chunks += (parent as? KtNamedSymbol)?.name?.asString() ?: "<no name>"
         }
+
+        return chunks.joinToString(".")
     }
 }
