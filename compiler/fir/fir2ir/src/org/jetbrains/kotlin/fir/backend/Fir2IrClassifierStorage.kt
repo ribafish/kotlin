@@ -51,7 +51,12 @@ class Fir2IrClassifierStorage(
         commonMemberStorage.localClassCache
     )
 
-    private val localClassesCreatedOnTheFly: MutableMap<FirClass, IrClass> = mutableMapOf()
+    private data class LocalClassCreatedOnTheFlyInfo(
+        val firClass: FirClass,
+        val irClass: IrClass,
+    )
+
+    private val localClassesCreatedOnTheFly: MutableList<LocalClassCreatedOnTheFlyInfo> = mutableListOf()
 
     private var processMembersOfClassesOnTheFlyImmediately = false
 
@@ -268,7 +273,7 @@ class Fir2IrClassifierStorage(
     private fun createAndCacheLocalIrClassOnTheFly(klass: FirClass): IrClass {
         val (irClass, firClassOrLocalParent, irClassOrLocalParent) = classifiersGenerator.createLocalIrClassOnTheFly(klass, processMembersOfClassesOnTheFlyImmediately)
         if (!processMembersOfClassesOnTheFlyImmediately) {
-            localClassesCreatedOnTheFly[firClassOrLocalParent] = irClassOrLocalParent
+            localClassesCreatedOnTheFly.add(LocalClassCreatedOnTheFlyInfo(firClassOrLocalParent, irClassOrLocalParent))
         }
         return irClass
     }
