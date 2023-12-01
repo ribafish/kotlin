@@ -41,7 +41,7 @@ public class ConstUtils {
 // This copy is required to be able to handle K2 constants without triggering constant evaluation.
 // There are two major changes:
 // 1. In `visitReferenceExpression` where we check for constant expression without triggering evaluation.
-// 2. In `visitTypeCastExpression` and in `visitPolyadicExpression` before we check for the type.
+// 2. In `visitPolyadicExpression` before we check for the type.
 // At the moment when we check for constant, not all types could be resolved, and if we return a wrong type, it will be cached.
 final class IsConstantExpressionVisitor extends JavaElementVisitor {
     private boolean myIsConstant;
@@ -89,11 +89,6 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
             return;
         }
 
-        // CHANGE #1
-        checkForNotYetEvaluatedConstant(operand);
-        if (myIsConstant) return;
-        // END
-
         PsiType type = element.getType();
         if (type instanceof PsiPrimitiveType) return;
         if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return;
@@ -122,7 +117,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
             operand.accept(this);
             if (!myIsConstant) return;
 
-            // CHANGE #2
+            // CHANGE #1
             checkForNotYetEvaluatedConstant(operand);
             if (myIsConstant) continue;
             // END
@@ -180,7 +175,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
             return;
         }
 
-        // CHANGE #3
+        // CHANGE #2
         checkForNotYetEvaluatedConstant(expression);
         if (myIsConstant) return;
         // END
