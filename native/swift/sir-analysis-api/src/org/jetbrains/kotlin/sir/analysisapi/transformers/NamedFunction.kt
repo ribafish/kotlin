@@ -20,23 +20,18 @@ import java.lang.IllegalStateException
 fun KtNamedFunction.toForeignFunction(): SirForeignFunction? {
     val names = fqName?.pathSegments()
         ?: return null
-    val pointer: KtSymbolPointer<KtFunctionLikeSymbol> = analyze(this) {
-        symbolPointerOfType()
-    }
     return buildForeignFunction {
         origin = SirOrigin.KotlinEntity.Function(
             name = { names.toListString() },
             parameters = {
                 analyze(this@toForeignFunction) {
-                    val function = pointer.restoreSymbol()
-                        ?: throw IllegalStateException("could not restore symbol")
+                    val function = this@toForeignFunction.getFunctionLikeSymbol()
                     function.valueParameters.map { it.toSirParam() }
                 }
             },
             returnType = {
                 analyze(this@toForeignFunction) {
-                    val function = pointer.restoreSymbol()
-                        ?: throw IllegalStateException("could not restore symbol")
+                    val function = this@toForeignFunction.getFunctionLikeSymbol()
                     SirOrigin.ExternallyDefined(
                         name = function.returnType.toString()
                     )
