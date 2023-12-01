@@ -119,4 +119,10 @@ public class ClassicNativeCInteropExecutableTest extends AbstractNativeCInteropE
     public void testToKString() throws Exception {
         runTest("native/native.tests/testData/CInterop/executable/toKString/");
     }
+
+    @Test
+    @TestMetadata("objcInstancetype")
+    public void testObjcInstancetype() throws Exception {
+        runTest("native/native.tests/testData/CInterop/executable/objcInstancetype/");
+    }
 }
