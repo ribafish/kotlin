@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
 import org.jetbrains.kotlin.fir.java.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyConstructor
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyProperty
 import org.jetbrains.kotlin.fir.references.toResolvedBaseSymbol
 import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
@@ -48,6 +47,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import java.util.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -278,7 +278,7 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                             ((delegate as? FirQualifiedAccessExpression)?.calleeReference?.toResolvedBaseSymbol()?.fir as? FirTypeParameterRefsOwner)?.let {
                                 classifierStorage.preCacheTypeParameters(it, symbol)
                             }
-                            createBackingField(
+                            createBackingFieldForDelegatedProperty(
                                 this,
                                 property,
                                 IrDeclarationOrigin.PROPERTY_DELEGATE,
@@ -475,6 +475,35 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
     }
 
     // ------------------------------------ fields ------------------------------------
+
+    internal val erasureDelegatedPropertyStack = Stack<FirProperty>()
+
+    internal fun createBackingFieldForDelegatedProperty(
+        irProperty: IrProperty,
+        firProperty: FirProperty,
+        origin: IrDeclarationOrigin,
+        symbol: IrFieldSymbol,
+        visibility: DescriptorVisibility,
+        name: Name,
+        isFinal: Boolean,
+        firInitializerExpression: FirExpression?,
+        type: IrType? = null
+    ): IrField {
+        erasureDelegatedPropertyStack.push(firProperty)
+        val result = createBackingField(
+            irProperty,
+            firProperty,
+            origin,
+            symbol,
+            visibility,
+            name,
+            isFinal,
+            firInitializerExpression,
+            type
+        )
+        erasureDelegatedPropertyStack.pop()
+        return result
+    }
 
     internal fun createBackingField(
         irProperty: IrProperty,

@@ -220,6 +220,9 @@ internal class ClassMemberGenerator(
     fun convertPropertyContent(irProperty: IrProperty, property: FirProperty, containingClass: FirClass?): IrProperty {
         val initializer = property.backingField?.initializer ?: property.initializer
         val delegate = property.delegate
+        /*if (delegate != null) {
+            callablesGenerator.erasureDelegatedPropertyStack.push(property)
+        }*/
         val propertyType = property.returnTypeRef.toIrType()
         irProperty.initializeBackingField(property, initializerExpression = initializer ?: delegate)
         if (containingClass != null) {
@@ -250,6 +253,9 @@ internal class ClassMemberGenerator(
             )
         }
         annotationGenerator.generate(irProperty, property)
+        /*if (delegate != null) {
+            callablesGenerator.erasureDelegatedPropertyStack.pop()
+        }*/
         return irProperty
     }
 
@@ -274,6 +280,9 @@ internal class ClassMemberGenerator(
             declarationStorage.enterScope(this@initializeBackingField.symbol)
             // NB: initializer can be already converted
             if (initializer == null && initializerExpression != null) {
+                /*if (property.delegate != null) {
+                    callablesGenerator.erasureDelegatedPropertyStack.push(property)
+                }*/
                 initializer = irFactory.createExpressionBody(
                     run {
                         val irExpression = visitor.convertToIrExpression(initializerExpression, isDelegate = property.delegate != null)
@@ -290,6 +299,9 @@ internal class ClassMemberGenerator(
                         }
                     }
                 )
+                /*if (property.delegate != null) {
+                    callablesGenerator.erasureDelegatedPropertyStack.pop()
+                }*/
             }
             declarationStorage.leaveScope(this@initializeBackingField.symbol)
         }

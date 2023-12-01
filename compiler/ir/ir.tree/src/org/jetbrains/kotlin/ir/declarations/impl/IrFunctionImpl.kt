@@ -46,6 +46,9 @@ class IrFunctionImpl(
         get() = symbol.descriptor
 
     init {
+        if (name.asString() == "getValue") {
+            Unit
+        }
         symbol.bind(this)
     }
 
@@ -97,6 +100,11 @@ class IrFunctionWithLateBindingImpl(
     override var isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
     override val factory: IrFactory = IrFactoryImpl
 ) : IrFunctionWithLateBinding() {
+    init {
+        if (name.asString() == "getValue") {
+            Unit
+        }
+    }
 
     private var _symbol: IrSimpleFunctionSymbol? = null
 

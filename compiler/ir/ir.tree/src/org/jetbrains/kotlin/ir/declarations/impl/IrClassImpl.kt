@@ -36,6 +36,9 @@ open class IrClassImpl(
     override val factory: IrFactory = IrFactoryImpl
 ) : IrClass() {
     init {
+        if (name.isSpecial && name.asString() == "<no name provided>") {
+            Unit
+        }
         symbol.bind(this)
     }
 

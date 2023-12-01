@@ -146,7 +146,7 @@ class Fir2IrLazyProperty(
             }
         }
         fir.delegate != null -> {
-            callablesGenerator.createBackingField(
+            callablesGenerator.createBackingFieldForDelegatedProperty(
                 this@Fir2IrLazyProperty,
                 fir,
                 IrDeclarationOrigin.PROPERTY_DELEGATE,
