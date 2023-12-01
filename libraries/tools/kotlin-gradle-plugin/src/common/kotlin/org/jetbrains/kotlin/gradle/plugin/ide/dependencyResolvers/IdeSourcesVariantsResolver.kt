@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
 import org.jetbrains.kotlin.gradle.plugin.sources.disambiguateName
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.utils.createResolvable
+import org.jetbrains.kotlin.gradle.utils.detachedResolvable
 
 internal object IdeSourcesVariantsResolver : IdeAdditionalArtifactResolver {
     override fun resolve(sourceSet: KotlinSourceSet, dependencies: Set<IdeaKotlinDependency>) {
@@ -50,7 +51,7 @@ internal object IdeSourcesVariantsResolver : IdeAdditionalArtifactResolver {
             configuration = platformCompilation.internal.configurations.compileDependencyConfiguration
         }
 
-        val sourcesConfig = project.configurations.createResolvable(sourceSet.disambiguateName("dependenciesSources"))
+        val sourcesConfig = project.configurations.detachedResolvable()
         sourcesConfig.apply {
             configureSourcesPublicationAttributes(target)
             extendsFrom(configuration)
