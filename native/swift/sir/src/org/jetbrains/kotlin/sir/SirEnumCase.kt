@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.sir
 
-class SirEnumCase(
+data class SirEnumCase(
     val name: String,
     val parameters: List<SirParameter>
 )
