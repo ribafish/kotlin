@@ -18,7 +18,6 @@ class MockSirFunction(
     override val parameters: List<SirParameter>,
     override val returnType: SirType,
 ) : SirFunction() {
-    override fun <R, D> acceptChildren(visitor: SirVisitor<R, D>, data: D) = TODO("Not yet implemented")
-
-    override fun <D> transformChildren(transformer: SirTransformer<D>, data: D) = TODO("Not yet implemented")
+    override fun <R, D> acceptChildren(visitor: SirVisitor<R, D>, data: D) = Unit
+    override fun <D> transformChildren(transformer: SirTransformer<D>, data: D) = Unit
 }

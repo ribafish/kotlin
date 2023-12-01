@@ -23,15 +23,16 @@ class SirTest {
     private fun produceSwiftElement(): Any {
         return buildEnum {
             origin = SirOrigin.KotlinEntity.Function(
-                name = { listOf("foo") },
+                fqName = { listOf("foo") },
                 parameters = {
-                    mutableListOf(
+                    listOf(
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg1",
-                            type = SirOrigin.ExternallyDefined("kotlin/Byte")
+                            type = SirOrigin.KotlinEntity.KotlinType("kotlin/Byte")
                         )
-                    )},
-                returnType = { SirOrigin.ExternallyDefined("kotlin/Byte") },
+                    )
+                },
+                returnType = { SirOrigin.KotlinEntity.KotlinType("kotlin/Byte") },
             )
             name = "MyEnum"
             visibility = SirVisibility.PUBLIC

@@ -11,20 +11,28 @@ import org.jetbrains.kotlin.sir.util.SirSwiftModule
 import org.jetbrains.sir.passes.SirPass
 import java.lang.IllegalStateException
 
+
+/**
+ * Translates `SirForeignFunction` into `SirFunction`.
+ * Works only with Nominal Types currently.
+ * If received `element` of different type than `SirForeignFunction`,
+ * or `element` does not contain origin of type `SirOrigin.KotlinEntity.Function`,
+ * returns `null`.
+ */
 class ForeignIntoSwiftFunctionTranslationPass : SirPass<SirFunction?, Unit> {
-    override fun run(element: SirElement, data: Unit): SirFunction? = (element as? SirForeignFunction)?.toSir()
-}
+    override fun run(element: SirElement, data: Unit): SirFunction? = buildFunction {
+        val foreignFunction = element as? SirForeignFunction
+            ?: return null
+        val kotlinOrigin = foreignFunction.origin as? SirOrigin.KotlinEntity.Function
+            ?: return null
 
-fun SirForeignFunction.toSir(): SirFunction? = buildFunction {
-    val kotlinOrigin = this@toSir.origin as? SirOrigin.KotlinEntity.Function
-        ?: return null
+        origin = kotlinOrigin
+        visibility = foreignFunction.visibility
+        name = kotlinOrigin.fqName().last()
+        kotlinOrigin.parameters().mapTo(parameters) { it.toSir() }
 
-    origin = kotlinOrigin
-    visibility = this@toSir.visibility
-    name = kotlinOrigin.name().last()
-    kotlinOrigin.parameters().mapTo(parameters) { it.toSir() }
-
-    returnType = kotlinOrigin.returnType().toSir()
+        returnType = kotlinOrigin.returnType().toSir()
+    }
 }
 
 private fun SirOrigin.KotlinEntity.Parameter.toSir(): SirParameter = SirParameter(
@@ -32,7 +40,7 @@ private fun SirOrigin.KotlinEntity.Parameter.toSir(): SirParameter = SirParamete
     type = type.toSir(),
 )
 
-fun SirOrigin.ExternallyDefined.toSir(): SirType = SirNominalType(
+private fun SirOrigin.KotlinEntity.KotlinType.toSir(): SirType = SirNominalType(
     type = when (this.name) {
         "kotlin/Byte" -> SirSwiftModule.int8
         "kotlin/Short" -> SirSwiftModule.int16

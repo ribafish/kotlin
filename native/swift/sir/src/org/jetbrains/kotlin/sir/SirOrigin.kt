@@ -13,15 +13,17 @@ sealed interface SirOrigin {
     sealed class KotlinEntity : SirOrigin {
 
         data class Function(
-            val name: () -> List<String>,
+            val fqName: () -> List<String>,
             val parameters: () -> List<Parameter>,
-            val returnType: () -> ExternallyDefined,
+            val returnType: () -> KotlinType,
         ) : KotlinEntity()
 
         data class Parameter(
             val name: String,
-            val type: ExternallyDefined,
-        )
+            val type: KotlinType,
+        ) : KotlinEntity()
+
+        data class KotlinType(val name: String) : KotlinEntity()
     }
 
     /**

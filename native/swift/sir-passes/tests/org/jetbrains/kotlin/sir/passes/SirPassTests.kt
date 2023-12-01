@@ -19,9 +19,9 @@ class SirPassTests {
     fun `foreign toplevel function without params should be translated`() {
         val mySirElement = buildForeignFunction {
             origin = SirOrigin.KotlinEntity.Function(
-                name = { listOf("foo") },
-                parameters = { mutableListOf() },
-                returnType = { SirOrigin.ExternallyDefined("kotlin/Boolean") },
+                fqName = { listOf("foo") },
+                parameters = { emptyList() },
+                returnType = { SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Boolean") },
             )
             visibility = SirVisibility.PUBLIC
         }
@@ -40,40 +40,40 @@ class SirPassTests {
     fun `foreign toplevel function with all params should be translated`() {
         val mySirElement = buildForeignFunction {
             origin = SirOrigin.KotlinEntity.Function(
-                name = { listOf("foo") },
+                fqName = { listOf("foo") },
                 parameters = {
-                    mutableListOf(
+                    listOf(
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg1",
-                            type = SirOrigin.ExternallyDefined("kotlin/Byte")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Byte")
                         ),
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg2",
-                            type = SirOrigin.ExternallyDefined("kotlin/Short")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Short")
                         ),
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg3",
-                            type = SirOrigin.ExternallyDefined("kotlin/Int")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Int")
                         ),
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg4",
-                            type = SirOrigin.ExternallyDefined("kotlin/Long")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Long")
                         ),
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg5",
-                            type = SirOrigin.ExternallyDefined("kotlin/Double")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Double")
                         ),
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg6",
-                            type = SirOrigin.ExternallyDefined("kotlin/Float")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Float")
                         ),
                         SirOrigin.KotlinEntity.Parameter(
                             name = "arg7",
-                            type = SirOrigin.ExternallyDefined("kotlin/Boolean")
+                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Boolean")
                         )
                     )
                 },
-                returnType = { SirOrigin.ExternallyDefined("kotlin/Byte") },
+                returnType = { SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Byte") },
             )
             visibility = SirVisibility.PUBLIC
         }
