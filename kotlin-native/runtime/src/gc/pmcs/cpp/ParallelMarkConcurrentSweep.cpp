@@ -198,15 +198,30 @@ void gc::ParallelMarkConcurrentSweep::PerformFullGC(int64_t epoch) noexcept {
     alloc::SweepExtraObjects<alloc::DefaultSweepTraits<alloc::ObjectFactoryImpl>>(gcHandle, *extraObjectFactoryIterable);
     extraObjectFactoryIterable = std::nullopt;
     auto finalizerQueue = alloc::Sweep<alloc::DefaultSweepTraits<alloc::ObjectFactoryImpl>>(gcHandle, *objectFactoryIterable);
+    if (!mainThreadFinalizerProcessor_.available()) {
+        finalizerQueue.mergeIntoRegular();
+    }
     objectFactoryIterable = std::nullopt;
     alloc::compactObjectPoolInMainThread();
 #else
     // also sweeps extraObjects
     auto finalizerQueue = allocator_.impl().heap().Sweep(gcHandle);
-    for (auto& thread : kotlin::mm::ThreadRegistry::Instance().LockForIter()) {
-        finalizerQueue.TransferAllFrom(thread.allocator().impl().alloc().ExtractFinalizerQueue());
+    bool mainThreadAvailable = mainThreadFinalizerProcessor_.available();
+    if (!mainThreadAvailable) {
+        finalizerQueue.mergeIntoRegular();
     }
-    finalizerQueue.TransferAllFrom(allocator_.impl().heap().ExtractFinalizerQueue());
+    for (auto& thread : kotlin::mm::ThreadRegistry::Instance().LockForIter()) {
+        auto threadQueue = thread.allocator().impl().alloc().ExtractFinalizerQueue();
+        if (!mainThreadAvailable) {
+            threadQueue.mergeIntoRegular();
+        }
+        finalizerQueue.mergeFrom(std::move(threadQueue));
+    }
+    auto globalQueue = allocator_.impl().heap().ExtractFinalizerQueue();
+    if (!mainThreadAvailable) {
+        globalQueue.mergeIntoRegular();
+    }
+    finalizerQueue.mergeFrom(std::move(globalQueue));
 #endif
     scheduler.onGCFinish(epoch, gcHandle.getKeptSizeBytes() + threadCount * allocator_.estimateOverheadPerThread());
     state_.finish(epoch);
@@ -216,7 +231,8 @@ void gc::ParallelMarkConcurrentSweep::PerformFullGC(int64_t epoch) noexcept {
     // This may start a new thread. On some pthreads implementations, this may block waiting for concurrent thread
     // destructors running. So, it must ensured that no locks are held by this point.
     // TODO: Consider having an always on sleeping finalizer thread.
-    finalizerProcessor_.ScheduleTasks(std::move(finalizerQueue), epoch);
+    finalizerProcessor_.ScheduleTasks(std::move(finalizerQueue.regular), epoch);
+    mainThreadFinalizerProcessor_.schedule(std::move(finalizerQueue.mainThread));
 }
 
 void gc::ParallelMarkConcurrentSweep::reconfigure(std::size_t maxParallelism, bool mutatorsCooperate, std::size_t auxGCThreads) noexcept {

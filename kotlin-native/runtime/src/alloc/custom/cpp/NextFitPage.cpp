@@ -40,7 +40,7 @@ uint8_t* NextFitPage::TryAllocate(uint32_t blockSize) noexcept {
     return curBlock_->TryAllocate(cellsNeeded);
 }
 
-bool NextFitPage::Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept {
+bool NextFitPage::Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
     CustomAllocDebug("NextFitPage@%p::Sweep()", this);
     Cell* end = cells_ + NEXT_FIT_PAGE_CELL_COUNT;
     bool alive = false;

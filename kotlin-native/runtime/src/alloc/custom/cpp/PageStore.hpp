@@ -13,6 +13,7 @@
 #include "AtomicStack.hpp"
 #include "ExtraObjectPage.hpp"
 #include "GCStatistics.hpp"
+#include "CombinedFinalizerQueue.hpp"
 
 namespace kotlin::alloc {
 
@@ -28,12 +29,12 @@ public:
         while ((page = empty_.Pop())) page->Destroy();
     }
 
-    void Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept {
+    void Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
         while (SweepSingle(sweepHandle, unswept_.Pop(), unswept_, ready_, finalizerQueue)) {
         }
     }
 
-    void SweepAndFree(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept {
+    void SweepAndFree(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
         T* page;
         while ((page = unswept_.Pop())) {
             if (page->Sweep(sweepHandle, finalizerQueue)) {
@@ -44,7 +45,7 @@ public:
         }
     }
 
-    T* GetPage(uint32_t cellCount, FinalizerQueue& finalizerQueue, std::atomic<std::size_t>& concurrentSweepersCount_) noexcept {
+    T* GetPage(uint32_t cellCount, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue, std::atomic<std::size_t>& concurrentSweepersCount_) noexcept {
         T* page;
         if ((page = ready_.Pop())) {
             used_.Push(page);
@@ -96,7 +97,7 @@ public:
 private:
     friend class Heap;
 
-    T* SweepSingle(GCSweepScope& sweepHandle, T* page, AtomicStack<T>& from, AtomicStack<T>& to, FinalizerQueue& finalizerQueue) noexcept {
+    T* SweepSingle(GCSweepScope& sweepHandle, T* page, AtomicStack<T>& from, AtomicStack<T>& to, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
         if (!page) {
             return nullptr;
         }

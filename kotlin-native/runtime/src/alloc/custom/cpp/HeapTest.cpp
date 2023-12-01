@@ -44,7 +44,7 @@ TEST(CustomAllocTest, HeapReuseFixedBlockPages) {
         fakeTypes[i] = {.typeInfo_ = &fakeTypes[i], .instanceSize_ = 8 * (i - 1), .flags_ = 0};
     }
     FixedBlockPage* pages[MAX];
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (int blocks = MIN; blocks < MAX; ++blocks) {
         pages[blocks] = heap.GetFixedBlockPage(blocks, finalizerQueue);
         uint8_t* obj = pages[blocks]->TryAllocate();
@@ -63,7 +63,7 @@ TEST(CustomAllocTest, HeapReuseFixedBlockPages) {
 TEST(CustomAllocTest, HeapReuseNextFitPages) {
     Heap heap;
     const uint32_t BLOCKSIZE = FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE + 42;
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     NextFitPage* page = heap.GetNextFitPage(BLOCKSIZE, finalizerQueue);
     uint8_t* obj = page->TryAllocate(BLOCKSIZE);
     TypeInfo fakeType = {.typeInfo_ = &fakeType, .instanceSize_ = 8 * (BLOCKSIZE - 1), .flags_ = 0};

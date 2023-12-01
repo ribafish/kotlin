@@ -55,7 +55,7 @@ TEST(CustomAllocTest, NextFitPageSweepEmptyPage) {
     NextFitPage* page = NextFitPage::Create(MIN_BLOCK_SIZE);
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     EXPECT_FALSE(page->Sweep(gcScope, finalizerQueue));
     page->Destroy();
 }
@@ -63,7 +63,7 @@ TEST(CustomAllocTest, NextFitPageSweepEmptyPage) {
 TEST(CustomAllocTest, NextFitPageSweepFullUnmarkedPage) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t seed = 0xC0FFEE0; seed <= 0xC0FFEEF; ++seed) {
         std::minstd_rand r(seed);
         NextFitPage* page = NextFitPage::Create(MIN_BLOCK_SIZE);
@@ -78,7 +78,7 @@ TEST(CustomAllocTest, NextFitPageSweepSingleMarked) {
     mark(alloc(page, MIN_BLOCK_SIZE));
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     EXPECT_TRUE(page->Sweep(gcScope, finalizerQueue));
     page->Destroy();
 }
@@ -86,7 +86,7 @@ TEST(CustomAllocTest, NextFitPageSweepSingleMarked) {
 TEST(CustomAllocTest, NextFitPageSweepSingleReuse) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t seed = 0xC0FFEE0; seed <= 0xC0FFEEF; ++seed) {
         std::minstd_rand r(seed);
         NextFitPage* page = NextFitPage::Create(MIN_BLOCK_SIZE);
@@ -104,7 +104,7 @@ TEST(CustomAllocTest, NextFitPageSweepSingleReuse) {
 TEST(CustomAllocTest, NextFitPageSweepReuse) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t seed = 0xC0FFEE0; seed <= 0xC0FFEEF; ++seed) {
         std::minstd_rand r(seed);
         NextFitPage* page = NextFitPage::Create(MIN_BLOCK_SIZE);
@@ -127,7 +127,7 @@ TEST(CustomAllocTest, NextFitPageSweepReuse) {
 TEST(CustomAllocTest, NextFitPageSweepCoallesce) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     NextFitPage* page = NextFitPage::Create(MIN_BLOCK_SIZE);
     EXPECT_TRUE(alloc(page, (NEXT_FIT_PAGE_CELL_COUNT-1) / 2 - 1));
     EXPECT_FALSE(page->Sweep(gcScope, finalizerQueue));

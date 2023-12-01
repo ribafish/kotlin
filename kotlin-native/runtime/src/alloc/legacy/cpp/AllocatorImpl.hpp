@@ -14,6 +14,7 @@
 #include "ObjectFactory.hpp"
 #include "ObjectFactoryAllocator.hpp"
 #include "ObjectFactorySweep.hpp"
+#include "MainThreadFinalizerProcessor.hpp"
 
 namespace kotlin::alloc {
 
@@ -31,6 +32,9 @@ struct ObjectFactoryTraits {
 };
 
 using ObjectFactoryImpl = ObjectFactory<ObjectFactoryTraits>;
+
+using FinalizerQueue = ObjectFactoryImpl::FinalizerQueue;
+using FinalizerQueueTraits = ObjectFactoryImpl::FinalizerQueueTraits;
 
 class Allocator::Impl : private Pinned {
 public:
@@ -58,8 +62,5 @@ private:
     ObjectFactoryImpl::ThreadQueue objectFactoryThreadQueue_;
     ExtraObjectDataFactory::ThreadQueue extraObjectDataFactoryThreadQueue_;
 };
-
-using FinalizerQueue = ObjectFactoryImpl::FinalizerQueue;
-using FinalizerQueueTraits = ObjectFactoryImpl::FinalizerQueueTraits;
 
 } // namespace kotlin::alloc

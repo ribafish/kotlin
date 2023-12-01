@@ -21,11 +21,17 @@ struct FinalizerQueueTraits {
     static void add(FinalizerQueue& into, FinalizerQueue from) noexcept { into.TransferAllFrom(std::move(from)); }
 
     static void process(FinalizerQueue queue) noexcept {
-        while (auto* cell = queue.Pop()) {
+        while(processSingle(queue)) {}
+    }
+
+    static bool processSingle(FinalizerQueue& queue) noexcept {
+        if (auto* cell = queue.Pop()) {
             auto* extraObject = cell->Data();
             auto* baseObject = extraObject->GetBaseObject();
             RunFinalizers(baseObject);
+            return true;
         }
+        return false;
     }
 };
 

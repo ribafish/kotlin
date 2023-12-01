@@ -51,7 +51,7 @@ TEST(CustomAllocTest, FixedBlockPageConsequtiveAlloc) {
 TEST(CustomAllocTest, FixedBlockPageSweepEmptyPage) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t size = 2; size <= FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE; ++size) {
         FixedBlockPage* page = FixedBlockPage::Create(size);
         EXPECT_FALSE(page->Sweep(gcScope, finalizerQueue));
@@ -62,7 +62,7 @@ TEST(CustomAllocTest, FixedBlockPageSweepEmptyPage) {
 TEST(CustomAllocTest, FixedBlockPageSweepFullUnmarkedPage) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t size = 2; size <= FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE; ++size) {
         FixedBlockPage* page = FixedBlockPage::Create(size);
         uint32_t count = 0;
@@ -76,7 +76,7 @@ TEST(CustomAllocTest, FixedBlockPageSweepFullUnmarkedPage) {
 TEST(CustomAllocTest, FixedBlockPageSweepSingleMarked) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t size = 2; size <= FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE; ++size) {
         FixedBlockPage* page = FixedBlockPage::Create(size);
         uint8_t* ptr = alloc(page, size);
@@ -89,7 +89,7 @@ TEST(CustomAllocTest, FixedBlockPageSweepSingleMarked) {
 TEST(CustomAllocTest, FixedBlockPageSweepSingleReuse) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t size = 2; size <= FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE; ++size) {
         FixedBlockPage* page = FixedBlockPage::Create(size);
         uint8_t* ptr = alloc(page, size);
@@ -102,7 +102,7 @@ TEST(CustomAllocTest, FixedBlockPageSweepSingleReuse) {
 TEST(CustomAllocTest, FixedBlockPageSweepReuse) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     for (uint32_t size = 2; size <= FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE; ++size) {
         FixedBlockPage* page = FixedBlockPage::Create(size);
         uint8_t* ptr;
@@ -122,7 +122,7 @@ TEST(CustomAllocTest, FixedBlockPageSweepReuse) {
 TEST(CustomAllocTest, FixedBlockPageRandomExercise) {
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     std::minstd_rand r(42);
     uint8_t* ptr;
     for (uint32_t size = 2; size <= FIXED_BLOCK_PAGE_MAX_BLOCK_SIZE; ++size) {

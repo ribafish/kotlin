@@ -40,7 +40,7 @@ TEST(CustomAllocTest, ExtraObjectPageConsequtiveAlloc) {
 
 TEST(CustomAllocTest, ExtraObjectPageSweepEmptyPage) {
     Page* page = Page::Create(0);
-    Queue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<Queue> finalizerQueue;
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweepExtraObjects();
     EXPECT_FALSE(page->Sweep(gcScope, finalizerQueue));
@@ -57,7 +57,7 @@ TEST(CustomAllocTest, ExtraObjectPageSweepFullFinalizedPage) {
         ++count;
     }
     EXPECT_EQ(count, EXTRA_OBJECT_COUNT);
-    Queue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<Queue> finalizerQueue;
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweepExtraObjects();
     EXPECT_FALSE(page->Sweep(gcScope, finalizerQueue));

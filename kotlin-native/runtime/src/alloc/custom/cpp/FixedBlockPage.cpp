@@ -45,7 +45,7 @@ uint8_t* FixedBlockPage::TryAllocate() noexcept {
     return cells_[next].data;
 }
 
-bool FixedBlockPage::Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept {
+bool FixedBlockPage::Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
     CustomAllocInfo("FixedBlockPage(%p)::Sweep()", this);
     FixedCellRange nextFree = nextFree_; // Accessing the previous free list structure.
     FixedCellRange* prevRange = &nextFree_; // Creating the new free list structure.

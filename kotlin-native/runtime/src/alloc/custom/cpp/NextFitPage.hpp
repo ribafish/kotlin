@@ -14,6 +14,7 @@
 #include "Cell.hpp"
 #include "ExtraObjectPage.hpp"
 #include "GCStatistics.hpp"
+#include "CombinedFinalizerQueue.hpp"
 
 namespace kotlin::alloc {
 
@@ -30,7 +31,7 @@ public:
     // Tries to allocate in current page, returns null if no free block in page is big enough
     uint8_t* TryAllocate(uint32_t blockSize) noexcept;
 
-    bool Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept;
+    bool Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept;
 
     // Testing method
     bool CheckInvariants() noexcept;

@@ -17,6 +17,7 @@
 #include "GCState.hpp"
 #include "GCStatistics.hpp"
 #include "IntrusiveList.hpp"
+#include "MainThreadFinalizerProcessor.hpp"
 #include "MarkAndSweepUtils.hpp"
 #include "ObjectData.hpp"
 #include "ParallelMark.hpp"
@@ -86,6 +87,7 @@ private:
 
     GCStateHolder state_;
     FinalizerProcessor<alloc::FinalizerQueue, alloc::FinalizerQueueTraits> finalizerProcessor_;
+    alloc::MainThreadFinalizerProcessor<alloc::FinalizerQueue, alloc::FinalizerQueueTraits> mainThreadFinalizerProcessor_;
 
     mark::ParallelMark markDispatcher_;
     ScopedThread mainThread_;

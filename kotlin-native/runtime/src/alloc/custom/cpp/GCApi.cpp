@@ -33,7 +33,7 @@ std::atomic<size_t> allocatedBytesCounter;
 
 namespace kotlin::alloc {
 
-bool SweepObject(uint8_t* object, FinalizerQueue& finalizerQueue, gc::GCHandle::GCSweepScope& gcHandle) noexcept {
+bool SweepObject(uint8_t* object, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue, gc::GCHandle::GCSweepScope& gcHandle) noexcept {
     auto* heapObjHeader = reinterpret_cast<HeapObjHeader*>(object);
     auto size = CustomAllocator::GetAllocatedHeapSize(heapObjHeader->object());
     if (gc::tryResetMark(heapObjHeader->objectData())) {
@@ -48,7 +48,16 @@ bool SweepObject(uint8_t* object, FinalizerQueue& finalizerQueue, gc::GCHandle::
             extraObject->setFlag(mm::ExtraObjectData::FLAGS_IN_FINALIZER_QUEUE);
             extraObject->ClearRegularWeakReferenceImpl();
             CustomAllocDebug("SweepObject: fromExtraObject(%p) = %p", extraObject, ExtraObjectCell::fromExtraObject(extraObject));
-            finalizerQueue.Push(ExtraObjectCell::fromExtraObject(extraObject));
+            auto* cell = ExtraObjectCell::fromExtraObject(extraObject);
+            if (compiler::objcDisposeOnMain()) {
+                if (extraObject->getFlag(mm::ExtraObjectData::FLAGS_RELEASE_ON_MAIN_QUEUE)) {
+                    finalizerQueue.mainThread.Push(cell);
+                } else {
+                    finalizerQueue.regular.Push(cell);
+                }
+            } else {
+                finalizerQueue.regular.Push(cell);
+            }
             gcHandle.addMarkedObject();
             gcHandle.addKeptObject(size);
             return true;

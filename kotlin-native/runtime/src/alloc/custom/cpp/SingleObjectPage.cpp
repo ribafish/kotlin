@@ -37,7 +37,7 @@ uint8_t* SingleObjectPage::TryAllocate() noexcept {
     return Data();
 }
 
-bool SingleObjectPage::Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept {
+bool SingleObjectPage::Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
     CustomAllocDebug("SingleObjectPage@%p::Sweep()", this);
     if (SweepObject(Data(), finalizerQueue, sweepHandle)) {
         return true;

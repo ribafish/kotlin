@@ -37,7 +37,7 @@ TEST(CustomAllocTest, SingleObjectPageSweepEmptyPage) {
     EXPECT_TRUE(page);
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     EXPECT_FALSE(page->Sweep(gcScope, finalizerQueue));
     page->Destroy();
 }
@@ -49,7 +49,7 @@ TEST(CustomAllocTest, SingleObjectPageSweepFullPage) {
     mark(page->Data());
     auto gcHandle = kotlin::gc::GCHandle::createFakeForTests();
     auto gcScope = gcHandle.sweep();
-    kotlin::alloc::FinalizerQueue finalizerQueue;
+    kotlin::alloc::CombinedFinalizerQueue<kotlin::alloc::FinalizerQueue> finalizerQueue;
     EXPECT_TRUE(page->Sweep(gcScope, finalizerQueue));
     page->Destroy();
 }

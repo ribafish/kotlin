@@ -47,7 +47,7 @@ mm::ExtraObjectData* ExtraObjectPage::TryAllocate() noexcept {
     return freeBlock->Data();
 }
 
-bool ExtraObjectPage::Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept {
+bool ExtraObjectPage::Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept {
     CustomAllocInfo("ExtraObjectPage(%p)::Sweep()", this);
     // `end` is after the last legal allocation of a block, but does not
     // necessarily match an actual block starting point.

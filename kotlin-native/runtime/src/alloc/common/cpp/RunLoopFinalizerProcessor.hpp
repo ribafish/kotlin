@@ -5,7 +5,7 @@
 
 #pragma once
 
-#if KONAN_HAS_FOUNDATION_FRAMEWORK
+
 
 #include <mutex>
 
@@ -24,6 +24,7 @@ struct RunLoopFinalizerProcessorConfig {
     std::chrono::nanoseconds minTimeBetweenTasks = std::chrono::milliseconds(10);
 };
 
+#if KONAN_HAS_FOUNDATION_FRAMEWORK
 template <typename FinalizerQueue, typename FinalizerQueueTraits>
 class RunLoopFinalizerProcessor : private Pinned {
 public:
@@ -117,7 +118,6 @@ private:
     objc_support::RunLoopSource source_{[this]() noexcept { process(); }};
     objc_support::RunLoopTimer timer_{[this]() noexcept { source_.signal(); }, std::chrono::hours(100), std::chrono::hours(100) };
 };
+#endif
 
 }
-
-#endif

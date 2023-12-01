@@ -15,6 +15,7 @@
 #include "GCState.hpp"
 #include "GlobalData.hpp"
 #include "IntrusiveList.hpp"
+#include "MainThreadFinalizerProcessor.hpp"
 #include "ObjectData.hpp"
 #include "Types.h"
 #include "Utils.hpp"
@@ -59,6 +60,7 @@ private:
     GCStateHolder state_;
     ScopedThread gcThread_;
     FinalizerProcessor<alloc::FinalizerQueue, alloc::FinalizerQueueTraits> finalizerProcessor_;
+    alloc::MainThreadFinalizerProcessor<alloc::FinalizerQueue, alloc::FinalizerQueueTraits> mainThreadFinalizerProcessor_;
 
     MarkQueue markQueue_;
 };

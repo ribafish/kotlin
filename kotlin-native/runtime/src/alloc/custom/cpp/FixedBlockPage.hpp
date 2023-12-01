@@ -13,6 +13,7 @@
 #include "AtomicStack.hpp"
 #include "ExtraObjectPage.hpp"
 #include "GCStatistics.hpp"
+#include "CombinedFinalizerQueue.hpp"
 
 namespace kotlin::alloc {
 
@@ -42,7 +43,7 @@ public:
     // Tries to allocate in current page, returns null if no free block in page
     uint8_t* TryAllocate() noexcept;
 
-    bool Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept;
+    bool Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept;
 
     // Testing method
     std::vector<uint8_t*> GetAllocatedBlocks() noexcept;

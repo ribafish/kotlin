@@ -19,6 +19,7 @@
 #include "GCStatistics.hpp"
 #include "Memory.h"
 #include "TypeLayout.hpp"
+#include "CombinedFinalizerQueue.hpp"
 
 namespace kotlin::alloc {
 
@@ -85,7 +86,7 @@ private:
 };
 
 // Returns `true` if the `object` must be kept alive still.
-bool SweepObject(uint8_t* object, FinalizerQueue& finalizerQueue, gc::GCHandle::GCSweepScope& sweepScope) noexcept;
+bool SweepObject(uint8_t* object, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue, gc::GCHandle::GCSweepScope& sweepScope) noexcept;
 
 // Returns `true` if the `extraObject` must be kept alive still
 bool SweepExtraObject(mm::ExtraObjectData* extraObject, gc::GCHandle::GCSweepExtraObjectsScope& sweepScope) noexcept;

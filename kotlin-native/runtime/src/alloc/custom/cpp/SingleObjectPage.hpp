@@ -13,6 +13,7 @@
 #include "AtomicStack.hpp"
 #include "ExtraObjectPage.hpp"
 #include "GCStatistics.hpp"
+#include "CombinedFinalizerQueue.hpp"
 
 namespace kotlin::alloc {
 
@@ -30,7 +31,7 @@ public:
 
     uint8_t* TryAllocate() noexcept;
 
-    bool Sweep(GCSweepScope& sweepHandle, FinalizerQueue& finalizerQueue) noexcept;
+    bool Sweep(GCSweepScope& sweepHandle, CombinedFinalizerQueue<FinalizerQueue>& finalizerQueue) noexcept;
 
 private:
     friend class AtomicStack<SingleObjectPage>;
