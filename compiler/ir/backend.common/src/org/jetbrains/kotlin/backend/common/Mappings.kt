@@ -19,6 +19,7 @@ interface Mapping {
     val capturedFields: Delegate<IrClass, Collection<IrField>>
     val capturedConstructors: Delegate<IrConstructor, IrConstructor>
     val reflectedNameAccessor: Delegate<IrClass, IrSimpleFunction>
+    val classToSyntheticPrimaryConstructor: Delegate<IrClass, IrConstructor>
     val suspendFunctionsToFunctionWithContinuations: Delegate<IrSimpleFunction, IrSimpleFunction>
     val functionWithContinuationsToSuspendFunctions: Delegate<IrSimpleFunction, IrSimpleFunction>
 
@@ -79,6 +80,7 @@ open class DefaultMapping(delegateFactory: DelegateFactory = DefaultDelegateFact
     override val capturedFields: Mapping.Delegate<IrClass, Collection<IrField>> = delegateFactory.newDeclarationToDeclarationCollectionMapping()
     override val capturedConstructors: Mapping.Delegate<IrConstructor, IrConstructor> = delegateFactory.newDeclarationToDeclarationMapping()
     override val reflectedNameAccessor: Mapping.Delegate<IrClass, IrSimpleFunction> = delegateFactory.newDeclarationToDeclarationMapping()
+    override val classToSyntheticPrimaryConstructor = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrConstructor>()
     override val suspendFunctionsToFunctionWithContinuations: Mapping.Delegate<IrSimpleFunction, IrSimpleFunction> = delegateFactory.newDeclarationToDeclarationMapping()
     override val functionWithContinuationsToSuspendFunctions: Mapping.Delegate<IrSimpleFunction, IrSimpleFunction> = delegateFactory.newDeclarationToDeclarationMapping()
 }

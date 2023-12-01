@@ -1064,6 +1064,11 @@ class LocalDeclarationsLowering(
                     val constructorContext = declaration.constructors.mapNotNull { localClassConstructors[it] }
                         .singleOrNull { it.declaration.delegationKind(context.irBuiltIns) == ConstructorDelegationKind.CALLS_SUPER }
                     localClasses[declaration] = LocalClassContext(declaration, data.inInlineFunctionScope, constructorContext)
+
+                    // Add synthetic constructor if it exists
+                    context.mapping.classToSyntheticPrimaryConstructor[declaration]?.let {
+                        localClassConstructors[it] = LocalClassConstructorContext(it, data.inInlineFunctionScope)
+                    }
                 }
 
                 private val Data.inInlineFunctionScope: Boolean

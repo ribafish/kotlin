@@ -643,6 +643,8 @@ val loweringList = listOf(
     propertyReferenceLowering,
     callableReferencePhase,
     singleAbstractMethodPhase,
+    primaryConstructorLoweringPhase,
+    delegateToPrimaryConstructorLoweringPhase,
     localDelegatedPropertiesLoweringPhase,
     localDeclarationsLoweringPhase,
     localClassExtractionPhase,
@@ -650,8 +652,6 @@ val loweringList = listOf(
     innerClassesMemberBodyLoweringPhase,
     innerClassConstructorCallsLoweringPhase,
     propertiesLoweringPhase,
-    primaryConstructorLoweringPhase,
-    delegateToPrimaryConstructorLoweringPhase,
     // Common prefix ends
 
     wasmStringSwitchOptimizerLowering,
