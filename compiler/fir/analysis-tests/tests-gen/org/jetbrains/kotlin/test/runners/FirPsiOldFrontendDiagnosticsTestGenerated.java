@@ -31489,6 +31489,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("comparisonOfBuiltInTypesUnderOr.kt")
+            public void testComparisonOfBuiltInTypesUnderOr() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/comparisonOfBuiltInTypesUnderOr.kt");
+            }
+
+            @Test
+            @TestMetadata("comparisonOfClassTypesUnderOr.kt")
+            public void testComparisonOfClassTypesUnderOr() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/comparisonOfClassTypesUnderOr.kt");
+            }
+
+            @Test
             @TestMetadata("comparisonUnderAnd.kt")
             public void testComparisonUnderAnd() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/comparisonUnderAnd.kt");

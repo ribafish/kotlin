@@ -1,0 +1,47 @@
+package
+
+private fun test1(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test10(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test11(/*0*/ x: A2?): kotlin.Unit
+private fun test2(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test3(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test4(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test5(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test6(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test7(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test8(/*0*/ x: kotlin.Any?): kotlin.Unit
+private fun test9(/*0*/ x: kotlin.Any?): kotlin.Unit
+
+private interface A {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+private sealed interface A2 {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+private final class B : A {
+    public constructor B()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+private final class B2 : A2 {
+    public constructor B2()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+private final class C2 : A2 {
+    public constructor C2()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
