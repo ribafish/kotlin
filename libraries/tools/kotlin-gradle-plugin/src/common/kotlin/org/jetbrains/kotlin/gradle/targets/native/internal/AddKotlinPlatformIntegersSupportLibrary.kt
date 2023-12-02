@@ -34,22 +34,6 @@ internal val AddKotlinPlatformIntegersSupportLibrary = KotlinProjectSetupCorouti
      * But roots of the native source set hierarchies are only linux and ios. I.e. they don't depend on any other
      * native source set. The code below calculates exactly that:
      */
-    /**
-     * Calculate roots of native source sets
-     * Imagine following structure:
-     *
-     * ```
-     *      common
-     *   /   |        \
-     *  jvm  linux     ios
-     *       /   |     |     \
-     *    lX64 lArm64  iosX64 iosArm64
-     * ```
-     *
-     * In the structure above following source sets are native: linux, ios, lX64, lArm64, iosX64, iosArm64
-     * But roots of the native source set hierarchies are only linux and ios. I.e. they don't depend on any other
-     * native source set. The code below calculates exactly that:
-     */
     val nativeSourceSets = sourceSets.filter { sourceSet -> sourceSet.internal.commonizerTarget.await() != null }
     val nativeSourceSetsRoots = nativeSourceSets.filter { sourceSet ->
         val allVisibleSourceSets = sourceSet.dependsOn + getVisibleSourceSetsFromAssociateCompilations(sourceSet)
