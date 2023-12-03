@@ -18,7 +18,7 @@ object AsmLikeInstructionListingDirectives : SimpleDirectivesContainer() {
     )
 
     val INLINE_SCOPES_DIFFERENCE by directive(
-        "If present then saves dump for IR backend in asm.scopes.txt file"
+        "If present and if inline scopes are enabled then saves dump for IR backend in asm.scopes.txt file"
     )
 
     val FIR_DIFFERENCE by directive(
