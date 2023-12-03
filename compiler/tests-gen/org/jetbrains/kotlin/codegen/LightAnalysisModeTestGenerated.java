@@ -29644,6 +29644,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/transitiveSuperclassActualization_java.kt");
                 }
 
+                @TestMetadata("valueClassOfExpectClass.kt")
+                public void testValueClassOfExpectClass() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/valueClassOfExpectClass.kt");
+                }
+
                 @TestMetadata("valueClasses.kt")
                 public void testValueClasses() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/valueClasses.kt");
