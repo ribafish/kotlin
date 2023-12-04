@@ -9,6 +9,8 @@ plugins {
     // HACK: java plugin makes idea import dependencies on this project as source (with empty sources however),
     // this prevents reindexing of kotlin-compiler.jar after build on every change in compiler modules
     `java-library`
+    // required to disambiguate attributes of non-jvm Kotlin libraries
+    kotlin("jvm")
 }
 
 
