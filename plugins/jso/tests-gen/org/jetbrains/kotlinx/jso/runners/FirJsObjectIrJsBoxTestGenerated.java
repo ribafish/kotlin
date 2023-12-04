@@ -26,8 +26,32 @@ public class FirJsObjectIrJsBoxTestGenerated extends AbstractFirJsObjectIrJsBoxT
     }
 
     @Test
+    @TestMetadata("copy.kt")
+    public void testCopy() throws Exception {
+        runTest("plugins/jso/testData/box/copy.kt");
+    }
+
+    @Test
+    @TestMetadata("optional.kt")
+    public void testOptional() throws Exception {
+        runTest("plugins/jso/testData/box/optional.kt");
+    }
+
+    @Test
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("plugins/jso/testData/box/simple.kt");
+    }
+
+    @Test
+    @TestMetadata("with-inheritance.kt")
+    public void testWith_inheritance() throws Exception {
+        runTest("plugins/jso/testData/box/with-inheritance.kt");
+    }
+
+    @Test
+    @TestMetadata("with-multiple-inheritance.kt")
+    public void testWith_multiple_inheritance() throws Exception {
+        runTest("plugins/jso/testData/box/with-multiple-inheritance.kt");
     }
 }

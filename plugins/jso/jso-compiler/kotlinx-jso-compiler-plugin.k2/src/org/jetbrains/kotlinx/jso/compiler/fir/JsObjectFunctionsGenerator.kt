@@ -172,7 +172,7 @@ class JsObjectFunctionsGenerator(session: FirSession) : FirDeclarationGeneration
                     source = null,
                     value = null,
                     kind = ConstantValueKind.Null,
-                    setType = false
+                    setType = true
                 )
             }
         }
