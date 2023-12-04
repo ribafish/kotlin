@@ -115,14 +115,13 @@ internal class DefaultKotlinSourceSetFactory(
 
     private fun setupDependencySourcesConfiguration(sourceSet: DefaultKotlinSourceSet) {
         project.launch {
-            val metadataTarget = project.multiplatformExtensionOrNull?.metadataTarget
             val platformCompilation = sourceSet.awaitPlatformCompilations().singleOrNull()
 
             // Shared source sets and platform source sets has different configurations for compile dependencies
             val configuration: Configuration
             val target: KotlinTarget
             if (platformCompilation == null) {
-                target = metadataTarget ?: return@launch // source set configured incorrectly, can't resolve artifact for that
+                target = project.multiplatformExtensionOrNull?.metadataTarget ?: return@launch // source set configured incorrectly, can't resolve artifact for that
                 configuration = sourceSet.internal.resolvableMetadataConfiguration
             } else {
                 target = platformCompilation.target
