@@ -28,6 +28,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.UtilsKt
 import java.util.concurrent.ConcurrentHashMap
 import plugins.KotlinBuildPublishingPluginKt
+import java.security.MessageDigest
 
 buildscript {
     apply from: "gradle/kotlinGradlePlugin.gradle"
@@ -585,6 +586,35 @@ configure([bundleRegular, bundlePrebuilt]) {
         archiveExtension.set('tar.gz')
         compression = Compression.GZIP
     }
+
+    // Calculating SHA-256 checksums for bundle artifacts
+    doLast {
+        File bundleFile = archiveFile.get().asFile
+        if (bundleFile.exists()) {
+            String checksum = calculateChecksum(bundleFile, "SHA-256")
+            File checksumFile = new File(bundleFile.parentFile, "${bundleFile.name}.sha256")
+            println "SHA-256: " + checksum + " , file:" + checksumFile
+            checksumFile.write(checksum)
+        }
+    }
+}
+
+def calculateChecksum(File file, String algorithm) {
+    MessageDigest digest = MessageDigest.getInstance(algorithm)
+    FileInputStream fis = new FileInputStream(file)
+    byte[] byteArray = new byte[1024]
+    int bytesCount
+    while ((bytesCount = fis.read(byteArray)) != -1) {
+        digest.update(byteArray, 0, bytesCount)
+    }
+    fis.close()
+    byte[] bytes = digest.digest()
+
+    StringBuilder sb = new StringBuilder()
+    for (byte aByte : bytes) {
+        sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1))
+    }
+    return sb.toString()
 }
 
 tasks.register("tc-dist", (isWindows()) ? Zip : Tar) {
@@ -772,6 +802,10 @@ publishing {
                         classifier = platformName(target)
                         extension = "spdx.json"
                     }
+                    mvn.artifact("${UtilsKt.getNativeBundlesLocation(project)}/kotlin-native-${platformName(target)}-${kotlinVersion}.${(target.family == Family.MINGW) ? 'zip' : 'tar.gz'}.sha256") {
+                        classifier = platformName(target)
+                        extension = "sha256"
+                    }
                 }
             } else {
                 mvn.artifact(bundleRegular) {
@@ -804,6 +838,10 @@ publishing {
                     mvn.artifact("${UtilsKt.getNativeBundlesLocation(project)}/kotlin-native-prebuilt-${platformName(target)}-${kotlinVersion}.spdx.json") {
                         classifier = platformName(target)
                         extension = "spdx.json"
+                    }
+                    mvn.artifact("${UtilsKt.getNativeBundlesLocation(project)}/kotlin-native-${platformName(target)}-${kotlinVersion}.${(target.family == Family.MINGW) ? 'zip' : 'tar.gz'}.sha256") {
+                        classifier = platformName(target)
+                        extension = "sha256"
                     }
                 }
             } else {
