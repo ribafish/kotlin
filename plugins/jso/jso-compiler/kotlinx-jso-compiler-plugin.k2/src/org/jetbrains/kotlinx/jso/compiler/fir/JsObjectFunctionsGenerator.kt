@@ -11,8 +11,10 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirFunctionTarget
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
+import org.jetbrains.kotlin.fir.builder.createDataClassCopyFunction
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.builder.FirSimpleFunctionBuilder
 import org.jetbrains.kotlin.fir.declarations.builder.buildRegularClass
 import org.jetbrains.kotlin.fir.declarations.builder.buildSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
@@ -20,40 +22,77 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusIm
 import org.jetbrains.kotlin.fir.declarations.origin
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.extensions.NestedClassGenerationContext
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.references.builder.buildImplicitThisReference
+import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.scopes.kotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
+import org.jetbrains.kotlin.fir.types.coneTypeOrNull
 import org.jetbrains.kotlin.fir.types.isNullable
 import org.jetbrains.kotlin.fir.types.toFirResolvedTypeRef
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.ConstantValueKind
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlinx.jso.compiler.fir.services.jsObjectPropertiesProvider
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsSimpleObjectPluginKey
 import org.jetbrains.kotlinx.jso.compiler.resolve.SpecialNames
 
-class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
+/**
+ * The extension generate a synthetic factory and copy-method for an `external interface` annotated with @JsSimpleObject
+ * Imagine the next interfaces:
+ * ```
+ * external interface User {
+ *   val name: String
+ * }
+ * @JsSimpleObject
+ * external interface Admin {
+ *   val chat: Chat
+ * }
+ * ```
+ *
+ * For the interface `Admin` this function should generate the companion inline function:
+ * ```
+ * external interface Admin {
+ *   val chat: Chat
+ *
+ *  inline fun copy(chat: Chat = this.chat, name: String = this.name): Admin =
+ *      Admin.Companion.invoke(chat, name)
+ *
+ *   companion object {
+ *      inline operator fun invoke(chat: Chat, name: String): Admin =
+ *          js("{ chat: chat, name: name }")
+ *   }
+ * }
+ * ```
+ */
+class JsObjectFunctionsGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     private val predicateBasedProvider = session.predicateBasedProvider
 
     private val matchedInterfaces by lazy {
         predicateBasedProvider.getSymbolsByPredicate(JsObjectPredicates.AnnotatedWithJsSimpleObject.LOOKUP)
             .filterIsInstance<FirRegularClassSymbol>()
+            .toSet()
     }
 
     private val factoryFqNamesToJsObjectInterface by lazy {
         matchedInterfaces.associateBy { it.classId.asSingleFqName() }
     }
 
+    private val FirClassLikeSymbol<*>.isJsObject: Boolean
+        get() = this is FirRegularClassSymbol && this in matchedInterfaces
+
     override fun getNestedClassifiersNames(classSymbol: FirClassSymbol<*>, context: NestedClassGenerationContext): Set<Name> {
-        return if (classSymbol.shouldHaveGeneratedMethodInCompanion()) setOf(SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) else emptySet()
+        return if (classSymbol.isJsObject) setOf(SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) else emptySet()
     }
 
     override fun generateNestedClassLikeDeclaration(
@@ -63,15 +102,11 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
     ): FirClassLikeSymbol<*>? {
         return if (
             owner is FirRegularClassSymbol &&
-            owner.shouldHaveGeneratedMethodInCompanion() &&
+            owner.isJsObject &&
             name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
         ) generateCompanionDeclaration(owner)
         else null
     }
-
-    private fun FirClassSymbol<*>.shouldHaveGeneratedMethodInCompanion() =
-        classId.asSingleFqName() in factoryFqNamesToJsObjectInterface
-
 
     private fun generateCompanionDeclaration(owner: FirRegularClassSymbol): FirRegularClassSymbol? {
         if (owner.companionObjectSymbol != null) return null
@@ -98,48 +133,78 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
     override fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>, context: MemberGenerationContext): Set<Name> {
         val outerClass = classSymbol.getContainingClassSymbol(session)
         return when {
-            classSymbol.isCompanion && outerClass?.classId?.asSingleFqName() in factoryFqNamesToJsObjectInterface -> setOf(SpecialNames.INVOKE_OPERATOR_NAME)
+            classSymbol.isCompanion && outerClass?.isJsObject == true -> setOf(SpecialNames.INVOKE_OPERATOR_NAME)
+            classSymbol.isJsObject -> setOf(SpecialNames.COPY_METHOD_NAME)
             else -> emptySet()
         }
     }
 
     override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
+        if (context == null) return emptyList()
+
         val containingClass = callableId.classId
         val possibleInterface = containingClass?.outerClassId
-        if (context == null || possibleInterface == null || !context.owner.isCompanion || callableId.callableName != SpecialNames.INVOKE_OPERATOR_NAME) return emptyList()
-        val jsSimpleObjectInterface = factoryFqNamesToJsObjectInterface[possibleInterface.asSingleFqName()] ?: return emptyList()
-        return listOf(createJsObjectFactoryFunction(callableId, context.owner, jsSimpleObjectInterface).symbol)
+
+        return when (callableId.callableName) {
+            SpecialNames.COPY_METHOD_NAME -> {
+                containingClass
+                    ?.let { factoryFqNamesToJsObjectInterface[it.asSingleFqName()] }
+                    ?.let { listOf(createJsObjectCopyFunction(callableId, context.owner, it).symbol) } ?: emptyList()
+            }
+            SpecialNames.INVOKE_OPERATOR_NAME -> {
+                possibleInterface
+                    ?.takeIf { context.owner.isCompanion }
+                    ?.let { factoryFqNamesToJsObjectInterface[it.asSingleFqName()] }
+                    ?.let { listOf(createJsObjectFactoryFunction(callableId, context.owner, it).symbol) } ?: emptyList()
+            }
+            else -> emptyList()
+        }
     }
 
-    /**
-     * The method generate a synthetic factory for an `external interface` annotated with @JsSimpleObject
-     * Imagine the next interfaces:
-     * ```
-     * external interface User {
-     *   val name: String
-     * }
-     * @JsSimpleObject
-     * external interface Admin {
-     *   val chat: Chat
-     * }
-     * ```
-     *
-     * For the interface `Admin` this function should generate the companion inline function:
-     * ```
-     * external interface Admin {
-     *   val chat: Chat
-     *   companion object {
-     *      inline operator fun invoke(chat: Chat, name: String): Admin =
-     *          js("{ chat: chat, name: name }")
-     *   }
-     * }
-     * ```
-     */
-    @OptIn(SymbolInternals::class)
     private fun createJsObjectFactoryFunction(
         callableId: CallableId,
-        parentObject: FirClassSymbol<*>,
-        jsSimpleObjectInterface: FirRegularClassSymbol
+        parent: FirClassSymbol<*>,
+        jsSimpleObjectInterface: FirRegularClassSymbol,
+    ): FirSimpleFunction {
+        return createJsObjectFunction(callableId, parent, jsSimpleObjectInterface) {
+            runIf(resolvedReturnTypeRef.type.isNullable) {
+                buildConstExpression(
+                    source = null,
+                    value = null,
+                    kind = ConstantValueKind.Null,
+                    setType = false
+                )
+            }
+        }
+    }
+
+    private fun createJsObjectCopyFunction(
+        callableId: CallableId,
+        parent: FirClassSymbol<*>,
+        jsSimpleObjectInterface: FirRegularClassSymbol,
+    ): FirSimpleFunction {
+        val interfaceType = jsSimpleObjectInterface.defaultType()
+        return createJsObjectFunction(callableId, parent, jsSimpleObjectInterface) {
+            buildPropertyAccessExpression {
+                dispatchReceiver = buildThisReceiverExpression {
+                    calleeReference = buildImplicitThisReference { boundSymbol = jsSimpleObjectInterface }
+                    coneTypeOrNull = interfaceType
+                }
+                calleeReference = buildResolvedNamedReference {
+                    name = this@createJsObjectFunction.name
+                    resolvedSymbol = this@createJsObjectFunction
+                }
+                coneTypeOrNull = resolvedReturnType
+            }
+        }
+    }
+
+    @OptIn(SymbolInternals::class)
+    private fun createJsObjectFunction(
+        callableId: CallableId,
+        parent: FirClassSymbol<*>,
+        jsSimpleObjectInterface: FirRegularClassSymbol,
+        getParameterDefaultValueFromProperty: FirPropertySymbol.() -> FirExpression?
     ): FirSimpleFunction {
         val jsSimpleObjectProperties = session.jsObjectPropertiesProvider.getJsObjectPropertiesForClass(jsSimpleObjectInterface)
         val functionTarget = FirFunctionTarget(null, isLambda = false)
@@ -156,13 +221,13 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
             status = FirResolvedDeclarationStatusImpl(
                 jsSimpleObjectInterface.visibility,
                 Modality.FINAL,
-                jsSimpleObjectInterface.visibility.toEffectiveVisibility(parentObject, forClass = true)
+                jsSimpleObjectInterface.visibility.toEffectiveVisibility(parent, forClass = true)
             ).apply {
                 isInline = true
                 isOperator = true
             }
 
-            dispatchReceiverType = parentObject.defaultType()
+            dispatchReceiverType = parent.defaultType()
             jsSimpleObjectInterface.typeParameterSymbols.mapTo(typeParameters) { it.fir }
             jsSimpleObjectProperties.mapTo(valueParameters) {
                 val typeRef = it.resolvedReturnTypeRef
@@ -177,14 +242,7 @@ class JsObjectFactoryFunctionGenerator(session: FirSession) : FirDeclarationGene
                     isVararg = false
                     resolvePhase = FirResolvePhase.BODY_RESOLVE
                     containingFunctionSymbol = this@buildSimpleFunction.symbol
-                    if (typeRef.type.isNullable) {
-                        defaultValue = buildConstExpression(
-                            source = null,
-                            value = null,
-                            kind = ConstantValueKind.Null,
-                            setType = false
-                        )
-                    }
+                    defaultValue = it.getParameterDefaultValueFromProperty()
                 }
             }
         }.also(functionTarget::bind)

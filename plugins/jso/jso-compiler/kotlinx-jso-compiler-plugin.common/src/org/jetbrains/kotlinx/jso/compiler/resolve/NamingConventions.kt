@@ -21,4 +21,6 @@ object JsObjectAnnotations {
 object SpecialNames {
     val DEFAULT_NAME_FOR_COMPANION_OBJECT = Name.identifier("Companion")
     val INVOKE_OPERATOR_NAME = Name.identifier("invoke")
+    val COPY_METHOD_NAME = Name.identifier("cop" +
+                                                   "y")
 }

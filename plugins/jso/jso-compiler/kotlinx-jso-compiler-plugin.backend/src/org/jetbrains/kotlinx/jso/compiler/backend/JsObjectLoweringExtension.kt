@@ -9,12 +9,12 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
+import org.jetbrains.kotlin.ir.expressions.IrBlockBody
+import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlinx.jso.compiler.resolve.JsObjectAnnotations
 import org.jetbrains.kotlinx.jso.compiler.resolve.JsSimpleObjectPluginKey
+import org.jetbrains.kotlinx.jso.compiler.resolve.SpecialNames
 import org.jetbrains.kotlinx.jso.compiler.resolve.StandardIds
 
 private class MoveExternalInlineFunctionsWithBodiesOutside(private val context: IrPluginContext) : DeclarationTransformer {
@@ -28,10 +28,22 @@ private class MoveExternalInlineFunctionsWithBodiesOutside(private val context: 
 
         if (parent == null || declaration !is IrSimpleFunction || declaration.origin != EXPECTED_ORIGIN) return null
 
-        declaration.isExternal = false
-        declaration.parent = file
         file.declarations.add(declaration)
-        declaration.body = context.irFactory.createBlockBody(declaration.startOffset, declaration.endOffset).apply {
+
+        declaration.body = when (declaration.name) {
+            SpecialNames.COPY_METHOD_NAME, SpecialNames.INVOKE_OPERATOR_NAME -> declaration.generateBodyForFactoryAndCopyFunction()
+            else -> error("Unexpected function with name `${declaration.name.identifier}`")
+        }
+
+        declaration.parent = file
+        declaration.isExternal = false
+
+        return emptyList()
+    }
+
+    private fun IrSimpleFunction.generateBodyForFactoryAndCopyFunction(): IrBlockBody {
+        val declaration = this
+        return context.irFactory.createBlockBody(startOffset, declaration.endOffset).apply {
             statements += IrReturnImpl(
                 declaration.startOffset,
                 declaration.endOffset,
@@ -59,8 +71,6 @@ private class MoveExternalInlineFunctionsWithBodiesOutside(private val context: 
                 }
             )
         }
-
-        return emptyList()
     }
 }
 

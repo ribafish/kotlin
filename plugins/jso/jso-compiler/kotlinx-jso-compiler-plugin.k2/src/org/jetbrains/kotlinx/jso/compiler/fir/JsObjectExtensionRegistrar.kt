@@ -10,7 +10,7 @@ import org.jetbrains.kotlinx.jso.compiler.fir.services.JsSimpleObjectPropertiesP
 
 class JsObjectExtensionRegistrar : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
-        +::JsObjectFactoryFunctionGenerator
+        +::JsObjectFunctionsGenerator
         // services
         +::JsSimpleObjectPropertiesProvider
     }
