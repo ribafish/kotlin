@@ -19,7 +19,7 @@ kotlin {
         compilations.getByName("main") {
             cinterops {
                 val cinterop by creating {
-                    defFileProperty.set(createDefFileTask.flatMap { it.defFile })
+                    definitionFile.set(createDefFileTask.flatMap { it.defFile })
                 }
             }
         }

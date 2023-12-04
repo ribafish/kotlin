@@ -312,8 +312,9 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
                 lowerCamelCaseName("generateDef", pod.moduleName).asValidTaskName()
             ) {task ->
                 task.pod.set(pod)
-                val defFileAbsolutePath =
-                    project.layout.cocoapodsBuildDirs.defs.map { it.file("${task.pod.get().moduleName}.def") }.getFile().absolutePath
+                val defFileAbsolutePath = project.layout.cocoapodsBuildDirs.defs.map {
+                    it.asFile.resolve("${task.pod.get().moduleName}.def").absolutePath
+                }
                 task.defFile.set(project.layout.projectDirectory.file(defFileAbsolutePath))
                 task.description = "Generates a def file for CocoaPods dependencies with module ${pod.moduleName}"
                 // This task is an implementation detail so we don't add it in any group
@@ -333,7 +334,7 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
                     }
 
                     with(interop) {
-                        defFileProperty.set(defTask.flatMap { it.defFile })
+                        definitionFile.set(defTask.flatMap { it.defFile })
                         _packageNameProp.set(project.provider { pod.packageName })
                         _extraOptsProp.addAll(project.provider { pod.extraOpts })
                     }

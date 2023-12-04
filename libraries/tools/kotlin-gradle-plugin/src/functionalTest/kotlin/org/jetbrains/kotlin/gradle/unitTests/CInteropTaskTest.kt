@@ -49,7 +49,7 @@ class CInteropTaskTest : MultiplatformExtensionTest() {
         project.evaluate()
 
         assertEquals("updated-dependencyFile", cinteropTask.libraries.files.single().name)
-        assertEquals("updated-defFile", cinteropTask.defFile.getFile().name)
+        assertEquals("updated-defFile", cinteropTask.definitionFile.getFile().name)
         assertEquals("updated-packageName", cinteropTask.packageName)
         assertEquals(listOf("default-compilerOpts", "updated-compilerOpts"), cinteropTask.compilerOpts)
         assertEquals(listOf("default-linkerOpts", "updated-linkerOpts"), cinteropTask.linkerOpts)
