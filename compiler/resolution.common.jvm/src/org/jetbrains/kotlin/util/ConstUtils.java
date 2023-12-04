@@ -118,8 +118,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
             if (!myIsConstant) return;
 
             // CHANGE #1
-            checkForNotYetEvaluatedConstant(operand);
-            if (myIsConstant) continue;
+            if (checkForNotYetEvaluatedConstant(operand)) return;
             // END
 
             final PsiType type = operand.getType();
@@ -176,8 +175,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
         }
 
         // CHANGE #2
-        checkForNotYetEvaluatedConstant(expression);
-        if (myIsConstant) return;
+        if (checkForNotYetEvaluatedConstant(expression)) return;
         // END
 
         variable.hasInitializer();
@@ -190,15 +188,19 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
         varIsConst.put(variable, myIsConstant);
     }
 
-    private void checkForNotYetEvaluatedConstant(PsiExpression operand) {
+    private boolean checkForNotYetEvaluatedConstant(PsiExpression operand) {
         if (operand instanceof PsiReferenceExpression) {
             PsiElement refElement = ((PsiReferenceExpression) operand).resolve();
             NotEvaluatedConstAware notEvaluatedConstAware = getNotEvaluatedConstAware(refElement);
-            if (notEvaluatedConstAware != null && notEvaluatedConstAware.isNotYetComputed()) {
-                myIsConstant = true;
-                varIsConst.put((PsiVariable) refElement, Boolean.TRUE);
+            if (notEvaluatedConstAware != null) {
+                if (notEvaluatedConstAware.isNotYetComputed()) {
+                    myIsConstant = true;
+                    varIsConst.put((PsiVariable) refElement, Boolean.TRUE);
+                }
+                return true;
             }
         }
+        return false;
     }
 
     @Nullable
