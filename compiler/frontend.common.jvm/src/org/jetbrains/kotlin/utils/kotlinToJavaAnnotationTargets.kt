@@ -5,16 +5,18 @@
 
 package org.jetbrains.kotlin.utils
 
+import java.lang.annotation.ElementType
+
 val KOTLIN_TO_JAVA_ANNOTATION_TARGETS: Map<String, String> = mapOf(
-    "CLASS" to "TYPE",
-    "ANNOTATION_CLASS" to "ANNOTATION_TYPE",
-    "FIELD" to "FIELD",
-    "LOCAL_VARIABLE" to "LOCAL_VARIABLE",
-    "VALUE_PARAMETER" to "PARAMETER",
-    "CONSTRUCTOR" to "CONSTRUCTOR",
-    "FUNCTION" to "METHOD",
-    "PROPERTY_GETTER" to "METHOD",
-    "PROPERTY_SETTER" to "METHOD",
-    "TYPE_PARAMETER" to "TYPE_PARAMETER",
-    "TYPE" to "TYPE_USE",
+    AnnotationTarget.CLASS.name to ElementType.TYPE.name,
+    AnnotationTarget.ANNOTATION_CLASS.name to ElementType.ANNOTATION_TYPE.name,
+    AnnotationTarget.FIELD.name to ElementType.FIELD.name,
+    AnnotationTarget.LOCAL_VARIABLE.name to ElementType.LOCAL_VARIABLE.name,
+    AnnotationTarget.VALUE_PARAMETER.name to ElementType.PARAMETER.name,
+    AnnotationTarget.CONSTRUCTOR.name to ElementType.CONSTRUCTOR.name,
+    AnnotationTarget.FUNCTION.name to ElementType.METHOD.name,
+    AnnotationTarget.PROPERTY_GETTER.name to ElementType.METHOD.name,
+    AnnotationTarget.PROPERTY_SETTER.name to ElementType.METHOD.name,
+    AnnotationTarget.TYPE_PARAMETER.name to ElementType.TYPE_PARAMETER.name,
+    AnnotationTarget.TYPE.name to ElementType.TYPE_USE.name,
 )

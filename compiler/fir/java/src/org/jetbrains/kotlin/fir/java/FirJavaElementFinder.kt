@@ -24,15 +24,18 @@ import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.FirModuleData
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSessionComponent
 import org.jetbrains.kotlin.fir.analysis.checkers.getTargetAnnotation
 import org.jetbrains.kotlin.fir.caches.FirCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirConstExpression
+import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
@@ -43,6 +46,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.SupertypeComputationSession
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.java.structure.impl.NotEvaluatedConstAware
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
@@ -172,8 +176,9 @@ class FirJavaElementFinder(
             val targets = firClass.getTargetAnnotation(session)?.findTargets()
             if (targets != null) {
                 val annotationString = buildString {
-                    append("@java.lang.annotation.Target({")
-                    targets.mapNotNull { KOTLIN_TO_JAVA_ANNOTATION_TARGETS[it] }.joinTo(this) { "java.lang.annotation.ElementType.$it" }
+                    append("@${JvmAnnotationNames.TARGET_ANNOTATION}({")
+                    targets.mapNotNull { KOTLIN_TO_JAVA_ANNOTATION_TARGETS[it] }
+                        .joinTo(this) { "${JvmAnnotationNames.ELEMENT_TYPE_ENUM}.$it" }
                     append("})")
                 }
                 PsiAnnotationStubImpl(modifierListStub, annotationString)
