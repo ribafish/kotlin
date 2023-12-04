@@ -40,6 +40,13 @@ kotlin {
 
     jvm {
         compilations {
+            all {
+                compileTaskProvider.configure {
+                    compilerOptions {
+                        freeCompilerArgs.empty() // avoid common options set from the root project
+                    }
+                }
+            }
             val main by getting
             val test by getting
             configureJava9Compilation(
@@ -106,12 +113,14 @@ kotlin {
 
     targets.all {
         compilations.all {
-            compilerOptions.configure {
-                optIn.add("kotlin.contracts.ExperimentalContracts")
-                freeCompilerArgs.addAll(listOf(
-                    "-Xallow-kotlin-package",
-                    "-Xexpect-actual-classes",
-                ))
+            compileTaskProvider.configure {
+                compilerOptions {
+                    optIn.add("kotlin.contracts.ExperimentalContracts")
+                    freeCompilerArgs.addAll(listOf(
+                        "-Xallow-kotlin-package",
+                        "-Xexpect-actual-classes",
+                    ))
+                }
             }
         }
     }
