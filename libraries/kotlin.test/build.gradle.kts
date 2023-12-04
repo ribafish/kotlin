@@ -401,8 +401,8 @@ configurations {
 
 configureDefaultPublishing()
 
-fun emptyJavadocJar(appendix: String? = null) =
-    tasks.register<org.gradle.api.tasks.bundling.Jar>("emptyJavadocJar${appendix.orEmpty().capitalize()}") {
+fun emptyJavadocJar(appendix: String? = null): TaskProvider<Jar> =
+    tasks.register<Jar>("emptyJavadocJar${appendix.orEmpty().capitalize()}") {
         archiveAppendix = appendix
         archiveClassifier = "javadoc"
     }
