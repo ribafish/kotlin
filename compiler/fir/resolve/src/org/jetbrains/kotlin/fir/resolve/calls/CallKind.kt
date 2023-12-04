@@ -61,6 +61,7 @@ sealed class CallKind(vararg resolutionSequence: ResolutionStage) {
         ConstraintSystemForks,
         CheckIncompatibleTypeVariableUpperBounds,
         TypeParameterAsCallable,
+        CheckExpectFunctionCall,
     )
 
     object DelegatingConstructorCall : CallKind(
