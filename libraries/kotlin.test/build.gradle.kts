@@ -224,6 +224,7 @@ tasks {
             archiveAppendix = framework.lowercase()
             from(project.sourceSets["jvm${framework}Java9"].output)
             manifestAttributes(manifest, "Test", multiRelease = true)
+            manifest.attributes("Implementation-Title" to "${archiveBaseName.get()}-${archiveAppendix.get()}")
         }
     }
     val jvmSourcesJarTasks = jvmTestFrameworks.map { framework ->
@@ -238,12 +239,15 @@ tasks {
     }
     val jsJar by existing(Jar::class) {
         manifestAttributes(manifest, "Test")
+        manifest.attributes("Implementation-Title" to "${archiveBaseName.get()}-${archiveAppendix.get()}")
     }
     val wasmJsJar by existing(Jar::class) {
         manifestAttributes(manifest, "Test")
+        manifest.attributes("Implementation-Title" to "${archiveBaseName.get()}-${archiveAppendix.get()}")
     }
     val wasmWasiJar by existing(Jar::class) {
         manifestAttributes(manifest, "Test")
+        manifest.attributes("Implementation-Title" to "${archiveBaseName.get()}-${archiveAppendix.get()}")
     }
     val assemble by existing {
         dependsOn(jvmJarTasks)
