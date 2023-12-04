@@ -14,21 +14,17 @@ import org.jetbrains.kotlin.fir.analysis.checkers.expression.AbstractFirReflecti
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 
 object FirJsReflectionAPICallChecker : AbstractFirReflectionApiCallChecker() {
-    private val ADDITIONAL_ALLOWED_CLASSES = hashSetOf(
-        ClassId(StandardNames.KOTLIN_REFLECT_FQ_NAME, Name.identifier("AssociatedObjectKey")),
-        ClassId(StandardNames.KOTLIN_REFLECT_FQ_NAME, Name.identifier("ExperimentalAssociatedObjects"))
-    )
-
     override fun isWholeReflectionApiAvailable(context: CheckerContext): Boolean {
         return false
     }
 
     override fun isAllowedReflectionApi(name: Name, containingClassId: ClassId, context: CheckerContext): Boolean {
         return super.isAllowedReflectionApi(name, containingClassId, context) ||
-                containingClassId in ADDITIONAL_ALLOWED_CLASSES ||
-                name.asString() == "findAssociatedObject"
+                containingClassId in StandardClassIds.associatedObjectAnnotations ||
+                name == StandardNames.FqNames.findAssociatedObject.shortName()
     }
 
     override fun report(source: KtSourceElement?, context: CheckerContext, reporter: DiagnosticReporter) {
