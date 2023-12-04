@@ -30,6 +30,7 @@ fun TestProject.buildXcodeProject(
 }
 
 fun TestProject.xcodebuild(
+    workingDir: Path = projectPath,
     xcodeproj: Path? = null,
     workspace: Path? = null,
     scheme: String? = null,
@@ -37,7 +38,7 @@ fun TestProject.xcodebuild(
     sdk: String? = null,
     arch: String? = null,
     destination: String? = null,
-    workingDir: Path? = null,
+    derivedDataPath: Path? = projectPath.resolve("xcodeDerivedData"),
 ) {
     xcodebuild(
         buildList {
@@ -56,6 +57,7 @@ fun TestProject.xcodebuild(
             "-sdk" set sdk
             "-arch" set arch
             "-destination" set destination
+            "-derivedDataPath" set derivedDataPath
         },
         workingDir,
     )
@@ -77,11 +79,11 @@ fun TestProject.prepareForXcodebuild() {
     build(":wrapper")
 }
 
-private fun TestProject.xcodebuild(cmd: List<String>, workingDir: Path?) {
+private fun TestProject.xcodebuild(cmd: List<String>, workingDir: Path) {
     val xcodebuildResult = runProcess(
         cmd = cmd,
         environmentVariables = environmentVariables.environmentalVariables,
-        workingDir = (workingDir ?: projectPath).toFile(),
+        workingDir = workingDir.toFile(),
     )
     assertProcessRunResult(xcodebuildResult) {
         assertEquals(0, exitCode, "Exit code mismatch for `xcodebuild`.")
