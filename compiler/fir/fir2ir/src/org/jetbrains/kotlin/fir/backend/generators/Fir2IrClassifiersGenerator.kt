@@ -197,6 +197,7 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
         val irClass: IrClass,
         val firClassOrLocalParent: FirClass,
         val irClassOrLocalParent: IrClass,
+        val delegatedProperty: FirProperty?
     )
 
     // This function is called when we refer local class earlier than we reach its declaration
@@ -224,7 +225,16 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
             classifierStorage.getCachedIrClass(klass)
                 ?: error("Assuming that all nested classes of ${classOrLocalParent.classId.asString()} should already be cached")
         }
-        return LocalIrClassInfo(irClass, classOrLocalParent, result)
+        if (callablesGenerator.delegatedPropertyStack.size >= 2) {
+            Unit
+        }
+        val erasureDelegatedPropertyStack = converter.conv .delegatedPropertyStack
+        return LocalIrClassInfo(
+            irClass,
+            classOrLocalParent,
+            result,
+            if (erasureDelegatedPropertyStack.isNotEmpty()) erasureDelegatedPropertyStack.peek() else null
+        )
     }
 
     private val temporaryParent by lazy {

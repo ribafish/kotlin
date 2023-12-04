@@ -142,12 +142,22 @@ class Fir2IrConversionScope(val configuration: Fir2IrConfiguration) {
     @PrivateForInline
     internal val propertyStack = mutableListOf<Pair<IrProperty, FirProperty?>>()
 
+    @PublishedApi
+    @PrivateForInline
+    internal val delegatedPropertyStack = mutableListOf<FirProperty>()
+
     inline fun <R> withProperty(property: IrProperty, firProperty: FirProperty? = null, f: IrProperty.() -> R): R {
         propertyStack += (property to firProperty)
+        if (firProperty?.delegate != null) {
+            delegatedPropertyStack += firProperty
+        }
         try {
             return property.f()
         } finally {
             propertyStack.removeAt(propertyStack.size - 1)
+            if (firProperty?.delegate != null) {
+                delegatedPropertyStack.removeAt(delegatedPropertyStack.size - 1)
+            }
         }
     }
 

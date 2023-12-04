@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
 import org.jetbrains.kotlin.fir.java.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyConstructor
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyProperty
 import org.jetbrains.kotlin.fir.references.toResolvedBaseSymbol
 import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
@@ -45,7 +44,10 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.name.*
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.NameUtils
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import kotlin.contracts.ExperimentalContracts
@@ -273,6 +275,9 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                     val delegate = property.delegate
                     val getter = property.getter
                     val setter = property.setter
+                    if (delegate != null) {
+                        delegatedPropertyStack.push(property)
+                    }
                     if (delegate != null || property.hasBackingField) {
                         val backingField = if (delegate != null) {
                             ((delegate as? FirQualifiedAccessExpression)?.calleeReference?.toResolvedBaseSymbol()?.fir as? FirTypeParameterRefsOwner)?.let {
@@ -349,6 +354,9 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                                 property.unwrapFakeOverrides().setter,
                             )
                         }
+                    }
+                    if (delegate != null) {
+                        delegatedPropertyStack.pop()
                     }
                 }
             }

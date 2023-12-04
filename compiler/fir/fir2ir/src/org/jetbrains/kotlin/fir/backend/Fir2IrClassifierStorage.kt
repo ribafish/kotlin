@@ -54,6 +54,7 @@ class Fir2IrClassifierStorage(
     private data class LocalClassCreatedOnTheFlyInfo(
         val firClass: FirClass,
         val irClass: IrClass,
+        val delegatedProperty: FirProperty?,
     )
 
     private val localClassesCreatedOnTheFly: MutableList<LocalClassCreatedOnTheFlyInfo> = mutableListOf()
@@ -271,9 +272,9 @@ class Fir2IrClassifierStorage(
     // ------------------------------------ local classes ------------------------------------
 
     private fun createAndCacheLocalIrClassOnTheFly(klass: FirClass): IrClass {
-        val (irClass, firClassOrLocalParent, irClassOrLocalParent) = classifiersGenerator.createLocalIrClassOnTheFly(klass, processMembersOfClassesOnTheFlyImmediately)
+        val (irClass, firClassOrLocalParent, irClassOrLocalParent, delegatedProperty) = classifiersGenerator.createLocalIrClassOnTheFly(klass, processMembersOfClassesOnTheFlyImmediately)
         if (!processMembersOfClassesOnTheFlyImmediately) {
-            localClassesCreatedOnTheFly.add(LocalClassCreatedOnTheFlyInfo(firClassOrLocalParent, irClassOrLocalParent))
+            localClassesCreatedOnTheFly.add(LocalClassCreatedOnTheFlyInfo(firClassOrLocalParent, irClassOrLocalParent, delegatedProperty))
         }
         return irClass
     }
@@ -283,7 +284,10 @@ class Fir2IrClassifierStorage(
         // After the call of this function, members of local classes may be processed immediately
         // Before the call it's not possible, because f/o binding for regular classes isn't done yet
         processMembersOfClassesOnTheFlyImmediately = true
-        for ((klass, irClass) in localClassesCreatedOnTheFly) {
+        for ((klass, irClass, delegatedProperty) in localClassesCreatedOnTheFly) {
+            if (delegatedProperty != null) {
+                converter.callablesGenerator.delegatedPropertyStack.push(delegatedProperty)
+            }
             converter.processClassMembers(klass, irClass)
             // See the problem from KT-57441
 //            class Wrapper {
@@ -297,6 +301,9 @@ class Fir2IrClassifierStorage(
             // When we are building bar.foo fake override, we should call dummy.foo,
             // so we should have object : Bar.foo fake override to be built and bound.
             converter.bindFakeOverridesInClass(irClass)
+            if (delegatedProperty != null) {
+                converter.callablesGenerator.delegatedPropertyStack.pop()
+            }
         }
         localClassesCreatedOnTheFly.clear()
     }
