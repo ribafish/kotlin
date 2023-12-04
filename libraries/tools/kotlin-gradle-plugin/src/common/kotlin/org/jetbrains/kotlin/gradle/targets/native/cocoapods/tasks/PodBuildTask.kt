@@ -85,6 +85,10 @@ abstract class PodBuildTask @Inject constructor(
             "-configuration", podBuildSettings.configuration
         )
 
-        runCommand(podXcodeBuildCommand, logger) { directory(podsXcodeProjDir.asFile.parentFile) }
+        runCommand(podXcodeBuildCommand, logger) {
+            directory(podsXcodeProjDir.asFile.parentFile)
+            // Filter out deployment targets to avoid conflicts in xcodebuild -> gradle -> xcodebuild invocation chain
+            environment().entries.removeIf { it.key.endsWith("_DEPLOYMENT_TARGET") }
+        }
     }
 }

@@ -18,4 +18,5 @@ kotlin {
 
 repositories {
     mavenLocal()
+    mavenCentral()
 }
