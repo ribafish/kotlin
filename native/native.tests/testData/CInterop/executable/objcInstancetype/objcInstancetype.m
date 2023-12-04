@@ -1,4 +1,4 @@
-#import "library.h"
+#import "objcInstancetype.h"
 
 static id returnNil() {
     return nil;

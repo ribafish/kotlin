@@ -1,6 +1,6 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlin.experimental.ExperimentalObjCName::class)
 
-import library.*
+import objcInstancetype.*
 import kotlin.test.*
 import kotlinx.cinterop.*
 
