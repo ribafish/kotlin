@@ -64,18 +64,7 @@ abstract class FirTypeScope : FirContainingNamesAwareScope() {
     }
 }
 
-class MemberWithBaseScope<out D : FirCallableSymbol<*>>(val member: D, val baseScope: FirTypeScope) {
-    operator fun component1() = member
-    operator fun component2() = baseScope
-
-    override fun equals(other: Any?): Boolean {
-        return other is MemberWithBaseScope<*> && member == other.member
-    }
-
-    override fun hashCode(): Int {
-        return member.hashCode()
-    }
-}
+data class MemberWithBaseScope<out D : FirCallableSymbol<*>>(val member: D, val baseScope: FirTypeScope)
 
 typealias ProcessOverriddenWithBaseScope<D> = FirTypeScope.(D, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction
 typealias ProcessAllOverridden<D> = FirTypeScope.(D, (D) -> ProcessorAction) -> ProcessorAction
@@ -258,7 +247,7 @@ fun FirTypeScope.getDirectOverriddenFunctions(
     val overriddenFunctions = mutableSetOf<FirNamedFunctionSymbol>()
 
     processDirectlyOverriddenFunctions(function) {
-        overriddenFunctions.addOverridden(it, unwrapIntersectionAndSubstitutionOverride)
+        overriddenFunctions.addOverridden(it, function, unwrapIntersectionAndSubstitutionOverride)
         ProcessorAction.NEXT
     }
 
@@ -272,7 +261,7 @@ fun FirTypeScope.getDirectOverriddenProperties(
     val overriddenProperties = mutableSetOf<FirPropertySymbol>()
 
     processDirectlyOverriddenProperties(property) {
-        overriddenProperties.addOverridden(it, unwrapIntersectionAndSubstitutionOverride)
+        overriddenProperties.addOverridden(it, property, unwrapIntersectionAndSubstitutionOverride)
         ProcessorAction.NEXT
     }
 
@@ -297,8 +286,10 @@ fun FirTypeScope.retrieveDirectOverriddenOf(memberSymbol: FirCallableSymbol<*>):
 
 private inline fun <reified D : FirCallableSymbol<*>> MutableCollection<D>.addOverridden(
     symbol: D,
+    baseSymbol: D,
     unwrapIntersectionAndSubstitutionOverride: Boolean
 ) {
+    if (baseSymbol == symbol) return
     if (unwrapIntersectionAndSubstitutionOverride) {
         if (symbol is FirIntersectionCallableSymbol) {
             @Suppress("UNCHECKED_CAST")

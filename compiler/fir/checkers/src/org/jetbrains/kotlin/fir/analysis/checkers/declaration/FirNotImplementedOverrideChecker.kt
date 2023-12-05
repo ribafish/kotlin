@@ -86,8 +86,8 @@ object FirNotImplementedOverrideChecker : FirClassChecker() {
                     }
                 }
 
-                val firstFinal = filteredOverriddenMembers.firstOrNull { it.isFinal }
-                val firstOpen = filteredOverriddenMembers.firstOrNull { it.isOpen && delegatedTo != it.unwrapFakeOverrides() }
+                val firstFinal = filteredOverriddenMembers.firstOrNull { it != symbol && it.isFinal }
+                val firstOpen = filteredOverriddenMembers.firstOrNull { it != symbol && it.isOpen && delegatedTo != it.unwrapFakeOverrides() }
 
                 when {
                     firstFinal != null ->

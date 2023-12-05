@@ -59,23 +59,29 @@ class FirUnstableSmartcastTypeScope(
         return processComposite(FirScope::processPropertiesByName, name, processor)
     }
 
-    private inline fun <N, T : FirCallableSymbol<*>> processTypedComposite(
-        process: FirTypeScope.(N, (T, FirTypeScope) -> ProcessorAction) -> ProcessorAction,
-        name: N,
-        noinline processor: (T, FirTypeScope) -> ProcessorAction
+    private inline fun <S : FirCallableSymbol<*>> processDirectOverriddenWithBaseScope(
+        process: FirTypeScope.(S, (S, FirTypeScope) -> ProcessorAction) -> ProcessorAction,
+        baseSymbol: S,
+        noinline processDirectOverriddenSymbolsWithBaseScope: (S, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        val unique = mutableSetOf<T>()
-        originalScope.process(name) { symbol, firTypeScope ->
+        val unique = mutableSetOf<S>()
+        originalScope.process(baseSymbol) { symbol, firTypeScope ->
             unique += symbol
-            processor(symbol, firTypeScope)
+            processDirectOverriddenSymbolsWithBaseScope(symbol, firTypeScope)
         }.let { if (it == ProcessorAction.STOP) return ProcessorAction.STOP }
 
-        smartcastScope.process(name) { symbol, firTypeScope ->
-            if (symbol !in unique) {
-                markSymbolFromUnstableSmartcast(symbol)
-                processor(symbol, firTypeScope)
-            } else {
-                ProcessorAction.NEXT
+        smartcastScope.process(baseSymbol) { symbol, firTypeScope ->
+            when (symbol) {
+                /**
+                 * `processDirectOverriddenSymbolsWithBaseScope` may return the same symbol from underlying scopes,
+                 *   so we need to skip them until we found real overridden
+                 */
+                baseSymbol -> ProcessorAction.NEXT
+                !in unique -> {
+                    markSymbolFromUnstableSmartcast(symbol)
+                    processDirectOverriddenSymbolsWithBaseScope(symbol, firTypeScope)
+                }
+                else -> ProcessorAction.NEXT
             }
         }.let { if (it == ProcessorAction.STOP) return ProcessorAction.STOP }
         return ProcessorAction.NEXT
@@ -91,14 +97,14 @@ class FirUnstableSmartcastTypeScope(
         functionSymbol: FirNamedFunctionSymbol,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        return processTypedComposite(FirTypeScope::processDirectOverriddenFunctionsWithBaseScope, functionSymbol, processor)
+        return processDirectOverriddenWithBaseScope(FirTypeScope::processDirectOverriddenFunctionsWithBaseScope, functionSymbol, processor)
     }
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        return processTypedComposite(FirTypeScope::processDirectOverriddenPropertiesWithBaseScope, propertySymbol, processor)
+        return processDirectOverriddenWithBaseScope(FirTypeScope::processDirectOverriddenPropertiesWithBaseScope, propertySymbol, processor)
     }
 
     override fun getCallableNames(): Set<Name> {
