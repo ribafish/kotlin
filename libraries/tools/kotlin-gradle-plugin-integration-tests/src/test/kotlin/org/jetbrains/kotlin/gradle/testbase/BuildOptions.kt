@@ -158,7 +158,7 @@ data class BuildOptions(
             jsOptions.incrementalJs?.let { arguments.add("-Pkotlin.incremental.js=$it") }
             jsOptions.incrementalJsKlib?.let { arguments.add("-Pkotlin.incremental.js.klib=$it") }
             jsOptions.incrementalJsIr?.let { arguments.add("-Pkotlin.incremental.js.ir=$it") }
-            jsOptions.yarn?.let { arguments.add("-Pkotlin.js.yarn=$it") }
+            jsOptions.yarn.let { arguments.add("-Pkotlin.js.yarn=$it") }
         }
 
         if (androidVersion != null) {
