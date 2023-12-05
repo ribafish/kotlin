@@ -26,8 +26,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.RootPackageJsonTask
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
 import org.jetbrains.kotlin.gradle.tasks.CleanDataTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.tasks.withType
-import org.jetbrains.kotlin.gradle.utils.SingleActionPerProject
 import org.jetbrains.kotlin.gradle.utils.castIsolatedKotlinPluginClassLoaderAware
 import org.jetbrains.kotlin.gradle.utils.onlyIfCompat
 import org.jetbrains.kotlin.gradle.utils.providerWithLazyConvention
@@ -205,17 +203,17 @@ open class NodeJsRootPlugin : Plugin<Project> {
 
         project.tasks.register(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME, LockCopyTask::class.java) { task ->
             task.inputFile.set(
-                project.provider {
-                    val lockFile = npm.lockFileDirectory.resolve(npm.lockFileName)
-                    if (lockFile.exists()) {
-                        lockFile
+                npm.lockFileDirectory.zip(npm.lockFileName) { dir, name ->
+                    val file = dir.file(name).asFile
+                    if (file.exists()) {
+                        file
                     } else {
                         null
                     }
                 }
             )
             task.additionalInputFiles.from(
-                npm.lockFileDirectory.resolve(LockCopyTask.YARN_LOCK)
+                npm.lockFileDirectory.map { it.file(LockCopyTask.YARN_LOCK) }
             )
             task.outputDirectory.set(nodeJs.rootPackageDir)
             task.fileName.set(LockCopyTask.PACKAGE_LOCK)

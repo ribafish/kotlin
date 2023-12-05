@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.TaskProvider
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.gradle.logging.kotlinInfo
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NpmApiExtension
-import java.io.File
 
 open class NpmExtension(
     val project: Project,
@@ -47,20 +47,27 @@ open class NpmExtension(
 
     override val postInstallTasks: ListProperty<TaskProvider<*>> = project.objects.listProperty(TaskProvider::class.java)
 
-    var command by Property("npm")
+    val command: org.gradle.api.provider.Property<String> = project.objects.property(String::class.java)
+        .convention("npm")
 
-    var lockFileName by Property(LockCopyTask.PACKAGE_LOCK)
-    var lockFileDirectory: File by Property(project.rootDir.resolve(LockCopyTask.KOTLIN_JS_STORE))
+    val lockFileName: org.gradle.api.provider.Property<String> = project.objects.property(String::class.java)
+        .convention(LockCopyTask.PACKAGE_LOCK)
+    val lockFileDirectory: DirectoryProperty = project.objects.directoryProperty()
 
-    var ignoreScripts by Property(true)
+    val ignoreScripts: org.gradle.api.provider.Property<Boolean> = project.objects.property(Boolean::class.java)
+        .convention(true)
 
-    var packageLockMismatchReport: LockFileMismatchReport by Property(LockFileMismatchReport.FAIL)
+    val packageLockMismatchReport: org.gradle.api.provider.Property<LockFileMismatchReport> =
+        project.objects.property(LockFileMismatchReport::class.java)
+            .convention(LockFileMismatchReport.FAIL)
 
-    var reportNewPackageLock: Boolean by Property(false)
+    val reportNewPackageLock: org.gradle.api.provider.Property<Boolean> = project.objects.property(Boolean::class.java)
+        .convention(false)
 
-    var packageLockAutoReplace: Boolean by Property(false)
+    val packageLockAutoReplace: org.gradle.api.provider.Property<Boolean> = project.objects.property(Boolean::class.java)
+        .convention(false)
 
-    var overrides: MutableList<NpmOverride> by Property(mutableListOf())
+    val overrides: ListProperty<NpmOverride> = project.objects.listProperty(NpmOverride::class.java)
 
     fun override(path: String, configure: Action<NpmOverride>) {
         overrides.add(
@@ -90,13 +97,13 @@ open class NpmExtension(
                 finalCommand
         }
         return NpmEnv(
-            executable = getExecutable("npm", command, "cmd"),
-            ignoreScripts = ignoreScripts,
+            executable = getExecutable("npm", command.get(), "cmd"),
+            ignoreScripts = ignoreScripts.get(),
             standalone = !nodeJsEnvironmentValue.download,
-            packageLockMismatchReport = packageLockMismatchReport,
-            reportNewPackageLock = reportNewPackageLock,
-            packageLockAutoReplace = packageLockAutoReplace,
-            overrides = overrides
+            packageLockMismatchReport = packageLockMismatchReport.get(),
+            reportNewPackageLock = reportNewPackageLock.get(),
+            packageLockAutoReplace = packageLockAutoReplace.get(),
+            overrides = overrides.get()
         )
     }
 
