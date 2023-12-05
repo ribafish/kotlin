@@ -1,3 +1,4 @@
+import plugins.configureKotlinPomAttributes
 import plugins.signLibraryPublication
 
 description = "Runtime library for the JSO compiler plugin"
@@ -30,10 +31,18 @@ kotlin {
 
 configureCommonPublicationSettingsForGradle(signLibraryPublication)
 
+val emptyJavadocJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["kotlin"])
+            configureKotlinPomAttributes(project, "Runtime library for the JSO compiler plugin", packaging = "klib")
+        }
+        withType<MavenPublication> {
+            artifact(emptyJavadocJar)
         }
     }
 }
