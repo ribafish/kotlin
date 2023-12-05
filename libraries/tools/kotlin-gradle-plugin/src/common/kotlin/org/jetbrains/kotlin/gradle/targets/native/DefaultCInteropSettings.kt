@@ -71,18 +71,21 @@ abstract class DefaultCInteropSettings @Inject internal constructor(
 
     val interopProcessingTaskName get() = params.interopProcessingTaskName
 
-    val definitionFile: RegularFileProperty = params.services.objectFactory.fileProperty()
 
     @Deprecated("Deprecated. Please, use definitionFile.", ReplaceWith("definitionFile"))
-    val defFileProperty: Property<File> = params.services.objectFactory.property<File>().value(
+    val defFileProperty: Property<File> = params.services.objectFactory.property<File>().convention(
         params.services.projectLayout.projectDirectory.file("src/nativeInterop/cinterop/$name.def").asFile
+    )
+
+    val definitionFile: RegularFileProperty = params.services.objectFactory.fileProperty().convention(
+        params.services.projectLayout.file(defFileProperty)
     )
 
     @Deprecated("Deprecated because it is a non-lazy property.", ReplaceWith("definitionFile"))
     var defFile: File
         get() = definitionFile.getFile()
         set(value) {
-            definitionFile.set(params.services.projectLayout.projectDirectory.file(value.absolutePath))
+            definitionFile.set(value)
         }
 
     var packageName: String?
@@ -110,8 +113,7 @@ abstract class DefaultCInteropSettings @Inject internal constructor(
     // DSL methods.
 
     override fun defFile(file: Any) {
-        val filePath = params.services.fileOperations.file(file).absolutePath
-        definitionFile.set(params.services.projectLayout.projectDirectory.file(filePath))
+        definitionFile.set(params.services.fileOperations.file(file))
     }
 
     override fun packageName(value: String) {
