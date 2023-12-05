@@ -24,6 +24,7 @@ public class ReadContext(
     public val strings: NameResolver,
     public val types: TypeTable,
     @get:IgnoreInApiDump internal val versionRequirements: VersionRequirementTable,
+    internal val ignoreUnknownVersionRequirements: Boolean,
     private val parent: ReadContext? = null,
     internal val contextExtensions: List<ReadContextExtension> = emptyList()
 ) {
@@ -41,7 +42,7 @@ public class ReadContext(
         typeParameterNameToId[name] ?: parent?.getTypeParameterId(name)
 
     internal fun withTypeParameters(typeParameters: List<ProtoBuf.TypeParameter>): ReadContext =
-        ReadContext(strings, types, versionRequirements, this, contextExtensions).apply {
+        ReadContext(strings, types, versionRequirements, ignoreUnknownVersionRequirements, this, contextExtensions).apply {
             for (typeParameter in typeParameters) {
                 typeParameterNameToId[typeParameter.name] = typeParameter.id
             }
@@ -51,6 +52,7 @@ public class ReadContext(
 @OptIn(ExperimentalContextReceivers::class)
 public fun ProtoBuf.Class.toKmClass(
     strings: NameResolver,
+    ignoreUnknownVersionRequirements: Boolean = false,
     contextExtensions: List<ReadContextExtension> = emptyList(),
 ): KmClass {
     val v = KmClass()
@@ -58,6 +60,7 @@ public fun ProtoBuf.Class.toKmClass(
         strings,
         TypeTable(typeTable),
         VersionRequirementTable.create(versionRequirementTable),
+        ignoreUnknownVersionRequirements,
         contextExtensions = contextExtensions
     ).withTypeParameters(typeParameterList)
 
@@ -105,6 +108,7 @@ private fun ProtoBuf.Class.loadInlineClassUnderlyingType(c: ReadContext): ProtoB
 
 public fun ProtoBuf.Package.toKmPackage(
     strings: NameResolver,
+    ignoreUnknownVersionRequirements: Boolean = false,
     contextExtensions: List<ReadContextExtension> = emptyList(),
 ): KmPackage {
     val v = KmPackage()
@@ -112,6 +116,7 @@ public fun ProtoBuf.Package.toKmPackage(
         strings,
         TypeTable(typeTable),
         VersionRequirementTable.create(versionRequirementTable),
+        ignoreUnknownVersionRequirements,
         contextExtensions = contextExtensions
     )
 
@@ -131,11 +136,12 @@ public fun ProtoBuf.PackageFragment.toKmModuleFragment(
         strings,
         TypeTable(ProtoBuf.TypeTable.newBuilder().build()),
         VersionRequirementTable.EMPTY,
+        false, // toKmModuleFragment is used for klib only
         contextExtensions = contextExtensions
     )
 
-    v.pkg = `package`.toKmPackage(strings, contextExtensions)
-    class_List.mapTo(v.classes) { it.toKmClass(strings, contextExtensions) }
+    v.pkg = `package`.toKmPackage(strings, false, contextExtensions)
+    class_List.mapTo(v.classes) { it.toKmClass(strings, false, contextExtensions) }
 
     c.extensions.forEach { it.readModuleFragmentExtensions(v, this, c) }
 
@@ -153,9 +159,9 @@ private fun KmDeclarationContainer.visitDeclarations(
     protoTypeAliases.mapTo(typeAliases) { it.toKmTypeAlias(c) }
 }
 
-public fun ProtoBuf.Function.toKmLambda(strings: NameResolver): KmLambda {
+public fun ProtoBuf.Function.toKmLambda(strings: NameResolver, ignoreUnknownVersionRequirements: Boolean = false): KmLambda {
     val v = KmLambda()
-    val c = ReadContext(strings, TypeTable(typeTable), VersionRequirementTable.EMPTY)
+    val c = ReadContext(strings, TypeTable(typeTable), VersionRequirementTable.EMPTY, ignoreUnknownVersionRequirements)
     v.function = this.toKmFunction(c)
     return v
 }
@@ -303,6 +309,7 @@ private fun ProtoBuf.Type.toKmType(c: ReadContext): KmType {
 private fun readVersionRequirement(id: Int, c: ReadContext): KmVersionRequirement {
     val v = KmVersionRequirement()
     val message = VersionRequirement.create(id, c.strings, c.versionRequirements)
+    if (message == null && !c.ignoreUnknownVersionRequirements) throw InconsistentKotlinMetadataException("No VersionRequirement with the given id in the table")
 
     val kind = when (message?.kind) {
         ProtoBuf.VersionRequirement.VersionKind.LANGUAGE_VERSION -> KmVersionRequirementVersionKind.LANGUAGE_VERSION

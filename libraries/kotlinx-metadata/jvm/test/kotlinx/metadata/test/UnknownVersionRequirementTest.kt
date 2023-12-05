@@ -5,6 +5,7 @@
 
 package kotlinx.metadata.test
 
+import kotlinx.metadata.KmClass
 import kotlinx.metadata.internal.ClassWriter
 import kotlinx.metadata.jvm.JvmMetadataVersion
 import kotlinx.metadata.jvm.KotlinClassMetadata
@@ -13,6 +14,7 @@ import kotlinx.metadata.jvm.internal.writeProtoBufData
 import org.jetbrains.kotlin.metadata.jvm.serialization.JvmStringTable
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class UnknownVersionRequirementTest {
 
@@ -21,6 +23,24 @@ class UnknownVersionRequirementTest {
     class Sample
 
     private val requireKotlinValue = "KmVersionRequirement(kind=LANGUAGE_VERSION, level=ERROR, version=1.8.0, errorCode=null, message=foobar)"
+
+    private fun corrupt(original: KmClass): Pair<Array<String>, Array<String>> {
+        val writer = ClassWriter(JvmStringTable())
+        writer.writeClass(original)
+        writer.t.addVersionRequirement(239) // invalid
+        val (d1, d2) = writeProtoBufData(writer.t.build(), writer.c)
+        return d1 to d2
+    }
+
+    @Test
+    fun incorrectVersionRequirementFailsIfMetadataIsNew() {
+        val (d1, d2) = corrupt(Sample::class.java.readMetadataAsKmClass())
+        val incorrect =
+            Metadata(KotlinClassMetadata.CLASS_KIND, JvmMetadataVersion.LATEST_STABLE_SUPPORTED.toIntArray(), d1, d2, extraInt = 0)
+        assertFailsWith<IllegalArgumentException> {
+            incorrect.readMetadataAsClass()
+        }
+    }
 
     @Test
     fun incorrectVersionRequirementHandledAsUnknown() {
@@ -31,12 +51,9 @@ class UnknownVersionRequirementTest {
             original.versionRequirements.single().toString()
         )
 
-        val writer = ClassWriter(JvmStringTable())
-        writer.writeClass(original)
-        writer.t.addVersionRequirement(239) // invalid
-        val (d1, d2) = writeProtoBufData(writer.t.build(), writer.c)
+        val (d1, d2) = corrupt(original)
         val incorrect =
-            Metadata(KotlinClassMetadata.CLASS_KIND, JvmMetadataVersion.LATEST_STABLE_SUPPORTED.toIntArray(), d1, d2, extraInt = 0)
+            Metadata(KotlinClassMetadata.CLASS_KIND, intArrayOf(1, 1, 3), d1, d2, extraInt = 0)
 
         val withInvalidRequirement = incorrect.readMetadataAsClass()
         assertEquals(2, withInvalidRequirement.kmClass.versionRequirements.size)
@@ -45,6 +62,7 @@ class UnknownVersionRequirementTest {
             withInvalidRequirement.kmClass.versionRequirements.toString()
         )
 
+        withInvalidRequirement.version = JvmMetadataVersion.LATEST_STABLE_SUPPORTED
         val rewritten = withInvalidRequirement.write().readAsKmClass()
         assertEquals(1, rewritten.versionRequirements.size)
         assertEquals(
