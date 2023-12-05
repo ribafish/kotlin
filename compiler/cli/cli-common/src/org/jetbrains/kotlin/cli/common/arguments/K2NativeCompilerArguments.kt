@@ -489,6 +489,9 @@ The library must be one of the ones passed with '-library'.""",
             it[AnalysisFlags.optIn] = optInList + listOf("kotlin.ExperimentalUnsignedTypes")
             if (printIr)
                 phasesToDumpAfter = arrayOf("ALL")
+            if (metadataKlib) {
+                it[AnalysisFlags.metadataCompilation] = true
+            }
         }
 
     override fun checkIrSupport(languageVersionSettings: LanguageVersionSettings, collector: MessageCollector) {

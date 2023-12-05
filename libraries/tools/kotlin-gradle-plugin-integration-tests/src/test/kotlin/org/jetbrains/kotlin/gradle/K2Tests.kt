@@ -214,4 +214,20 @@ class CustomK2Tests : KGPBaseTest() {
             }
         }
     }
+
+    @GradleTest
+    @DisplayName("Don't evaluate constants with common native metadata compilation")
+    fun kt63835DontEvaluateConstantsWithCommonNativeMetadataCompilation(gradleVersion: GradleVersion) {
+        project(
+            "k2-no-const-evaluation-with-common-native-metadata", gradleVersion,
+            buildOptions = defaultBuildOptions.copyEnsuringK2()
+        ) {
+            build("compileCommonMainKotlinMetadata") {
+                assertTasksExecuted(":compileCommonMainKotlinMetadata")
+            }
+            build("compileIosMainKotlinMetadata") {
+                assertTasksExecuted(":compileIosMainKotlinMetadata")
+            }
+        }
+    }
 }
