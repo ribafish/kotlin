@@ -50,6 +50,7 @@ native {
         flags("-qcv", ruleOut(), *ruleInAll())
     }
 
+    // FIXME: Migrate to the compilation database approach when the clang calls are removed
     tasks.register("generateCMakeLists") {
         doLast {
             projectDir.resolve("CMakeLists.txt").writeText(
