@@ -27,7 +27,7 @@ allprojects.forEach {
 
 tasks.named<org.jetbrains.kotlin.gradle.targets.js.npm.LockCopyTask>("kotlinStorePackageLock") {
     //A little hacky way to make yarn results
-    inputFile.fileValue(projectDir.resolve("packageLockStub"))
+    inputFile.value(projectDir.resolve("packageLockStub"))
 }
 
 kotlin {

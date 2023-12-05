@@ -202,9 +202,10 @@ open class NodeJsRootPlugin : Plugin<Project> {
         }
 
         project.tasks.register(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME, LockCopyTask::class.java) { task ->
+            val lockFileName = npm.lockFileName
             task.inputFile.set(
-                npm.lockFileDirectory.zip(npm.lockFileName) { dir, name ->
-                    val file = dir.file(name).asFile
+                npm.lockFileDirectory.map { dir ->
+                    val file = dir.file(lockFileName).get().asFile
                     if (file.exists()) {
                         file
                     } else {
