@@ -41,23 +41,17 @@ fun <T> MutableList<FirStatement>.addDestructuringStatements(
     for ((index, entry) in entries.withIndex()) {
         this += buildProperty {
             symbol = FirPropertySymbol(entry.name)
-            if (!localEntries) {
-                context.pushContainerSymbol(symbol)
-            }
-
-            this.moduleData = moduleData
-            origin = FirDeclarationOrigin.Source
-            returnTypeRef = entry.returnTypeRef
-            name = entry.name
-            initializer = container.toComponentCall(entry.source, index)
-            this.isVar = isVar
-            source = entry.source
-            isLocal = localEntries
-            status = FirDeclarationStatusImpl(if (localEntries) Visibilities.Local else Visibilities.Public, Modality.FINAL)
-            entry.extractAnnotationsTo(this, context.containerSymbol)
-
-            if (!localEntries) {
-                context.popContainerSymbol(symbol)
+            withContainerSymbol(symbol, localEntries) {
+                this.moduleData = moduleData
+                origin = FirDeclarationOrigin.Source
+                returnTypeRef = entry.returnTypeRef
+                name = entry.name
+                initializer = container.toComponentCall(entry.source, index)
+                this.isVar = isVar
+                source = entry.source
+                isLocal = localEntries
+                status = FirDeclarationStatusImpl(if (localEntries) Visibilities.Local else Visibilities.Public, Modality.FINAL)
+                entry.extractAnnotationsTo(this, context.containerSymbol)
             }
         }
     }

@@ -1664,118 +1664,112 @@ open class PsiRawFirBuilder(
                 FirNamedFunctionSymbol(callableIdForName(function.nameAsSafeName))
             }
 
-            if (!isLocalFunction) {
-                context.pushContainerSymbol(functionSymbol)
-            }
-
-            val typeReference = function.typeReference
-            val returnType = if (function.hasBlockBody()) {
-                typeReference.toFirOrUnitType()
-            } else {
-                typeReference.toFirOrImplicitType()
-            }
-
-            val receiverType = function.receiverTypeReference?.toFirType()
-            val labelName: String?
-
-            val functionBuilder = if (isAnonymousFunction) {
-                FirAnonymousFunctionBuilder().apply {
-                    receiverParameter = receiverType?.convertToReceiverParameter()
-                    symbol = functionSymbol as FirAnonymousFunctionSymbol
-                    isLambda = false
-                    hasExplicitParameterList = true
-                    label = context.getLastLabel(function)
-                    labelName = label?.name ?: context.calleeNamesForLambda.lastOrNull()?.identifier
-                    if (function.hasModifier(SUSPEND_KEYWORD)) {
-                        status = FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_SUSPEND_FUNCTION_EXPRESSION
-                    }
+            withContainerSymbol(functionSymbol, isLocalFunction) {
+                val typeReference = function.typeReference
+                val returnType = if (function.hasBlockBody()) {
+                    typeReference.toFirOrUnitType()
+                } else {
+                    typeReference.toFirOrImplicitType()
                 }
-            } else {
-                FirSimpleFunctionBuilder().apply {
-                    receiverParameter = receiverType?.convertToReceiverParameter()
-                    name = function.nameAsSafeName
-                    labelName = context.getLastLabel(function)?.name ?: runIf(!name.isSpecial) { name.identifier }
-                    symbol = functionSymbol as FirNamedFunctionSymbol
-                    dispatchReceiverType = runIf(!isLocalFunction) { currentDispatchReceiverType() }
-                    status = FirDeclarationStatusImpl(
-                        if (isLocalFunction) Visibilities.Local else function.visibility,
-                        function.modality,
-                    ).apply {
-                        isExpect = function.hasExpectModifier() || context.containerIsExpect
-                        isActual = function.hasActualModifier()
-                        isOverride = function.hasModifier(OVERRIDE_KEYWORD)
-                        isOperator = function.hasModifier(OPERATOR_KEYWORD)
-                        isInfix = function.hasModifier(INFIX_KEYWORD)
-                        isInline = function.hasModifier(INLINE_KEYWORD)
-                        isTailRec = function.hasModifier(TAILREC_KEYWORD)
-                        isExternal = function.hasModifier(EXTERNAL_KEYWORD)
-                        isSuspend = function.hasModifier(SUSPEND_KEYWORD)
-                    }
 
-                    contextReceivers.addAll(convertContextReceivers(function.contextReceivers))
-                }
-            }
+                val receiverType = function.receiverTypeReference?.toFirType()
+                val labelName: String?
 
-            val target = FirFunctionTarget(labelName, isLambda = false)
-            val functionSource = function.toFirSourceElement()
-            val firFunction = functionBuilder.apply {
-                source = functionSource
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = returnType
-
-                context.firFunctionTargets += target
-                function.extractAnnotationsTo(this)
-                if (this is FirSimpleFunctionBuilder) {
-                    function.extractTypeParametersTo(this, symbol)
-                }
-                for (valueParameter in function.valueParameters) {
-                    valueParameters += convertValueParameter(
-                        valueParameter,
-                        functionSymbol,
-                        null,
-                        if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.FUNCTION
-                    )
-                }
-                val actualTypeParameters = if (this is FirSimpleFunctionBuilder)
-                    this.typeParameters
-                else
-                    listOf()
-                withCapturedTypeParameters(true, functionSource, actualTypeParameters) {
-                    val outerContractDescription = function.obtainContractDescription()
-                    val (body, innerContractDescription) = withForcedLocalContext {
-                        function.buildFirBody()
-                    }
-                    this.body = body
-                    val contractDescription = outerContractDescription ?: innerContractDescription
-                    contractDescription?.let {
-                        if (this is FirSimpleFunctionBuilder) {
-                            this.contractDescription = it
-                        } else if (this is FirAnonymousFunctionBuilder) {
-                            this.contractDescription = it
+                val functionBuilder = if (isAnonymousFunction) {
+                    FirAnonymousFunctionBuilder().apply {
+                        receiverParameter = receiverType?.convertToReceiverParameter()
+                        symbol = functionSymbol as FirAnonymousFunctionSymbol
+                        isLambda = false
+                        hasExplicitParameterList = true
+                        label = context.getLastLabel(function)
+                        labelName = label?.name ?: context.calleeNamesForLambda.lastOrNull()?.identifier
+                        if (function.hasModifier(SUSPEND_KEYWORD)) {
+                            status = FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_SUSPEND_FUNCTION_EXPRESSION
                         }
                     }
-                }
-                context.firFunctionTargets.removeLast()
-                additionalFunctionInit()
-            }.build().also {
-                bindFunctionTarget(target, it)
-                if (it is FirSimpleFunction) {
-                    function.fillDanglingConstraintsTo(it)
-                }
-            }
+                } else {
+                    FirSimpleFunctionBuilder().apply {
+                        receiverParameter = receiverType?.convertToReceiverParameter()
+                        name = function.nameAsSafeName
+                        labelName = context.getLastLabel(function)?.name ?: runIf(!name.isSpecial) { name.identifier }
+                        symbol = functionSymbol as FirNamedFunctionSymbol
+                        dispatchReceiverType = runIf(!isLocalFunction) { currentDispatchReceiverType() }
+                        status = FirDeclarationStatusImpl(
+                            if (isLocalFunction) Visibilities.Local else function.visibility,
+                            function.modality,
+                        ).apply {
+                            isExpect = function.hasExpectModifier() || context.containerIsExpect
+                            isActual = function.hasActualModifier()
+                            isOverride = function.hasModifier(OVERRIDE_KEYWORD)
+                            isOperator = function.hasModifier(OPERATOR_KEYWORD)
+                            isInfix = function.hasModifier(INFIX_KEYWORD)
+                            isInline = function.hasModifier(INLINE_KEYWORD)
+                            isTailRec = function.hasModifier(TAILREC_KEYWORD)
+                            isExternal = function.hasModifier(EXTERNAL_KEYWORD)
+                            isSuspend = function.hasModifier(SUSPEND_KEYWORD)
+                        }
 
-            if (!isLocalFunction) {
-                context.popContainerSymbol(functionSymbol)
-            }
+                        contextReceivers.addAll(convertContextReceivers(function.contextReceivers))
+                    }
+                }
 
-            return if (firFunction is FirAnonymousFunction) {
-                buildAnonymousFunctionExpression {
+                val target = FirFunctionTarget(labelName, isLambda = false)
+                val functionSource = function.toFirSourceElement()
+                val firFunction = functionBuilder.apply {
                     source = functionSource
-                    anonymousFunction = firFunction
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = returnType
+
+                    context.firFunctionTargets += target
+                    function.extractAnnotationsTo(this)
+                    if (this is FirSimpleFunctionBuilder) {
+                        function.extractTypeParametersTo(this, symbol)
+                    }
+                    for (valueParameter in function.valueParameters) {
+                        valueParameters += convertValueParameter(
+                            valueParameter,
+                            functionSymbol,
+                            null,
+                            if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.FUNCTION
+                        )
+                    }
+                    val actualTypeParameters = if (this is FirSimpleFunctionBuilder)
+                        this.typeParameters
+                    else
+                        listOf()
+                    withCapturedTypeParameters(true, functionSource, actualTypeParameters) {
+                        val outerContractDescription = function.obtainContractDescription()
+                        val (body, innerContractDescription) = withForcedLocalContext {
+                            function.buildFirBody()
+                        }
+                        this.body = body
+                        val contractDescription = outerContractDescription ?: innerContractDescription
+                        contractDescription?.let {
+                            if (this is FirSimpleFunctionBuilder) {
+                                this.contractDescription = it
+                            } else if (this is FirAnonymousFunctionBuilder) {
+                                this.contractDescription = it
+                            }
+                        }
+                    }
+                    context.firFunctionTargets.removeLast()
+                    additionalFunctionInit()
+                }.build().also {
+                    bindFunctionTarget(target, it)
+                    if (it is FirSimpleFunction) {
+                        function.fillDanglingConstraintsTo(it)
+                    }
                 }
-            } else {
-                firFunction
+
+                return if (firFunction is FirAnonymousFunction) {
+                    buildAnonymousFunctionExpression {
+                        source = functionSource
+                        anonymousFunction = firFunction
+                    }
+                } else {
+                    firFunction
+                }
             }
         }
 
@@ -2003,154 +1997,155 @@ open class PsiRawFirBuilder(
             val propertySymbol = if (isLocal) {
                 FirPropertySymbol(propertyName)
             } else {
-                FirPropertySymbol(callableIdForName(propertyName)).also {
-                    this@PsiRawFirBuilder.context.pushContainerSymbol(it)
-                }
+                FirPropertySymbol(callableIdForName(propertyName))
             }
 
-            val propertyType = typeReference.toFirOrImplicitType()
-            val isVar = isVar
-            val propertyInitializer = toInitializerExpression()
+            withContainerSymbol(propertySymbol, isLocal) {
+                val propertyType = typeReference.toFirOrImplicitType()
+                val isVar = isVar
+                val propertyInitializer = toInitializerExpression()
 
-            val propertySource = toFirSourceElement()
+                val propertySource = toFirSourceElement()
 
-            return buildProperty {
-                source = propertySource
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = propertyType
-                name = propertyName
-                this.isVar = isVar
+                return buildProperty {
+                    source = propertySource
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = propertyType
+                    name = propertyName
+                    this.isVar = isVar
 
-                receiverParameter = receiverTypeReference?.toFirType()?.convertToReceiverParameter()
-                initializer = propertyInitializer
+                    receiverParameter = receiverTypeReference?.toFirType()?.convertToReceiverParameter()
+                    initializer = propertyInitializer
 
-                val propertyAnnotations = mutableListOf<FirAnnotationCall>()
-                for (annotationEntry in annotationEntries) {
-                    propertyAnnotations += annotationEntry.convert<FirAnnotationCall>()
-                }
-                if (this@toFirProperty.isLocal) {
-                    isLocal = true
-                    symbol = propertySymbol
-
-                    extractTypeParametersTo(this, symbol)
-                    backingField = this@toFirProperty.fieldDeclaration.toFirBackingField(
-                        this@toFirProperty,
-                        propertySymbol = symbol,
-                        propertyType,
-                        emptyList(),
-                    )
-
-                    status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL).apply {
-                        isLateInit = hasModifier(LATEINIT_KEYWORD)
+                    val propertyAnnotations = mutableListOf<FirAnnotationCall>()
+                    for (annotationEntry in annotationEntries) {
+                        propertyAnnotations += annotationEntry.convert<FirAnnotationCall>()
                     }
+                    if (this@toFirProperty.isLocal) {
+                        isLocal = true
+                        symbol = propertySymbol
 
-                    if (hasDelegate()) {
-                        fun extractDelegateExpression() =
-                            this@toFirProperty.delegate?.expression.toFirExpression("Incorrect delegate expression")
-
-                        val delegateBuilder = FirWrappedDelegateExpressionBuilder().apply {
-                            val delegateFirExpression = extractDelegateExpression()
-                            source = delegateFirExpression.source?.fakeElement(KtFakeSourceElementKind.WrappedDelegate)
-                                ?: this@toFirProperty.delegate?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
-                            expression = delegateFirExpression
-                        }
-
-                        generateAccessorsByDelegate(
-                            delegateBuilder,
-                            baseModuleData,
-                            ownerRegularOrAnonymousObjectSymbol = null,
-                            context = context,
-                            isExtension = false,
-                        )
-                    }
-                } else {
-                    isLocal = false
-                    symbol = propertySymbol
-                    dispatchReceiverType = currentDispatchReceiverType()
-                    extractTypeParametersTo(this, symbol)
-                    withCapturedTypeParameters(true, propertySource, this.typeParameters) {
+                        extractTypeParametersTo(this, symbol)
                         backingField = this@toFirProperty.fieldDeclaration.toFirBackingField(
                             this@toFirProperty,
                             propertySymbol = symbol,
                             propertyType,
-                            propertyAnnotations.filter { it.useSiteTarget == FIELD || it.useSiteTarget == PROPERTY_DELEGATE_FIELD },
+                            emptyList(),
                         )
 
-                        getter = convertPropertyAccessor(
-                            this@toFirProperty.getter,
-                            this@toFirProperty,
-                            propertyType,
-                            propertySymbol = symbol,
-                            isGetter = true,
-                            accessorAnnotationsFromProperty = propertyAnnotations.filterUseSiteTarget(PROPERTY_GETTER),
-                            parameterAnnotationsFromProperty = emptyList()
-                        )
-
-                        setter = convertPropertyAccessor(
-                            this@toFirProperty.setter,
-                            this@toFirProperty,
-                            propertyType,
-                            propertySymbol = symbol,
-                            isGetter = false,
-                            accessorAnnotationsFromProperty = propertyAnnotations.filterUseSiteTarget(PROPERTY_SETTER),
-                            parameterAnnotationsFromProperty = propertyAnnotations.filterUseSiteTarget(SETTER_PARAMETER)
-                        )
-
-                        status = FirDeclarationStatusImpl(visibility, modality).apply {
-                            isExpect = hasExpectModifier() || this@PsiRawFirBuilder.context.containerIsExpect
-                            isActual = hasActualModifier()
-                            isOverride = hasModifier(OVERRIDE_KEYWORD)
-                            isConst = hasModifier(CONST_KEYWORD)
+                        status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL).apply {
                             isLateInit = hasModifier(LATEINIT_KEYWORD)
-                            isExternal = hasModifier(EXTERNAL_KEYWORD)
                         }
 
                         if (hasDelegate()) {
                             fun extractDelegateExpression() =
-                                buildOrLazyExpression(this@toFirProperty.delegate?.expression?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)) {
-                                    this@toFirProperty.delegate?.expression?.let { expression ->
-                                        expression.toFirExpression("Should have delegate")
-                                    } ?: buildErrorExpression {
-                                        diagnostic = ConeSimpleDiagnostic("Should have delegate", DiagnosticKind.ExpressionExpected)
-                                    }
-                                }
+                                this@toFirProperty.delegate?.expression.toFirExpression("Incorrect delegate expression")
 
                             val delegateBuilder = FirWrappedDelegateExpressionBuilder().apply {
-                                val delegateExpression = extractDelegateExpression()
-                                source = delegateExpression.source?.fakeElement(KtFakeSourceElementKind.WrappedDelegate)
+                                val delegateFirExpression = extractDelegateExpression()
+                                source = delegateFirExpression.source?.fakeElement(KtFakeSourceElementKind.WrappedDelegate)
                                     ?: this@toFirProperty.delegate?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
-                                expression = delegateExpression
+                                expression = delegateFirExpression
                             }
-
-                            val (lazyDelegateExpression: FirLazyExpression?, lazyBody: FirLazyBlock?) = buildOrLazy(
-                                build = { null to null },
-                                lazy = { buildLazyExpression { source = delegateBuilder.source } to buildLazyBlock() },
-                            )
 
                             generateAccessorsByDelegate(
                                 delegateBuilder,
                                 baseModuleData,
-                                ownerRegularOrAnonymousObjectSymbol,
-                                context,
-                                isExtension = receiverTypeReference != null,
-                                lazyDelegateExpression = lazyDelegateExpression,
-                                lazyBodyForGeneratedAccessors = lazyBody,
+                                ownerRegularOrAnonymousObjectSymbol = null,
+                                context = context,
+                                isExtension = false,
                             )
                         }
-                    }
-                }
-                annotations += if (isLocal) propertyAnnotations else propertyAnnotations.filter {
-                    it.useSiteTarget != FIELD && it.useSiteTarget != PROPERTY_DELEGATE_FIELD && it.useSiteTarget != PROPERTY_GETTER &&
-                            (!isVar || it.useSiteTarget != SETTER_PARAMETER && it.useSiteTarget != PROPERTY_SETTER)
-                }
+                    } else {
+                        isLocal = false
+                        symbol = propertySymbol
+                        dispatchReceiverType = currentDispatchReceiverType()
+                        extractTypeParametersTo(this, symbol)
+                        withCapturedTypeParameters(true, propertySource, this.typeParameters) {
+                            backingField = this@toFirProperty.fieldDeclaration.toFirBackingField(
+                                this@toFirProperty,
+                                propertySymbol = symbol,
+                                propertyType,
+                                propertyAnnotations.filter { it.useSiteTarget == FIELD || it.useSiteTarget == PROPERTY_DELEGATE_FIELD },
+                            )
 
-                contextReceivers.addAll(convertContextReceivers(this@toFirProperty.contextReceivers))
-                additionalPropertyInit()
-            }.also {
-                if (!isLocal) {
-                    fillDanglingConstraintsTo(it)
-                    this@PsiRawFirBuilder.context.popContainerSymbol(propertySymbol)
+                            getter = convertPropertyAccessor(
+                                this@toFirProperty.getter,
+                                this@toFirProperty,
+                                propertyType,
+                                propertySymbol = symbol,
+                                isGetter = true,
+                                accessorAnnotationsFromProperty = propertyAnnotations.filterUseSiteTarget(PROPERTY_GETTER),
+                                parameterAnnotationsFromProperty = emptyList()
+                            )
+
+                            setter = convertPropertyAccessor(
+                                this@toFirProperty.setter,
+                                this@toFirProperty,
+                                propertyType,
+                                propertySymbol = symbol,
+                                isGetter = false,
+                                accessorAnnotationsFromProperty = propertyAnnotations.filterUseSiteTarget(PROPERTY_SETTER),
+                                parameterAnnotationsFromProperty = propertyAnnotations.filterUseSiteTarget(SETTER_PARAMETER)
+                            )
+
+                            status = FirDeclarationStatusImpl(visibility, modality).apply {
+                                isExpect = hasExpectModifier() || this@PsiRawFirBuilder.context.containerIsExpect
+                                isActual = hasActualModifier()
+                                isOverride = hasModifier(OVERRIDE_KEYWORD)
+                                isConst = hasModifier(CONST_KEYWORD)
+                                isLateInit = hasModifier(LATEINIT_KEYWORD)
+                                isExternal = hasModifier(EXTERNAL_KEYWORD)
+                            }
+
+                            if (hasDelegate()) {
+                                fun extractDelegateExpression() =
+                                    buildOrLazyExpression(
+                                        this@toFirProperty.delegate?.expression?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
+                                    ) {
+                                        this@toFirProperty.delegate?.expression?.let { expression ->
+                                            expression.toFirExpression("Should have delegate")
+                                        } ?: buildErrorExpression {
+                                            diagnostic = ConeSimpleDiagnostic("Should have delegate", DiagnosticKind.ExpressionExpected)
+                                        }
+                                    }
+
+                                val delegateBuilder = FirWrappedDelegateExpressionBuilder().apply {
+                                    val delegateExpression = extractDelegateExpression()
+                                    source = delegateExpression.source?.fakeElement(KtFakeSourceElementKind.WrappedDelegate)
+                                        ?: this@toFirProperty.delegate?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
+                                    expression = delegateExpression
+                                }
+
+                                val (lazyDelegateExpression: FirLazyExpression?, lazyBody: FirLazyBlock?) = buildOrLazy(
+                                    build = { null to null },
+                                    lazy = { buildLazyExpression { source = delegateBuilder.source } to buildLazyBlock() },
+                                )
+
+                                generateAccessorsByDelegate(
+                                    delegateBuilder,
+                                    baseModuleData,
+                                    ownerRegularOrAnonymousObjectSymbol,
+                                    context,
+                                    isExtension = receiverTypeReference != null,
+                                    lazyDelegateExpression = lazyDelegateExpression,
+                                    lazyBodyForGeneratedAccessors = lazyBody,
+                                )
+                            }
+                        }
+                    }
+                    annotations += if (isLocal) propertyAnnotations else propertyAnnotations.filter {
+                        it.useSiteTarget != FIELD && it.useSiteTarget != PROPERTY_DELEGATE_FIELD && it.useSiteTarget != PROPERTY_GETTER &&
+                                (!isVar || it.useSiteTarget != SETTER_PARAMETER && it.useSiteTarget != PROPERTY_SETTER)
+                    }
+
+                    contextReceivers.addAll(convertContextReceivers(this@toFirProperty.contextReceivers))
+                    additionalPropertyInit()
+                }.also {
+                    if (!isLocal) {
+                        fillDanglingConstraintsTo(it)
+                    }
                 }
             }
         }

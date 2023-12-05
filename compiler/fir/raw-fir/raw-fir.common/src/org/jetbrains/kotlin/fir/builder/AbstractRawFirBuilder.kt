@@ -146,14 +146,21 @@ abstract class AbstractRawFirBuilder<T>(val baseSession: FirSession, val context
     }
 
     /**
+     * @param isLocal if true [symbol] will be ignored
+     *
      * @see Context.containerSymbol
      * @see Context.pushContainerSymbol
      * @see Context.popContainerSymbol
      */
     inline fun <T> withContainerSymbol(
         symbol: FirBasedSymbol<*>,
+        isLocal: Boolean = false,
         block: () -> T,
     ): T {
+        if (isLocal) {
+            return block()
+        }
+
         context.pushContainerSymbol(symbol)
         return try {
             block()
