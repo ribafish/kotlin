@@ -33,7 +33,9 @@ sourceSets {
 
 optInToExperimentalCompilerApi()
 
-publish()
+if (project.hasProperty("kotlin-native.swift-export.enabled")) {
+    publish()
+}
 
 runtimeJar()
 sourcesJar()

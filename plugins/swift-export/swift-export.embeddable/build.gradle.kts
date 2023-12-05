@@ -6,8 +6,10 @@ dependencies {
     embedded(project(":kotlin-swift-export-compiler-plugin")) { isTransitive = false }
 }
 
-publish {
-    artifactId = artifactId.replace(".", "-")
+if (project.hasProperty("kotlin-native.swift-export.enabled")) {
+    publish {
+        artifactId = "kotlin-swift-export-compiler-plugin-embeddable"
+    }
 }
 
 runtimeJar(rewriteDefaultJarDepsToShadedCompiler())
