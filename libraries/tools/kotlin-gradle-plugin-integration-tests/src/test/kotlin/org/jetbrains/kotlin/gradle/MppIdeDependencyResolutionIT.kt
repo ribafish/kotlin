@@ -395,7 +395,7 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
     @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_2)
     @GradleTest
     fun `test resolve sources for dependency with multiple capabilities`(gradleVersion: GradleVersion) {
-        project("KT-63226-multiple-capabilities", gradleVersion) {
+        project("kt-63226-multiple-capabilities", gradleVersion) {
             build(":producer:publish")
 
             resolveIdeDependencies(":consumer") { dependencies ->
