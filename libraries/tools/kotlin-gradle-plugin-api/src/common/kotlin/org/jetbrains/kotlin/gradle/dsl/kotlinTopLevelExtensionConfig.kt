@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.dsl
 /**
  * DSL extension that is used to configure Kotlin options for the entire project.
  */
+@KotlinGradlePluginDsl
 interface KotlinTopLevelExtensionConfig {
     /**
      * Version of the core Kotlin libraries that are added to Kotlin compile classpath, unless there is already a dependency added to this
