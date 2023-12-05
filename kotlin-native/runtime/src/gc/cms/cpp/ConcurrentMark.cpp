@@ -70,6 +70,12 @@ void gc::mark::ConcurrentMark::runMainInSTW() {
         // complete mark closure form newly found objects
         parallelMark(mainWorker);
     } while (refsRemainInMutatorQueues);
+
+    for (auto& thread : *lockedMutatorsList_) {
+        auto& markQueue = thread.gc().impl().gc().mark().markQueue();
+        RuntimeAssert(markQueue->retainsNoWork(), ""); // TODO move into queue's destuctor?
+        markQueue.destroy();
+    }
 }
 
 void gc::mark::ConcurrentMark::runOnMutator(mm::ThreadData&) {
