@@ -32,12 +32,12 @@ class Kotlin2SwiftExportExtension : FirAnalysisHandlerExtension() {
 
         val (sourceModule, rawFiles) = standaloneAnalysisAPISession.modulesWithFiles.entries.single()
 
-        val ktFiles = rawFiles.mapNotNull { it as? KtFile }
+        val ktFiles = rawFiles.filterIsInstance<KtFile>()
 
         val module = buildModule {
+            name = sourceModule.moduleName
             val sirFactory = SirGenerator()
             ktFiles.forEach { file ->
-                name = sourceModule.moduleName
                 declarations += sirFactory.build(file)
             }
         }
