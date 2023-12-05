@@ -4,7 +4,7 @@ fun <E : String?, T : ((CharSequence) -> Unit)?> foo(x: E, y: T) {
     }
 
     if (y != null) {
-        <!UNSAFE_IMPLICIT_INVOKE_CALL!>y<!>(<!ARGUMENT_TYPE_MISMATCH!>x<!>)
+        y(<!ARGUMENT_TYPE_MISMATCH!>x<!>)
     }
 
     if (x != null && y != null) {
