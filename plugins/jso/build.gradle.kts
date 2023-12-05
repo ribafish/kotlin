@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
-import org.jetbrains.kotlin.gradle.targets.js.d8.D8RootPlugin
 
 description = "Kotlin JavaScript Object Compiler Plugin"
 
@@ -53,8 +52,6 @@ dependencies {
     testRuntimeOnly(project(":core:descriptors.runtime"))
 }
 
-optInToExperimentalCompilerApi()
-
 sourceSets {
     "main" { none() }
     "test" {
@@ -63,12 +60,13 @@ sourceSets {
     }
 }
 
-optInToExperimentalCompilerApi()
+publish()
 
 runtimeJar()
 sourcesJar()
 javadocJar()
 testsJar()
+optInToExperimentalCompilerApi()
 
 projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5) {
     useJUnitPlatform()
