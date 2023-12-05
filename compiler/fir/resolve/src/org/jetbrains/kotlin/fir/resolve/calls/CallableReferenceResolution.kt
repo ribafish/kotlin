@@ -277,7 +277,9 @@ private fun BodyResolveComponents.getCallableReferenceAdaptation(
     val returnTypeRef = function.returnTypeRef
     val coercionStrategy =
         if (returnExpectedType.isUnitOrFlexibleUnit &&
-            returnTypeRef.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session)?.isUnit != true
+            returnTypeRef.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session).let {
+                it !is ConeTypeParameterType && it?.isUnit != true
+            }
         )
             CoercionStrategy.COERCION_TO_UNIT
         else
