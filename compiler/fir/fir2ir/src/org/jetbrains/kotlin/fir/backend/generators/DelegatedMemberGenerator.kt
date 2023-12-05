@@ -192,7 +192,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
                 }
             }
         }
-        return result?.unwrapUseSiteSubstitutionOverrides()
+        return result
     }
 
     @OptIn(UnsafeDuringIrConstructionAPI::class)
