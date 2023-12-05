@@ -418,7 +418,21 @@ kotlin {
         }
         val jsTest by getting {
             dependencies {
-                api(project(":kotlin-test:kotlin-test-js-ir"))
+                api(project(":kotlin-test:kotlin-test-js-ir")) {
+                    /*
+                     * This is a workaround to avoid passing stdlib to Kotlin/JS compiler twice and thus leading to "KLIB hell".
+                     *
+                     * Why it happens that stdlib is passed twice:
+                     * 1. stdlib is an artifact that is produced in the current Gradle project from the sources in `jsMain` source set.
+                     *    It is stored in 'build/classes/kotlin/js/main' directory, and is automatically added by the KGP
+                     *    as a dependency to `jsTest` source set.
+                     * 2. stdlib is a library (KLIB file) that is a transitive dependency coming with 'kotlin-test' library.
+                     *    It is located in 'build/libs/kotlin-stdlib-js-<version>.klib' file.
+                     *
+                     * TODO: Get rid of this workaround when KT-64115 is fixed.
+                     */
+                    exclude("org.jetbrains.kotlin", "kotlin-stdlib")
+                }
             }
             kotlin.srcDir("${jsDir}/test")
         }
@@ -452,8 +466,6 @@ kotlin {
                 val sources = listOf(
                     "core/builtins/src/kotlin/"
                 ) + unimplementedNativeBuiltIns
-
-
 
                 val excluded = listOf(
                     // included in commonMain
@@ -495,7 +507,21 @@ kotlin {
         val wasmJsTest by getting {
             dependsOn(wasmCommonTest)
             dependencies {
-                api(project(":kotlin-test:kotlin-test-wasm-js"))
+                api(project(":kotlin-test:kotlin-test-wasm-js")) {
+                    /*
+                     * This is a workaround to avoid passing stdlib to Kotlin/WASM compiler twice and thus leading to "KLIB hell".
+                     *
+                     * Why it happens that stdlib is passed twice:
+                     * 1. stdlib is an artifact that is produced in the current Gradle project from the sources in `wasmJsMain` source set.
+                     *    It is stored in 'build/classes/kotlin/wasmJs/main' directory, and is automatically added by the KGP
+                     *    as a dependency to `wasmJsTest` source set.
+                     * 2. stdlib is a library (KLIB file) that is a transitive dependency coming with 'kotlin-test' library.
+                     *    It is located in 'build/libs/kotlin-stdlib-wasm-js-<version>.klib' file.
+                     *
+                     * TODO: Get rid of this workaround when KT-64115 is fixed.
+                     */
+                    exclude("org.jetbrains.kotlin", "kotlin-stdlib")
+                }
             }
             kotlin {
                 srcDir("wasm/js/test")
@@ -514,7 +540,21 @@ kotlin {
         val wasmWasiTest by getting {
             dependsOn(wasmCommonTest)
             dependencies {
-                api(project(":kotlin-test:kotlin-test-wasm-wasi"))
+                api(project(":kotlin-test:kotlin-test-wasm-wasi")) {
+                    /*
+                     * This is a workaround to avoid passing stdlib to Kotlin/WASM compiler twice and thus leading to "KLIB hell".
+                     *
+                     * Why it happens that stdlib is passed twice:
+                     * 1. stdlib is an artifact that is produced in the current Gradle project from the sources in `wasmWasiMain` source set.
+                     *    It is stored in 'build/classes/kotlin/wasmWasi/main' directory, and is automatically added by the KGP
+                     *    as a dependency to `wasmWasiTest` source set.
+                     * 2. stdlib is a library (KLIB file) that is a transitive dependency coming with 'kotlin-test' library.
+                     *    It is located in 'build/libs/kotlin-stdlib-wasm-wasi-<version>.klib' file.
+                     *
+                     * TODO: Get rid of this workaround when KT-64115 is fixed.
+                     */
+                    exclude("org.jetbrains.kotlin", "kotlin-stdlib")
+                }
             }
             kotlin {
                 srcDir("wasm/wasi/test")
