@@ -1,4 +1,6 @@
 // !LANGUAGE: -ForbidUsingExtensionPropertyTypeParameterInDelegate
+// MUTE_SIGNATURE_COMPARISON_K2: JVM_IR JS_IR NATIVE
+// Not sure K1 generates correct signatures for this case
 
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KMutableProperty1

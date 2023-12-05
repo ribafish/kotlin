@@ -5,8 +5,10 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.getAnnotationsByClassId
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
 import org.jetbrains.kotlin.fir.expressions.unexpandedConeClassLikeType
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
@@ -166,6 +168,21 @@ class Fir2IrTypeConverter(
                 }
                 val expandedType = fullyExpandedType(session)
                 val approximatedType = approximateType(expandedType)
+
+                if (approximatedType is ConeTypeParameterType) {
+                    val typeParameterSymbol = approximatedType.lookupTag.typeParameterSymbol
+                    val containingDeclarationFir = typeParameterSymbol.containingDeclarationSymbol.fir
+                    val anonymousObjectDelegate = (containingDeclarationFir as? FirProperty)?.delegate as? FirAnonymousObjectExpression
+                    if (anonymousObjectDelegate != null &&
+                        anonymousObjectDelegate.anonymousObject.typeParameters.any { it.symbol == typeParameterSymbol }
+                    ) {
+                        // This hack is about type parameter leak in case of generic delegated property
+                        // Such code has to be prohibited since LV 1.5
+                        // For more details see commit message or KT-24643
+                        return approximateUpperBounds(typeParameterSymbol.resolvedBounds)
+                    }
+                }
+
                 IrSimpleTypeImpl(
                     irSymbol,
                     hasQuestionMark = approximatedType.isMarkedNullable,
@@ -239,6 +256,14 @@ class Fir2IrTypeConverter(
             }
             is ConeStubType, is ConeIntegerLiteralType, is ConeTypeVariableType -> createErrorType()
         }
+    }
+
+    private fun approximateUpperBounds(resolvedBounds: List<FirResolvedTypeRef>): IrType {
+        val commonSupertype = session.typeContext.commonSuperTypeOrNull(resolvedBounds.map { it.type })!!
+        val resultType = (commonSupertype as? ConeClassLikeType)?.replaceArgumentsWithStarProjections()
+            ?: commonSupertype
+        val approximatedType = (commonSupertype as? ConeSimpleKotlinType)?.let { approximateType(it) } ?: resultType
+        return approximatedType.toIrType()
     }
 
     private fun ConeFlexibleType.isMutabilityFlexible(): Boolean {
