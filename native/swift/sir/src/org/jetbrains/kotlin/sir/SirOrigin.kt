@@ -10,21 +10,7 @@ sealed interface SirOrigin {
 
     data class ExternallyDefined(val name: String) : Synthetic
 
-    sealed class KotlinEntity : SirOrigin {
-
-        data class Function(
-            val fqName: () -> List<String>,
-            val parameters: () -> List<Parameter>,
-            val returnType: () -> KotlinType,
-        ) : KotlinEntity()
-
-        data class Parameter(
-            val name: String,
-            val type: KotlinType,
-        ) : KotlinEntity()
-
-        data class KotlinType(val name: String) : KotlinEntity()
-    }
+    data class ForeignEntity(val entity: KotlinEntity): SirOrigin
 
     /**
      * Value for nodes of unknown or non-viable origin

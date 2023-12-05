@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.sir.visitors.SirVisitor
 class MockSirFunction(
     override val origin: SirOrigin = SirOrigin.Unknown,
     override val visibility: SirVisibility = SirVisibility.PUBLIC,
-    override var parent: SirDeclarationParent = SirSwiftModule,
+    override var parent: SirDeclarationParent,
     override val name: String,
     override val parameters: List<SirParameter>,
     override val returnType: SirType,

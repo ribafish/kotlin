@@ -21,6 +21,8 @@ sourceSets {
     "test" { projectDefault() }
 }
 
+testsJar()
+
 projectTest(jUnitMode = JUnitMode.JUnit5) {
     workingDir = rootDir
     useJUnitPlatform { }

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendK
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.sir.SirForeignFunction
+import org.jetbrains.kotlin.sir.KotlinFunction
 import org.jetbrains.kotlin.sir.SirOrigin
 import org.jetbrains.kotlin.sir.builder.buildModule
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
@@ -59,7 +60,8 @@ abstract class AbstractKotlinSirContextTestBase : AbstractAnalysisApiBasedTest()
             module.declarations
                 .filterIsInstance<SirForeignFunction>()
                 .forEach {
-                    appendLine("${(it.origin as SirOrigin.KotlinEntity.Function).fqName()}")
+                    val function = (it.origin as SirOrigin.ForeignEntity).entity as KotlinFunction
+                    appendLine("${function.fqName}")
                 }
         }
 

@@ -7,6 +7,11 @@ package org.jetbrains.kotlin.sir.passes
 
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildForeignFunction
+import org.jetbrains.kotlin.sir.builder.buildModule
+import org.jetbrains.kotlin.sir.constants.*
+import org.jetbrains.kotlin.sir.mock.MockFunction
+import org.jetbrains.kotlin.sir.mock.MockKotlinType
+import org.jetbrains.kotlin.sir.mock.MockParameter
 import org.jetbrains.kotlin.sir.passes.asserts.assertSirFunctionsEquals
 import org.jetbrains.kotlin.sir.passes.mocks.MockSirFunction
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
@@ -17,68 +22,81 @@ import kotlin.test.assertNotNull
 class SirPassTests {
     @Test
     fun `foreign toplevel function without params should be translated`() {
+        val module = buildModule {
+            name = "demo"
+        }
         val mySirElement = buildForeignFunction {
-            origin = SirOrigin.KotlinEntity.Function(
-                fqName = { listOf("foo") },
-                parameters = { emptyList() },
-                returnType = { SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Boolean") },
+            origin = SirOrigin.ForeignEntity(
+                MockFunction(
+                    fqName = listOf("foo"),
+                    parameters = emptyList(),
+                    returnType = MockKotlinType(BOOLEAN),
+                )
             )
             visibility = SirVisibility.PUBLIC
         }
+        mySirElement.parent = module
+
         val myPass = ForeignIntoSwiftFunctionTranslationPass()
-        val result = myPass.run(mySirElement, Unit)
+        val result = myPass.run(mySirElement, Unit) as? SirFunction
         assertNotNull(result, "SirFunction should be produced")
         val exp = MockSirFunction(
             name = "foo",
             parameters = emptyList(),
             returnType = SirNominalType(SirSwiftModule.bool),
+            parent = module,
         )
         assertSirFunctionsEquals(actual = result, expected = exp)
     }
 
     @Test
     fun `foreign toplevel function with all params should be translated`() {
+        val module = buildModule {
+            name = "demo"
+        }
         val mySirElement = buildForeignFunction {
-            origin = SirOrigin.KotlinEntity.Function(
-                fqName = { listOf("foo") },
-                parameters = {
-                    listOf(
-                        SirOrigin.KotlinEntity.Parameter(
+            origin = SirOrigin.ForeignEntity(
+                MockFunction(
+                    fqName = listOf("foo"),
+                    parameters = listOf(
+                        MockParameter(
                             name = "arg1",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Byte")
+                            type = MockKotlinType(name = BYTE)
                         ),
-                        SirOrigin.KotlinEntity.Parameter(
+                        MockParameter(
                             name = "arg2",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Short")
+                            type = MockKotlinType(name = SHORT)
                         ),
-                        SirOrigin.KotlinEntity.Parameter(
+                        MockParameter(
                             name = "arg3",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Int")
+                            type = MockKotlinType(name = INT)
                         ),
-                        SirOrigin.KotlinEntity.Parameter(
+                        MockParameter(
                             name = "arg4",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Long")
+                            type = MockKotlinType(name = LONG)
                         ),
-                        SirOrigin.KotlinEntity.Parameter(
+                        MockParameter(
                             name = "arg5",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Double")
+                            type = MockKotlinType(name = DOUBLE)
                         ),
-                        SirOrigin.KotlinEntity.Parameter(
+                        MockParameter(
                             name = "arg6",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Float")
+                            type = MockKotlinType(name = FLOAT)
                         ),
-                        SirOrigin.KotlinEntity.Parameter(
+                        MockParameter(
                             name = "arg7",
-                            type = SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Boolean")
+                            type = MockKotlinType(name = BOOLEAN)
                         )
-                    )
-                },
-                returnType = { SirOrigin.KotlinEntity.KotlinType(name = "kotlin/Byte") },
+                    ),
+                    returnType = MockKotlinType(name = BYTE),
+                )
             )
             visibility = SirVisibility.PUBLIC
         }
+        mySirElement.parent = module
+
         val myPass = ForeignIntoSwiftFunctionTranslationPass()
-        val result = myPass.run(mySirElement, Unit)
+        val result = myPass.run(mySirElement, Unit) as? SirFunction
         assertNotNull(result, "SirFunction should be produced")
         val exp = MockSirFunction(
             name = "foo",
@@ -94,8 +112,8 @@ class SirPassTests {
                 SirParameter(argumentName = "arg7", type = SirNominalType(SirSwiftModule.bool)),
             ),
             returnType = SirNominalType(SirSwiftModule.int8),
+            parent = module
         )
         assertSirFunctionsEquals(actual = result, expected = exp)
     }
-
 }

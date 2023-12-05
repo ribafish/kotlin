@@ -8,6 +8,9 @@ package org.jetbrains.sir.passes.translation
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildFunction
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
+import org.jetbrains.kotlin.sir.KotlinFunction
+import org.jetbrains.kotlin.sir.constants.*
+import org.jetbrains.kotlin.sir.visitors.SirTransformer
 import org.jetbrains.sir.passes.SirPass
 import java.lang.IllegalStateException
 
@@ -19,36 +22,45 @@ import java.lang.IllegalStateException
  * or `element` does not contain origin of type `SirOrigin.KotlinEntity.Function`,
  * returns `null`.
  */
-class ForeignIntoSwiftFunctionTranslationPass : SirPass<SirFunction?, Unit> {
-    override fun run(element: SirElement, data: Unit): SirFunction? = buildFunction {
-        val foreignFunction = element as? SirForeignFunction
-            ?: return null
-        val kotlinOrigin = foreignFunction.origin as? SirOrigin.KotlinEntity.Function
-            ?: return null
+class ForeignIntoSwiftFunctionTranslationPass : SirPass<SirElement, Unit> {
 
-        origin = kotlinOrigin
-        visibility = foreignFunction.visibility
-        name = kotlinOrigin.fqName().last()
-        kotlinOrigin.parameters().mapTo(parameters) { it.toSir() }
+    private class Transformer : SirTransformer<Unit>() {
+        override fun <E : SirElement> transformElement(element: E, data: Unit): E {
+            element.transformChildren(this, data)
+            return element
+        }
 
-        returnType = kotlinOrigin.returnType().toSir()
+        override fun transformForeignFunction(foreignFunction: SirForeignFunction, data: Unit): SirDeclaration {
+            val kotlinOrigin = (foreignFunction.origin as? SirOrigin.ForeignEntity)?.entity as? KotlinFunction
+                ?: return foreignFunction
+            return buildFunction {
+                origin = foreignFunction.origin
+                visibility = foreignFunction.visibility
+                name = kotlinOrigin.fqName.last()
+                kotlinOrigin.parameters.mapTo(parameters) { it.toSir() }
+
+                returnType = kotlinOrigin.returnType.toSir()
+            }
+        }
     }
+
+    override fun run(element: SirElement, data: Unit): SirElement = element.accept(Transformer(), Unit)
 }
 
-private fun SirOrigin.KotlinEntity.Parameter.toSir(): SirParameter = SirParameter(
+private fun KotlinParameter.toSir(): SirParameter = SirParameter(
     argumentName = name,
     type = type.toSir(),
 )
 
-private fun SirOrigin.KotlinEntity.KotlinType.toSir(): SirType = SirNominalType(
+private fun KotlinType.toSir(): SirType = SirNominalType(
     type = when (this.name) {
-        "kotlin/Byte" -> SirSwiftModule.int8
-        "kotlin/Short" -> SirSwiftModule.int16
-        "kotlin/Int" -> SirSwiftModule.int32
-        "kotlin/Long" -> SirSwiftModule.int64
-        "kotlin/Boolean" -> SirSwiftModule.bool
-        "kotlin/Double" -> SirSwiftModule.double
-        "kotlin/Float" -> SirSwiftModule.float
+        BYTE -> SirSwiftModule.int8
+        SHORT -> SirSwiftModule.int16
+        INT -> SirSwiftModule.int32
+        LONG -> SirSwiftModule.int64
+        BOOLEAN -> SirSwiftModule.bool
+        DOUBLE -> SirSwiftModule.double
+        FLOAT -> SirSwiftModule.float
         else -> throw IllegalStateException("unknown externally defined type")
     }
 )
