@@ -23204,6 +23204,24 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("binaryLogic.kt")
+                public void testBinaryLogic() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/binaryLogic.kt");
+                }
+
+                @Test
+                @TestMetadata("complexBooleanInStringConcat_after.kt")
+                public void testComplexBooleanInStringConcat_after() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/complexBooleanInStringConcat_after.kt");
+                }
+
+                @Test
+                @TestMetadata("complexBooleanInStringConcat_before.kt")
+                public void testComplexBooleanInStringConcat_before() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/complexBooleanInStringConcat_before.kt");
+                }
+
+                @Test
                 @TestMetadata("constInteraction.kt")
                 public void testConstInteraction() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/constInteraction.kt");

@@ -48,6 +48,8 @@ internal fun checkConstantArguments(
         return intrinsicConstEvaluation && this.hasAnnotation(StandardClassIds.Annotations.IntrinsicConstEvaluation, session)
     }
 
+    if (expression.isForbiddenComplexConstant(session)) return ConstantArgumentKind.NOT_CONST
+
     when {
         expression is FirNamedArgumentExpression -> {
             checkConstantArguments(expression.expression, session)
@@ -93,16 +95,16 @@ internal fun checkConstantArguments(
                 return ConstantArgumentKind.NOT_CONST
             }
 
-            if (expression.isForbiddenComplexConstant(session)) {
-                return ConstantArgumentKind.NOT_CONST
-            }
-
             for (exp in (expression as FirCall).arguments) {
                 if (exp is FirResolvedQualifier || exp is FirGetClassCall || exp.resolvedType.isUnsignedType) {
                     return ConstantArgumentKind.NOT_CONST
                 }
                 checkConstantArguments(exp, session)?.let { return it }
             }
+        }
+        expression is FirBinaryLogicExpression -> {
+            checkConstantArguments(expression.leftOperand, session)?.let { return it }
+            checkConstantArguments(expression.rightOperand, session)?.let { return it }
         }
         expression is FirGetClassCall -> {
             var coneType = (expression as? FirCall)?.argument?.resolvedType
@@ -159,7 +161,7 @@ internal fun checkConstantArguments(
             if (calleeReference !is FirResolvedNamedReference) return ConstantArgumentKind.NOT_CONST
             val symbol = calleeReference.resolvedSymbol as? FirNamedFunctionSymbol ?: return ConstantArgumentKind.NOT_CONST
 
-            if (!symbol.canBeEvaluated() && !expression.isCompileTimeBuiltinCall(session) || expression.isForbiddenComplexConstant(session)) {
+            if (!symbol.canBeEvaluated() && !expression.isCompileTimeBuiltinCall(session)) {
                 return ConstantArgumentKind.NOT_CONST
             }
 
@@ -237,6 +239,8 @@ private val FirExpression.usesVariableAsConstant: Boolean
     get() = this is FirPropertyAccessExpression && toResolvedCallableSymbol()?.isConst == true
             || this is FirQualifiedAccessExpression && explicitReceiver?.usesVariableAsConstant != false
             || this is FirCall && this.arguments.any { it.usesVariableAsConstant }
+            || this is FirBinaryLogicExpression && (this.leftOperand.usesVariableAsConstant || this.rightOperand.usesVariableAsConstant)
+            || this is FirComparisonExpression && this.compareToCall.usesVariableAsConstant
 
 private val compileTimeFunctions = setOf(
     *OperatorNameConventions.BINARY_OPERATION_NAMES.toTypedArray(), *OperatorNameConventions.UNARY_OPERATION_NAMES.toTypedArray(),
