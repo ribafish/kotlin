@@ -43,8 +43,7 @@ val prepareRangeSources by tasks.registering(Sync::class) {
         include("WasExperimental.kt")
     }
 
-    val rangesCherryPicked = layout.buildDirectory.dir("src/ranges")
-    into(rangesCherryPicked)
+    into(layout.buildDirectory.dir("src/ranges"))
 }
 
 val prepareSources by tasks.registering(Sync::class) {
@@ -52,8 +51,7 @@ val prepareSources by tasks.registering(Sync::class) {
         exclude("typeOf.kt")
         exclude("KClasses.kt")
     }
-    val builtinsCherryPicked = layout.buildDirectory.dir("src/reflect")
-    into(builtinsCherryPicked)
+    into(layout.buildDirectory.dir("src/reflect"))
 }
 
 val prepareSourcesJvm by tasks.registering(Sync::class) {
@@ -67,8 +65,7 @@ val prepareSourcesJvm by tasks.registering(Sync::class) {
         include("KTypeParameter.kt")
         include("KVariance.kt")
     }
-    val builtinsCherryPickedJvm = layout.buildDirectory.dir("src-jvm/reflect")
-    into(builtinsCherryPickedJvm)
+    into(layout.buildDirectory.dir("src-jvm/reflect"))
 }
 
 /**
