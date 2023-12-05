@@ -130,18 +130,18 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase(
         val stack = mutableListOf<FirDeclaration>()
 
         inline fun withStack(element: FirElement, action: () -> Unit) {
-            if (element is FirDeclaration) {
-                stack += element
+            if (element !is FirDeclaration) {
+                action()
+                return
             }
 
+            stack += element
             try {
                 action()
             } finally {
-                if (element is FirDeclaration) {
-                    val last = stack.removeLast()
-                    if (last != element) {
-                        error("Stack is corrupted")
-                    }
+                val last = stack.removeLast()
+                if (last != element) {
+                    error("Stack is corrupted")
                 }
             }
         }
