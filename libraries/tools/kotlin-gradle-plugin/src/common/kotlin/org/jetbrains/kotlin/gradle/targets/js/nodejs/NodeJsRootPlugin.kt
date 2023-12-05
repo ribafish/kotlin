@@ -203,16 +203,24 @@ open class NodeJsRootPlugin : Plugin<Project> {
             ).disallowChanges()
         }
 
-        project.tasks.register(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME, LockCopyTask::class.java) {
-            val lockFile = npm.lockFileDirectory.resolve(npm.lockFileName)
-            it.inputFile.set(npm.lockFileDirectory.resolve(npm.lockFileName))
-            it.additionalInputFiles.from(
+        project.tasks.register(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME, LockCopyTask::class.java) { task ->
+            task.inputFile.set(
+                project.provider {
+                    val lockFile = npm.lockFileDirectory.resolve(npm.lockFileName)
+                    if (lockFile.exists()) {
+                        lockFile
+                    } else {
+                        null
+                    }
+                }
+            )
+            task.additionalInputFiles.from(
                 npm.lockFileDirectory.resolve(LockCopyTask.YARN_LOCK)
             )
-            it.outputDirectory.set(nodeJs.rootPackageDir)
-            it.fileName.set(LockCopyTask.PACKAGE_LOCK)
-            it.onlyIf {
-                lockFile.exists()
+            task.outputDirectory.set(nodeJs.rootPackageDir)
+            task.fileName.set(LockCopyTask.PACKAGE_LOCK)
+            task.onlyIf {
+                task.inputFile.getOrNull()?.exists() == true || task.additionalInputFiles.files.any { it.exists() }
             }
         }
 

@@ -7,10 +7,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileSystemOperations
-import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.file.*
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
@@ -25,8 +22,9 @@ abstract class LockCopyTask : DefaultTask() {
 
     @get:NormalizeLineEndings
     @get:InputFile
+    @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val inputFile: RegularFileProperty
+    abstract val inputFile: Property<File?>
 
     @get:NormalizeLineEndings
     @get:InputFiles
@@ -51,9 +49,12 @@ abstract class LockCopyTask : DefaultTask() {
     @TaskAction
     open fun copy() {
         fs.copy { copy ->
-            copy.from(inputFile) {
-                it.rename { fileName.get() }
+            inputFile.getOrNull()?.let { inputFile ->
+                copy.from(inputFile) {
+                    it.rename { fileName.get() }
+                }
             }
+
             copy.from(additionalInputFiles)
             copy.into(outputDirectory)
         }
@@ -84,10 +85,15 @@ abstract class LockStoreTask : LockCopyTask() {
     override fun copy() {
         val outputFile = outputDirectory.get().asFile.resolve(fileName.get())
 
+        val value = inputFile.get()
+        requireNotNull(value) {
+            "Input file $fileName should exist"
+        }
+
         val shouldReportMismatch = if (!outputFile.exists()) {
             reportNewLockFile.get()
         } else {
-            lockFileMismatchReport.get() != LockFileMismatchReport.NONE && !contentEquals(inputFile.get().asFile, outputFile)
+            lockFileMismatchReport.get() != LockFileMismatchReport.NONE && !contentEquals(value, outputFile)
         }
 
         // outputFile is updated only with auto replace or not existed, but we need delete all other files initially
