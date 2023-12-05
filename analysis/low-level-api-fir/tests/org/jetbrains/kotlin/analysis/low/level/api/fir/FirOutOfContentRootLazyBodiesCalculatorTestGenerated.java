@@ -136,6 +136,12 @@ public class FirOutOfContentRootLazyBodiesCalculatorTestGenerated extends Abstra
         }
 
         @Test
+        @TestMetadata("danglingConstrants.kt")
+        public void testDanglingConstrants() throws Exception {
+            runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/danglingConstrants.kt");
+        }
+
+        @Test
         @TestMetadata("dataClassWithAnnotations.kt")
         public void testDataClassWithAnnotations() throws Exception {
             runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/dataClassWithAnnotations.kt");
