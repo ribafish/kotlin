@@ -8,30 +8,9 @@
 #include "MarkAndSweepUtils.hpp"
 #include "GCStatistics.hpp"
 #include "Utils.hpp"
-
-// required to access gc thread data
 #include "GCImpl.hpp"
 
 using namespace kotlin;
-
-namespace {
-
-gc::mark::ConcurrentMark::ThreadData::FlushAction flushAction{};
-
-} // namespace
-
-mm::OncePerThreadAction<gc::mark::ConcurrentMark::ThreadData::FlushAction>::ThreadData&
-gc::mark::ConcurrentMark::ThreadData::FlushAction::getUtilityData(mm::ThreadData& threadData) {
-    return threadData.gc().impl().gc().mark().flushActionData_;
-}
-
-void gc::mark::ConcurrentMark::ThreadData::FlushAction::action(mm::ThreadData& threadData) noexcept {
-    auto& markData = threadData.gc().impl().gc().mark();
-    bool flushed = markData.markQueue()->forceFlush();
-    RuntimeAssert(flushed, "Don't know yet what to handle overflow");
-}
-
-gc::mark::ConcurrentMark::ThreadData::ThreadData(mm::ThreadData& base) : flushActionData_(flushAction, base) {}
 
 void gc::mark::ConcurrentMark::beginMarkingEpoch(gc::GCHandle gcHandle) {
     gcHandle_ = gcHandle;
@@ -63,9 +42,8 @@ void gc::mark::ConcurrentMark::runMainInSTW() {
     // global root set must be collected after all the mutator's global data have been published
     collectRootSetGlobals<MarkTraits>(gcHandle(), mainWorker);
 
-    barriers::enableMarkBarriers();
+    barriers::enableMarkBarriers(gcHandle().getEpoch());
 
-    // TODO move all the STW management in a single place
     resumeTheWorld(gcHandle());
 
     // build mark closure
@@ -74,14 +52,21 @@ void gc::mark::ConcurrentMark::runMainInSTW() {
     // TODO resume the world much later when the mark closure is completed
     stopTheWorld(gcHandle());
 
-    flushAction.ensurePerformed(*lockedMutatorsList_);
-
     barriers::disableMarkBarriers();
 
-    // TODO check if there is actually new work flushed
-    parallelProcessor_->undo();
-    // complete mark closure form newly found objects
-    parallelMark(mainWorker);
+    bool refsRemainInMutatorQueues = false;
+    do {
+        for (auto& mutator: *lockedMutatorsList_) {
+            bool markQueueNowEmpty = mutator.gc().impl().gc().mark().markQueue()->forceFlush();
+            if (!markQueueNowEmpty) {
+                refsRemainInMutatorQueues = true;
+            }
+        }
+
+        parallelProcessor_->undo();
+        // complete mark closure form newly found objects
+        parallelMark(mainWorker);
+    } while (refsRemainInMutatorQueues);
 }
 
 void gc::mark::ConcurrentMark::runOnMutator(mm::ThreadData&) {

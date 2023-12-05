@@ -64,19 +64,9 @@ public:
 
     class ThreadData : private Pinned {
     public:
-        class FlushAction : public mm::OncePerThreadAction<FlushAction> {
-        public:
-            static OncePerThreadAction::ThreadData& getUtilityData(mm::ThreadData& threadData);
-            static void action(mm::ThreadData& threadData) noexcept;
-        };
-
-        ThreadData(mm::ThreadData& base);
-
         auto& markQueue() noexcept { return markQueue_; }
-
     private:
         ManuallyScoped<mark::ConcurrentMark::MutatorQueue> markQueue_;
-        FlushAction::ThreadData flushActionData_;
     };
 
     void beginMarkingEpoch(gc::GCHandle gcHandle);

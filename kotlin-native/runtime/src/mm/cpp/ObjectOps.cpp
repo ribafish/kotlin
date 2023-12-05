@@ -22,9 +22,6 @@ OBJ_GETTER(mm::AllocateObject, ThreadData* threadData, const TypeInfo* typeInfo)
     threadData->gc().onAllocation(object);
     // Prevents unsafe class publication (see KT-58995).
     std::atomic_thread_fence(std::memory_order_release);
-#if __has_feature(thread_sanitizer)
-    __tsan_release(object);
-#endif
     RETURN_OBJ(object);
 }
 
@@ -35,8 +32,5 @@ OBJ_GETTER(mm::AllocateArray, ThreadData* threadData, const TypeInfo* typeInfo, 
     threadData->gc().onAllocation(array->obj());
     // Prevents unsafe class publication (see KT-58995).
     std::atomic_thread_fence(std::memory_order_release);
-#if __has_feature(thread_sanitizer)
-    __tsan_release(array->obj());
-#endif
     RETURN_OBJ(array->obj());
 }

@@ -87,11 +87,11 @@ void beforeHeapRefUpdateSlowPath(mm::DirectRefAccessor ref, ObjHeader* value) no
     auto prev = ref.loadAtomic(std::memory_order_consume);
     BarriersLogDebug(true, "Write *%p <- %p (%p overwritten)", ref.location(), value, prev);
     if (prev != nullptr) {
-#if __has_feature(thread_sanitizer)
-        // Tell TSAN, that we acquire here the object's memory,
-        // released previously on allocation with atomic_thread_fence and __tsan_release workaround.
-        __tsan_acquire(prev);
-#endif
+//#if __has_feature(thread_sanitizer)
+//        // Tell TSAN, that we acquire here the object's memory,
+//        // released previously on allocation with atomic_thread_fence and __tsan_release workaround.
+//        __tsan_acquire(prev);
+//#endif
         // FIXME Redundant if the destination object is black.
         //       Yet at the moment there is now efficient way to distinguish black and gray objects.
 

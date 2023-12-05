@@ -37,8 +37,7 @@ public:
         explicit ThreadData(ConcurrentMarkAndSweep& gc, mm::ThreadData& threadData) noexcept
             : gc_(gc)
             , threadData_(threadData)
-            , barriers_()
-            , mark_(threadData) {}
+            , barriers_() {}
 
         ~ThreadData() = default;
 
