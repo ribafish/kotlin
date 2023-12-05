@@ -27,7 +27,10 @@ void gc::mark::ConcurrentMark::endMarkingEpoch() {
 }
 
 void gc::mark::ConcurrentMark::runMainInSTW() {
-    RuntimeAssert(!compiler::gcMarkSingleThreaded(), "Not yet sure how this should work");
+    if (compiler::gcMarkSingleThreaded()) {
+        // TODO
+        GCLogWarning(gcHandle().getEpoch(), "Single threaded mark is not yet supported in CMS"); // because it's always single threaded, oder?
+    }
     ParallelProcessor::Worker mainWorker(*parallelProcessor_);
     GCLogDebug(gcHandle().getEpoch(), "Creating main (#0) mark worker");
 

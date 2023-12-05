@@ -202,6 +202,12 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                         "Mutators cooperation is not supported during single threaded mark")
             }
             false
+        } else if (gc == GC.CONCURRENT_MARK_AND_SWEEP) {
+            if (mutatorsCooperate == true) {
+                configuration.report(CompilerMessageSeverity.STRONG_WARNING,
+                        "Mutators cooperation is not yet supported in CMS GC")
+            }
+            false
         } else {
             mutatorsCooperate ?: true
         }
