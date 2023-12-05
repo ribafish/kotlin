@@ -659,13 +659,13 @@ class LightTreeRawFirDeclarationBuilder(
             buildAnonymousObjectExpression {
                 source = objectLiteral.toFirSourceElement()
                 anonymousObject = buildAnonymousObject {
-                    symbol = FirAnonymousObjectSymbol(context.packageFqName)
                     val objectDeclaration = objectLiteral.getChildNodesByType(OBJECT_DECLARATION).first()
                     source = objectDeclaration.toFirSourceElement()
                     origin = FirDeclarationOrigin.Source
                     moduleData = baseModuleData
                     classKind = ClassKind.CLASS
                     scopeProvider = baseScopeProvider
+                    symbol = FirAnonymousObjectSymbol(context.packageFqName)
                     status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
                     context.appendOuterTypeParameters(ignoreLastLevel = false, typeParameters)
                     val delegatedSelfType = objectLiteral.toDelegatedSelfType(this)
@@ -789,12 +789,12 @@ class LightTreeRawFirDeclarationBuilder(
                     val entrySource = enumEntry.toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
                     source = entrySource
                     anonymousObject = buildAnonymousObject {
-                        symbol = FirAnonymousObjectSymbol(context.packageFqName)
                         source = entrySource
                         moduleData = baseModuleData
                         origin = FirDeclarationOrigin.Source
                         classKind = ClassKind.ENUM_ENTRY
                         scopeProvider = baseScopeProvider
+                        symbol = FirAnonymousObjectSymbol(context.packageFqName)
                         status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
                         val enumClassWrapper = ClassWrapper(
                             modifiers,
@@ -837,7 +837,6 @@ class LightTreeRawFirDeclarationBuilder(
                     }
                 }
             }
-
         }.also {
             context.popContainerSymbol(it.symbol)
             it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag

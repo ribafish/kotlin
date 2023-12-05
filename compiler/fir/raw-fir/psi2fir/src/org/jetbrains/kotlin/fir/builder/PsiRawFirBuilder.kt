@@ -292,7 +292,6 @@ open class PsiRawFirBuilder(
                 diagnostic = ConeSyntaxDiagnostic(
                     if (this@toFirOrErrorType == null) "Incomplete code" else "Conversion failed"
                 )
-
                 this@toFirOrErrorType?.extractAnnotationsTo(this)
             }
 
@@ -1362,20 +1361,21 @@ open class PsiRawFirBuilder(
                             val enumEntrySource = toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
                             source = enumEntrySource
                             anonymousObject = buildAnonymousObject {
-                                symbol = FirAnonymousObjectSymbol(this@PsiRawFirBuilder.context.packageFqName)
                                 source = enumEntrySource
                                 moduleData = baseModuleData
                                 origin = FirDeclarationOrigin.Source
                                 classKind = ClassKind.ENUM_ENTRY
                                 scopeProvider = this@PsiRawFirBuilder.baseScopeProvider
+                                symbol = FirAnonymousObjectSymbol(this@PsiRawFirBuilder.context.packageFqName)
                                 status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
 
                                 val delegatedEntrySelfType = buildResolvedTypeRef {
-                                    type = ConeClassLikeTypeImpl(
-                                        this@buildAnonymousObject.symbol.toLookupTag(),
-                                        emptyArray(),
-                                        isNullable = false
-                                    )
+                                    type =
+                                        ConeClassLikeTypeImpl(
+                                            this@buildAnonymousObject.symbol.toLookupTag(),
+                                            emptyArray(),
+                                            isNullable = false
+                                        )
                                 }
                                 registerSelfType(delegatedEntrySelfType)
 
@@ -1591,14 +1591,13 @@ open class PsiRawFirBuilder(
                 buildAnonymousObjectExpression {
                     source = expression.toFirSourceElement()
                     anonymousObject = buildAnonymousObject {
-                        symbol = FirAnonymousObjectSymbol(context.packageFqName)
-
                         val objectDeclaration = expression.objectDeclaration
                         source = objectDeclaration.toFirSourceElement()
                         moduleData = baseModuleData
                         origin = FirDeclarationOrigin.Source
                         classKind = ClassKind.CLASS
                         scopeProvider = baseScopeProvider
+                        symbol = FirAnonymousObjectSymbol(context.packageFqName)
                         status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
                         context.appendOuterTypeParameters(ignoreLastLevel = false, typeParameters)
                         val delegatedSelfType = objectDeclaration.toDelegatedSelfType(this)
@@ -1807,12 +1806,12 @@ open class PsiRawFirBuilder(
 
             val target: FirFunctionTarget
             val anonymousFunction = buildAnonymousFunction {
-                symbol = FirAnonymousFunctionSymbol()
                 source = literalSource
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 returnTypeRef = FirImplicitTypeRefImplWithoutSource
                 receiverParameter = literalSource.asReceiverParameter()
+                symbol = FirAnonymousFunctionSymbol()
                 isLambda = true
                 hasExplicitParameterList = expression.functionLiteral.arrow != null
 
@@ -1902,7 +1901,6 @@ open class PsiRawFirBuilder(
             }.also {
                 bindFunctionTarget(target, it)
             }
-
             return buildAnonymousFunctionExpression {
                 source = expression.toKtPsiSourceElement()
                 this.anonymousFunction = anonymousFunction
