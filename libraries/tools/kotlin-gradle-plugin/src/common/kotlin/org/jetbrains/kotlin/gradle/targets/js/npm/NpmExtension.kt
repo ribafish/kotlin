@@ -53,6 +53,7 @@ open class NpmExtension(
     val lockFileName: org.gradle.api.provider.Property<String> = project.objects.property(String::class.java)
         .convention(LockCopyTask.PACKAGE_LOCK)
     val lockFileDirectory: DirectoryProperty = project.objects.directoryProperty()
+        .convention(project.layout.projectDirectory.dir(LockCopyTask.KOTLIN_JS_STORE))
 
     val ignoreScripts: org.gradle.api.provider.Property<Boolean> = project.objects.property(Boolean::class.java)
         .convention(true)
