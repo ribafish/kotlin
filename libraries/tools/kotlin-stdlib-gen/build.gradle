@@ -1,9 +1,17 @@
-apply plugin: 'kotlin'
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+
+def copyCopyrightProfile = tasks.register("copyCopyrightProfile", Copy) {
+    from "$rootDir/.idea/copyright"
+    into "$buildDir/copyright"
+    include 'apache.xml'
+}
 
 sourceSets {
     main {
         kotlin.srcDir 'src'
-        resources.srcDir "$buildDir/copyright"
+        resources.srcDir(copyCopyrightProfile)
     }
 }
 
@@ -16,16 +24,6 @@ compileKotlin {
     kotlinOptions {
         freeCompilerArgs = ["-version", "-Xdont-warn-on-error-suppression"]
     }
-}
-
-tasks.register("copyCopyrightProfile", Copy) {
-    from "$rootDir/.idea/copyright"
-    into "$buildDir/copyright"
-    include 'apache.xml'
-}
-
-processResources {
-    dependsOn(copyCopyrightProfile)
 }
 
 tasks.register("run", JavaExec) {
