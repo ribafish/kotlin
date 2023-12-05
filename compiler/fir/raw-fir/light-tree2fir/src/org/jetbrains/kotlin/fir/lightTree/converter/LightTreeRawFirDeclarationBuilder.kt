@@ -754,91 +754,90 @@ class LightTreeRawFirDeclarationBuilder(
         val containingClassIsExpectClass = classWrapper.hasExpect() || context.containerIsExpect
         return buildEnumEntry {
             symbol = FirEnumEntrySymbol(CallableId(context.currentClassId, enumEntryName))
-            context.pushContainerSymbol(symbol)
-
-            enumEntry.forEachChildren {
-                when (it.tokenType) {
-                    MODIFIER_LIST -> modifiers = convertModifierList(it)
-                    INITIALIZER_LIST -> {
-                        enumSuperTypeCallEntry += convertInitializerList(it)
-                        it.getChildNodeByType(SUPER_TYPE_CALL_ENTRY)?.let { superTypeCall ->
-                            superTypeCallEntry = superTypeCall
+            withContainerSymbol(symbol) {
+                enumEntry.forEachChildren {
+                    when (it.tokenType) {
+                        MODIFIER_LIST -> modifiers = convertModifierList(it)
+                        INITIALIZER_LIST -> {
+                            enumSuperTypeCallEntry += convertInitializerList(it)
+                            it.getChildNodeByType(SUPER_TYPE_CALL_ENTRY)?.let { superTypeCall ->
+                                superTypeCallEntry = superTypeCall
+                            }
                         }
+                        CLASS_BODY -> classBodyNode = it
                     }
-                    CLASS_BODY -> classBodyNode = it
                 }
-            }
 
-            source = enumEntry.toFirSourceElement()
-            moduleData = baseModuleData
-            origin = FirDeclarationOrigin.Source
-            returnTypeRef = classWrapper.delegatedSelfTypeRef
-            name = enumEntryName
-            status = FirDeclarationStatusImpl(Visibilities.Public, Modality.FINAL).apply {
-                isStatic = true
-                isExpect = containingClassIsExpectClass
-            }
-            if (classWrapper.hasDefaultConstructor && enumEntry.getChildNodeByType(INITIALIZER_LIST) == null &&
-                modifiers.annotations.isEmpty() && classBodyNode == null
-            ) {
-                return@buildEnumEntry
-            }
-            annotations += modifiers.annotations
-            initializer = withChildClassName(enumEntryName, isExpect = false) {
-                buildAnonymousObjectExpression {
-                    val entrySource = enumEntry.toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
-                    source = entrySource
-                    anonymousObject = buildAnonymousObject {
+                source = enumEntry.toFirSourceElement()
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                returnTypeRef = classWrapper.delegatedSelfTypeRef
+                name = enumEntryName
+                status = FirDeclarationStatusImpl(Visibilities.Public, Modality.FINAL).apply {
+                    isStatic = true
+                    isExpect = containingClassIsExpectClass
+                }
+                if (classWrapper.hasDefaultConstructor && enumEntry.getChildNodeByType(INITIALIZER_LIST) == null &&
+                    modifiers.annotations.isEmpty() && classBodyNode == null
+                ) {
+                    return@buildEnumEntry
+                }
+                annotations += modifiers.annotations
+                initializer = withChildClassName(enumEntryName, isExpect = false) {
+                    buildAnonymousObjectExpression {
+                        val entrySource = enumEntry.toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
                         source = entrySource
-                        moduleData = baseModuleData
-                        origin = FirDeclarationOrigin.Source
-                        classKind = ClassKind.ENUM_ENTRY
-                        scopeProvider = baseScopeProvider
-                        symbol = FirAnonymousObjectSymbol(context.packageFqName)
-                        status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
-                        val enumClassWrapper = ClassWrapper(
-                            modifiers,
-                            ClassKind.ENUM_ENTRY,
-                            this,
-                            hasSecondaryConstructor = classBodyNode.getChildNodesByType(SECONDARY_CONSTRUCTOR).isNotEmpty(),
-                            hasDefaultConstructor = false,
-                            delegatedSelfTypeRef = buildResolvedTypeRef {
-                                type = ConeClassLikeTypeImpl(
-                                    this@buildAnonymousObject.symbol.toLookupTag(),
-                                    ConeTypeProjection.EMPTY_ARRAY,
-                                    isNullable = false
-                                )
-                            }.also { registerSelfType(it) },
-                            delegatedSuperTypeRef = classWrapper.delegatedSelfTypeRef,
-                            delegatedSuperCalls = listOf(
-                                DelegatedConstructorWrapper(
-                                    classWrapper.delegatedSelfTypeRef,
-                                    enumSuperTypeCallEntry,
-                                    superTypeCallEntry?.toFirSourceElement(),
+                        anonymousObject = buildAnonymousObject {
+                            source = entrySource
+                            moduleData = baseModuleData
+                            origin = FirDeclarationOrigin.Source
+                            classKind = ClassKind.ENUM_ENTRY
+                            scopeProvider = baseScopeProvider
+                            symbol = FirAnonymousObjectSymbol(context.packageFqName)
+                            status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+                            val enumClassWrapper = ClassWrapper(
+                                modifiers,
+                                ClassKind.ENUM_ENTRY,
+                                this,
+                                hasSecondaryConstructor = classBodyNode.getChildNodesByType(SECONDARY_CONSTRUCTOR).isNotEmpty(),
+                                hasDefaultConstructor = false,
+                                delegatedSelfTypeRef = buildResolvedTypeRef {
+                                    type = ConeClassLikeTypeImpl(
+                                        this@buildAnonymousObject.symbol.toLookupTag(),
+                                        ConeTypeProjection.EMPTY_ARRAY,
+                                        isNullable = false
+                                    )
+                                }.also { registerSelfType(it) },
+                                delegatedSuperTypeRef = classWrapper.delegatedSelfTypeRef,
+                                delegatedSuperCalls = listOf(
+                                    DelegatedConstructorWrapper(
+                                        classWrapper.delegatedSelfTypeRef,
+                                        enumSuperTypeCallEntry,
+                                        superTypeCallEntry?.toFirSourceElement(),
+                                    )
                                 )
                             )
-                        )
-                        superTypeRefs += enumClassWrapper.delegatedSuperTypeRef
-                        convertPrimaryConstructor(
-                            enumEntry,
-                            null,
-                            enumEntry.toFirSourceElement(),
-                            enumClassWrapper,
-                            superTypeCallEntry?.toFirSourceElement(),
-                            isEnumEntry = true,
-                            containingClassIsExpectClass = containingClassIsExpectClass
-                        )?.let { declarations += it.firConstructor }
-                        classBodyNode?.also {
-                            // Use ANONYMOUS_OBJECT_NAME for the owner class id of enum entry declarations
-                            withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
-                                declarations += convertClassBody(it, enumClassWrapper)
+                            superTypeRefs += enumClassWrapper.delegatedSuperTypeRef
+                            convertPrimaryConstructor(
+                                enumEntry,
+                                null,
+                                enumEntry.toFirSourceElement(),
+                                enumClassWrapper,
+                                superTypeCallEntry?.toFirSourceElement(),
+                                isEnumEntry = true,
+                                containingClassIsExpectClass = containingClassIsExpectClass
+                            )?.let { declarations += it.firConstructor }
+                            classBodyNode?.also {
+                                // Use ANONYMOUS_OBJECT_NAME for the owner class id of enum entry declarations
+                                withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
+                                    declarations += convertClassBody(it, enumClassWrapper)
+                                }
                             }
                         }
                     }
                 }
             }
         }.also {
-            context.popContainerSymbol(it.symbol)
             it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
         }
     }
@@ -922,106 +921,110 @@ class LightTreeRawFirDeclarationBuilder(
         }
 
         val constructorSymbol = FirConstructorSymbol(callableIdForClassConstructor())
-        context.pushContainerSymbol(constructorSymbol)
-
-        var modifiersIfPresent: Modifier? = null
-        val valueParameters = mutableListOf<ValueParameter>()
-        var hasConstructorKeyword = false
-        primaryConstructor?.forEachChildren {
-            when (it.tokenType) {
-                MODIFIER_LIST -> modifiersIfPresent = convertModifierList(it)
-                CONSTRUCTOR_KEYWORD -> hasConstructorKeyword = true
-                VALUE_PARAMETER_LIST -> valueParameters += convertValueParameters(it, constructorSymbol, ValueParameterDeclaration.PRIMARY_CONSTRUCTOR)
+        withContainerSymbol(constructorSymbol) {
+            var modifiersIfPresent: Modifier? = null
+            val valueParameters = mutableListOf<ValueParameter>()
+            var hasConstructorKeyword = false
+            primaryConstructor?.forEachChildren {
+                when (it.tokenType) {
+                    MODIFIER_LIST -> modifiersIfPresent = convertModifierList(it)
+                    CONSTRUCTOR_KEYWORD -> hasConstructorKeyword = true
+                    VALUE_PARAMETER_LIST -> valueParameters += convertValueParameters(
+                        it,
+                        constructorSymbol,
+                        ValueParameterDeclaration.PRIMARY_CONSTRUCTOR
+                    )
+                }
             }
-        }
-        val modifiers = modifiersIfPresent ?: Modifier()
 
-        val defaultVisibility = classWrapper.defaultConstructorVisibility()
-        val firDelegatedCall = runUnless(containingClassIsExpectClass || isKotlinAny) {
-            fun createDelegatedConstructorCall(
-                delegatedConstructorSource: KtLightSourceElement?,
-                delegatedSuperTypeRef: FirTypeRef,
-                arguments: List<FirExpression>,
-            ): FirDelegatedConstructorCall {
-                return buildDelegatedConstructorCall {
-                    source = delegatedConstructorSource
-                        ?: primaryConstructor?.toFirSourceElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                                ?: selfTypeSource?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                    constructedTypeRef = delegatedSuperTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
-                    isThis = false
-                    calleeReference = buildExplicitSuperReference {
-                        //[dirty] in case of enum classWrapper.delegatedSuperTypeRef.source is whole enum source
-                        source = if (!isEnumEntry) {
-                            classWrapper.delegatedSuperTypeRef.source?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                                ?: this@buildDelegatedConstructorCall.source?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                        } else {
-                            delegatedConstructorSource
-                                ?.lighterASTNode
-                                ?.getChildNodeByType(CONSTRUCTOR_CALLEE)
-                                ?.toFirSourceElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                                ?: this@buildDelegatedConstructorCall.source
+            val modifiers = modifiersIfPresent ?: Modifier()
+
+            val defaultVisibility = classWrapper.defaultConstructorVisibility()
+            val firDelegatedCall = runUnless(containingClassIsExpectClass || isKotlinAny) {
+                fun createDelegatedConstructorCall(
+                    delegatedConstructorSource: KtLightSourceElement?,
+                    delegatedSuperTypeRef: FirTypeRef,
+                    arguments: List<FirExpression>,
+                ): FirDelegatedConstructorCall {
+                    return buildDelegatedConstructorCall {
+                        source = delegatedConstructorSource
+                            ?: primaryConstructor?.toFirSourceElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                                    ?: selfTypeSource?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                        constructedTypeRef = delegatedSuperTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
+                        isThis = false
+                        calleeReference = buildExplicitSuperReference {
+                            //[dirty] in case of enum classWrapper.delegatedSuperTypeRef.source is whole enum source
+                            source = if (!isEnumEntry) {
+                                classWrapper.delegatedSuperTypeRef.source?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                                    ?: this@buildDelegatedConstructorCall.source?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                            } else {
+                                delegatedConstructorSource
+                                    ?.lighterASTNode
+                                    ?.getChildNodeByType(CONSTRUCTOR_CALLEE)
+                                    ?.toFirSourceElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                                    ?: this@buildDelegatedConstructorCall.source
+                            }
+
+                            superTypeRef = this@buildDelegatedConstructorCall.constructedTypeRef
                         }
-
-                        superTypeRef = this@buildDelegatedConstructorCall.constructedTypeRef
+                        extractArgumentsFrom(arguments)
                     }
-                    extractArgumentsFrom(arguments)
                 }
-            }
-            if (classWrapper.delegatedSuperCalls.size <= 1) {
-                createDelegatedConstructorCall(
-                    delegatedConstructorSource,
-                    classWrapper.delegatedSuperTypeRef,
-                    classWrapper.delegatedSuperCalls.lastOrNull()?.arguments ?: emptyList(),
-                )
-            } else {
-                buildMultiDelegatedConstructorCall {
-                    classWrapper.delegatedSuperCalls.mapTo(delegatedConstructorCalls) { (delegatedSuperTypeRef, arguments, source) ->
-                        createDelegatedConstructorCall(source, delegatedSuperTypeRef, arguments)
+                if (classWrapper.delegatedSuperCalls.size <= 1) {
+                    createDelegatedConstructorCall(
+                        delegatedConstructorSource,
+                        classWrapper.delegatedSuperTypeRef,
+                        classWrapper.delegatedSuperCalls.lastOrNull()?.arguments ?: emptyList(),
+                    )
+                } else {
+                    buildMultiDelegatedConstructorCall {
+                        classWrapper.delegatedSuperCalls.mapTo(delegatedConstructorCalls) { (delegatedSuperTypeRef, arguments, source) ->
+                            createDelegatedConstructorCall(source, delegatedSuperTypeRef, arguments)
+                        }
                     }
                 }
             }
-        }
 
-        val explicitVisibility = runIf(primaryConstructor != null) {
-            modifiers.getVisibility().takeUnless { it == Visibilities.Unknown }
-        }
-        val status = FirDeclarationStatusImpl(explicitVisibility ?: defaultVisibility, Modality.FINAL).apply {
-            isExpect = modifiers.hasExpect() || context.containerIsExpect
-            isActual = modifiers.hasActual() || isImplicitlyActual
-            isInner = classWrapper.isInner()
-            isFromSealedClass = classWrapper.isSealed() && explicitVisibility !== Visibilities.Private
-            isFromEnumClass = classWrapper.isEnum()
-        }
+            val explicitVisibility = runIf(primaryConstructor != null) {
+                modifiers.getVisibility().takeUnless { it == Visibilities.Unknown }
+            }
+            val status = FirDeclarationStatusImpl(explicitVisibility ?: defaultVisibility, Modality.FINAL).apply {
+                isExpect = modifiers.hasExpect() || context.containerIsExpect
+                isActual = modifiers.hasActual() || isImplicitlyActual
+                isInner = classWrapper.isInner()
+                isFromSealedClass = classWrapper.isSealed() && explicitVisibility !== Visibilities.Private
+                isFromEnumClass = classWrapper.isEnum()
+            }
 
-        val builder = when {
-            modifiersIfPresent != null && !hasConstructorKeyword -> createErrorConstructorBuilder(ConeMissingConstructorKeyword)
-            isErrorConstructor -> createErrorConstructorBuilder(ConeNoConstructorError)
-            else -> FirPrimaryConstructorBuilder()
-        }
-        builder.apply {
-            source = primaryConstructor?.toFirSourceElement()
-                ?: selfTypeSource?.fakeElement(KtFakeSourceElementKind.ImplicitConstructor)
-            moduleData = baseModuleData
-            origin = FirDeclarationOrigin.Source
-            returnTypeRef = classWrapper.delegatedSelfTypeRef
-            dispatchReceiverType = classWrapper.obtainDispatchReceiverForConstructor()
-            this.status = status
-            symbol = constructorSymbol
-            annotations += modifiers.annotations
-            typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
-            this.valueParameters += valueParameters.map { it.firValueParameter }
-            delegatedConstructor = firDelegatedCall
-            this.body = null
-            this.contextReceivers.addAll(convertContextReceivers(classNode))
-        }
+            val builder = when {
+                modifiersIfPresent != null && !hasConstructorKeyword -> createErrorConstructorBuilder(ConeMissingConstructorKeyword)
+                isErrorConstructor -> createErrorConstructorBuilder(ConeNoConstructorError)
+                else -> FirPrimaryConstructorBuilder()
+            }
+            builder.apply {
+                source = primaryConstructor?.toFirSourceElement()
+                    ?: selfTypeSource?.fakeElement(KtFakeSourceElementKind.ImplicitConstructor)
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                returnTypeRef = classWrapper.delegatedSelfTypeRef
+                dispatchReceiverType = classWrapper.obtainDispatchReceiverForConstructor()
+                this.status = status
+                symbol = constructorSymbol
+                annotations += modifiers.annotations
+                typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
+                this.valueParameters += valueParameters.map { it.firValueParameter }
+                delegatedConstructor = firDelegatedCall
+                this.body = null
+                this.contextReceivers.addAll(convertContextReceivers(classNode))
+            }
 
-        context.popContainerSymbol(constructorSymbol)
-        return PrimaryConstructor(
-            builder.build().apply {
-                containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
-            },
-            valueParameters,
-        )
+            return PrimaryConstructor(
+                builder.build().apply {
+                    containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
+                },
+                valueParameters,
+            )
+        }
     }
 
     /**
@@ -1030,28 +1033,27 @@ class LightTreeRawFirDeclarationBuilder(
      */
     private fun convertAnonymousInitializer(anonymousInitializer: LighterASTNode): FirDeclaration {
         val initializerSymbol = FirAnonymousInitializerSymbol()
-        context.pushContainerSymbol(initializerSymbol)
-
-        var firBlock: FirBlock? = null
-        var modifiers = Modifier()
-        anonymousInitializer.forEachChildren {
-            when (it.tokenType) {
-                MODIFIER_LIST -> modifiers = convertModifierList(it, isInClass = true)
-                BLOCK -> withForcedLocalContext {
-                    firBlock = convertBlock(it)
+        withContainerSymbol(initializerSymbol) {
+            var firBlock: FirBlock? = null
+            var modifiers = Modifier()
+            anonymousInitializer.forEachChildren {
+                when (it.tokenType) {
+                    MODIFIER_LIST -> modifiers = convertModifierList(it, isInClass = true)
+                    BLOCK -> withForcedLocalContext {
+                        firBlock = convertBlock(it)
+                    }
                 }
             }
-        }
 
-        return buildAnonymousInitializer {
-            symbol = initializerSymbol
-            source = anonymousInitializer.toFirSourceElement()
-            moduleData = baseModuleData
-            origin = FirDeclarationOrigin.Source
-            body = firBlock ?: buildEmptyExpressionBlock()
-            dispatchReceiverType = context.dispatchReceiverTypesStack.lastOrNull()
-            annotations += modifiers.annotations
-            context.popContainerSymbol(initializerSymbol)
+            return buildAnonymousInitializer {
+                symbol = initializerSymbol
+                source = anonymousInitializer.toFirSourceElement()
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                body = firBlock ?: buildEmptyExpressionBlock()
+                dispatchReceiverType = context.dispatchReceiverTypesStack.lastOrNull()
+                annotations += modifiers.annotations
+            }
         }
     }
 
@@ -1065,54 +1067,57 @@ class LightTreeRawFirDeclarationBuilder(
         var block: LighterASTNode? = null
 
         val constructorSymbol = FirConstructorSymbol(callableIdForClassConstructor())
-        context.pushContainerSymbol(constructorSymbol)
-
-        secondaryConstructor.forEachChildren {
-            when (it.tokenType) {
-                MODIFIER_LIST -> modifiers = convertModifierList(it)
-                VALUE_PARAMETER_LIST -> firValueParameters += convertValueParameters(it, constructorSymbol, ValueParameterDeclaration.FUNCTION)
-                CONSTRUCTOR_DELEGATION_CALL -> constructorDelegationCall = convertConstructorDelegationCall(it, classWrapper)
-                BLOCK -> block = it
+        withContainerSymbol(constructorSymbol) {
+            secondaryConstructor.forEachChildren {
+                when (it.tokenType) {
+                    MODIFIER_LIST -> modifiers = convertModifierList(it)
+                    VALUE_PARAMETER_LIST -> firValueParameters += convertValueParameters(
+                        it,
+                        constructorSymbol,
+                        ValueParameterDeclaration.FUNCTION
+                    )
+                    CONSTRUCTOR_DELEGATION_CALL -> constructorDelegationCall = convertConstructorDelegationCall(it, classWrapper)
+                    BLOCK -> block = it
+                }
             }
-        }
 
-        val delegatedSelfTypeRef = classWrapper.delegatedSelfTypeRef
+            val delegatedSelfTypeRef = classWrapper.delegatedSelfTypeRef
 
-        val explicitVisibility = modifiers.getVisibility()
-        val status = FirDeclarationStatusImpl(explicitVisibility, Modality.FINAL).apply {
-            isExpect = modifiers.hasExpect() || context.containerIsExpect
-            isActual = modifiers.hasActual()
-            isInner = classWrapper.isInner()
-            isFromSealedClass = classWrapper.isSealed() && explicitVisibility !== Visibilities.Private
-            isFromEnumClass = classWrapper.isEnum()
-        }
-
-        val target = FirFunctionTarget(labelName = null, isLambda = false)
-        return buildConstructor {
-            source = secondaryConstructor.toFirSourceElement()
-            moduleData = baseModuleData
-            origin = FirDeclarationOrigin.Source
-            returnTypeRef = delegatedSelfTypeRef
-            dispatchReceiverType = classWrapper.obtainDispatchReceiverForConstructor()
-            this.status = status
-            symbol = constructorSymbol
-            delegatedConstructor = constructorDelegationCall
-
-            context.firFunctionTargets += target
-            annotations += modifiers.annotations
-            typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
-            valueParameters += firValueParameters.map { it.firValueParameter }
-            val (body, contractDescription) = withForcedLocalContext {
-                convertFunctionBody(block, null, allowLegacyContractDescription = true)
+            val explicitVisibility = modifiers.getVisibility()
+            val status = FirDeclarationStatusImpl(explicitVisibility, Modality.FINAL).apply {
+                isExpect = modifiers.hasExpect() || context.containerIsExpect
+                isActual = modifiers.hasActual()
+                isInner = classWrapper.isInner()
+                isFromSealedClass = classWrapper.isSealed() && explicitVisibility !== Visibilities.Private
+                isFromEnumClass = classWrapper.isEnum()
             }
-            this.body = body
-            contractDescription?.let { this.contractDescription = it }
-            context.firFunctionTargets.removeLast()
-            this.contextReceivers.addAll(convertContextReceivers(secondaryConstructor.getParent()!!.getParent()!!))
-        }.also {
-            it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
-            target.bind(it)
-            context.popContainerSymbol(constructorSymbol)
+
+            val target = FirFunctionTarget(labelName = null, isLambda = false)
+            return buildConstructor {
+                source = secondaryConstructor.toFirSourceElement()
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                returnTypeRef = delegatedSelfTypeRef
+                dispatchReceiverType = classWrapper.obtainDispatchReceiverForConstructor()
+                this.status = status
+                symbol = constructorSymbol
+                delegatedConstructor = constructorDelegationCall
+
+                context.firFunctionTargets += target
+                annotations += modifiers.annotations
+                typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
+                valueParameters += firValueParameters.map { it.firValueParameter }
+                val (body, contractDescription) = withForcedLocalContext {
+                    convertFunctionBody(block, null, allowLegacyContractDescription = true)
+                }
+                this.body = body
+                contractDescription?.let { this.contractDescription = it }
+                context.firFunctionTargets.removeLast()
+                this.contextReceivers.addAll(convertContextReceivers(secondaryConstructor.getParent()!!.getParent()!!))
+            }.also {
+                it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
+                target.bind(it)
+            }
         }
     }
 
@@ -1190,37 +1195,40 @@ class LightTreeRawFirDeclarationBuilder(
         val typeAliasIsExpect = modifiers.hasExpect() || context.containerIsExpect
         return withChildClassName(typeAliasName, isExpect = typeAliasIsExpect) {
             val typeAliasSymbol = FirTypeAliasSymbol(context.currentClassId)
-            context.pushContainerSymbol(typeAliasSymbol)
-            typeAlias.forEachChildren {
-                when (it.tokenType) {
-                    MODIFIER_LIST -> modifiers = convertModifierList(it)
-                    TYPE_REFERENCE -> firType = convertType(it)
+            withContainerSymbol(typeAliasSymbol) {
+                typeAlias.forEachChildren {
+                    when (it.tokenType) {
+                        MODIFIER_LIST -> modifiers = convertModifierList(it)
+                        TYPE_REFERENCE -> firType = convertType(it)
+                    }
                 }
-            }
 
-            val firTypeParameters = mutableListOf<FirTypeParameter>()
-            typeAlias.forEachChildren {
-                if (it.tokenType == TYPE_PARAMETER_LIST) {
-                    firTypeParameters += convertTypeParameters(it, emptyList(), typeAliasSymbol)
+                val firTypeParameters = mutableListOf<FirTypeParameter>()
+                typeAlias.forEachChildren {
+                    if (it.tokenType == TYPE_PARAMETER_LIST) {
+                        firTypeParameters += convertTypeParameters(it, emptyList(), typeAliasSymbol)
+                    }
                 }
-            }
 
-            buildTypeAlias {
-                source = typeAlias.toFirSourceElement()
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                name = typeAliasName
-                val isLocal = context.inLocalContext
-                status = FirDeclarationStatusImpl(if (isLocal) Visibilities.Local else modifiers.getVisibility(), Modality.FINAL).apply {
-                    isExpect = typeAliasIsExpect
-                    isActual = modifiers.hasActual()
+                buildTypeAlias {
+                    source = typeAlias.toFirSourceElement()
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    name = typeAliasName
+                    val isLocal = context.inLocalContext
+                    status = FirDeclarationStatusImpl(
+                        if (isLocal) Visibilities.Local else modifiers.getVisibility(),
+                        Modality.FINAL,
+                    ).apply {
+                        isExpect = typeAliasIsExpect
+                        isActual = modifiers.hasActual()
+                    }
+
+                    symbol = typeAliasSymbol
+                    expandedTypeRef = firType
+                    annotations += modifiers.annotations
+                    typeParameters += firTypeParameters
                 }
-                symbol = typeAliasSymbol
-                expandedTypeRef = firType
-                annotations += modifiers.annotations
-                typeParameters += firTypeParameters
-
-                context.popContainerSymbol(typeAliasSymbol)
             }
         }
     }

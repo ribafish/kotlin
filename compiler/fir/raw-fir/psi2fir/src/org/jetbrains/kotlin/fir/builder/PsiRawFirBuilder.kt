@@ -712,84 +712,82 @@ open class PsiRawFirBuilder(
 
             val propertyName = nameAsSafeName
             val propertySymbol = FirPropertySymbol(callableIdForName(propertyName))
-            this@PsiRawFirBuilder.context.pushContainerSymbol(propertySymbol)
+            withContainerSymbol(propertySymbol) {
+                val propertySource = toFirSourceElement(KtFakeSourceElementKind.PropertyFromParameter)
+                val parameterAnnotations = mutableListOf<FirAnnotationCall>()
+                for (annotationEntry in annotationEntries) {
+                    parameterAnnotations += annotationEntry.convert<FirAnnotationCall>()
+                }
 
-            val propertySource = toFirSourceElement(KtFakeSourceElementKind.PropertyFromParameter)
-            val parameterAnnotations = mutableListOf<FirAnnotationCall>()
-            for (annotationEntry in annotationEntries) {
-                parameterAnnotations += annotationEntry.convert<FirAnnotationCall>()
-            }
-
-            return buildProperty {
-                source = propertySource
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = firParameter.returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.PropertyFromParameter)
-                name = propertyName
-                initializer = buildPropertyAccessExpression {
+                return buildProperty {
                     source = propertySource
-                    calleeReference = buildPropertyFromParameterResolvedNamedReference {
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = firParameter.returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.PropertyFromParameter)
+                    name = propertyName
+                    initializer = buildPropertyAccessExpression {
                         source = propertySource
-                        name = propertyName
-                        resolvedSymbol = firParameter.symbol
+                        calleeReference = buildPropertyFromParameterResolvedNamedReference {
+                            source = propertySource
+                            name = propertyName
+                            resolvedSymbol = firParameter.symbol
+                        }
                     }
-                }
-                isVar = isMutable
-                symbol = propertySymbol
-                isLocal = false
-                val defaultAccessorSource = propertySource.fakeElement(KtFakeSourceElementKind.DefaultAccessor)
-                backingField = FirDefaultPropertyBackingField(
-                    moduleData = baseModuleData,
-                    origin = FirDeclarationOrigin.Source,
-                    source = defaultAccessorSource,
-                    annotations = parameterAnnotations.filter {
-                        it.useSiteTarget == FIELD || it.useSiteTarget == PROPERTY_DELEGATE_FIELD
-                    }.toMutableList(),
-                    returnTypeRef = returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
-                    isVar = isVar,
-                    propertySymbol = symbol,
-                    status = status.copy(isLateInit = false),
-                )
+                    isVar = isMutable
+                    symbol = propertySymbol
+                    isLocal = false
+                    val defaultAccessorSource = propertySource.fakeElement(KtFakeSourceElementKind.DefaultAccessor)
+                    backingField = FirDefaultPropertyBackingField(
+                        moduleData = baseModuleData,
+                        origin = FirDeclarationOrigin.Source,
+                        source = defaultAccessorSource,
+                        annotations = parameterAnnotations.filter {
+                            it.useSiteTarget == FIELD || it.useSiteTarget == PROPERTY_DELEGATE_FIELD
+                        }.toMutableList(),
+                        returnTypeRef = returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
+                        isVar = isVar,
+                        propertySymbol = symbol,
+                        status = status.copy(isLateInit = false),
+                    )
 
-                this.status = status
-                getter = FirDefaultPropertyGetter(
-                    defaultAccessorSource,
-                    baseModuleData,
-                    FirDeclarationOrigin.Source,
-                    returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
-                    visibility,
-                    symbol,
-                    isInline = hasModifier(INLINE_KEYWORD),
-                ).also { getter ->
-                    getter.initContainingClassAttr()
-                    getter.replaceAnnotations(parameterAnnotations.filterUseSiteTarget(PROPERTY_GETTER))
-                }
-                setter = if (isMutable) FirDefaultPropertySetter(
-                    defaultAccessorSource,
-                    baseModuleData,
-                    FirDeclarationOrigin.Source,
-                    returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
-                    visibility,
-                    symbol,
-                    parameterAnnotations = parameterAnnotations.filterUseSiteTarget(SETTER_PARAMETER),
-                    isInline = hasModifier(INLINE_KEYWORD),
-                ).also { setter ->
-                    setter.initContainingClassAttr()
-                    setter.replaceAnnotations(parameterAnnotations.filterUseSiteTarget(PROPERTY_SETTER))
-                } else null
-                annotations += parameterAnnotations.filter {
-                    it.useSiteTarget == null || it.useSiteTarget == PROPERTY
-                }
+                    this.status = status
+                    getter = FirDefaultPropertyGetter(
+                        defaultAccessorSource,
+                        baseModuleData,
+                        FirDeclarationOrigin.Source,
+                        returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
+                        visibility,
+                        symbol,
+                        isInline = hasModifier(INLINE_KEYWORD),
+                    ).also { getter ->
+                        getter.initContainingClassAttr()
+                        getter.replaceAnnotations(parameterAnnotations.filterUseSiteTarget(PROPERTY_GETTER))
+                    }
+                    setter = if (isMutable) FirDefaultPropertySetter(
+                        defaultAccessorSource,
+                        baseModuleData,
+                        FirDeclarationOrigin.Source,
+                        returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
+                        visibility,
+                        symbol,
+                        parameterAnnotations = parameterAnnotations.filterUseSiteTarget(SETTER_PARAMETER),
+                        isInline = hasModifier(INLINE_KEYWORD),
+                    ).also { setter ->
+                        setter.initContainingClassAttr()
+                        setter.replaceAnnotations(parameterAnnotations.filterUseSiteTarget(PROPERTY_SETTER))
+                    } else null
+                    annotations += parameterAnnotations.filter {
+                        it.useSiteTarget == null || it.useSiteTarget == PROPERTY
+                    }
 
-                dispatchReceiverType = currentDispatchReceiverType()
-            }.apply {
-                if (firParameter.isVararg) {
-                    isFromVararg = true
+                    dispatchReceiverType = currentDispatchReceiverType()
+                }.apply {
+                    if (firParameter.isVararg) {
+                        isFromVararg = true
+                    }
+                    firParameter.correspondingProperty = this
+                    fromPrimaryConstructor = true
                 }
-                firParameter.correspondingProperty = this
-                fromPrimaryConstructor = true
-
-                this@PsiRawFirBuilder.context.popContainerSymbol(propertySymbol)
             }
         }
 
@@ -1087,89 +1085,92 @@ open class PsiRawFirBuilder(
             isKotlinAny: Boolean = false,
         ): FirConstructor {
             val constructorSymbol = FirConstructorSymbol(callableIdForClassConstructor())
-            context.pushContainerSymbol(constructorSymbol)
+            withContainerSymbol(constructorSymbol) {
+                val constructorSource = this?.toFirSourceElement()
+                    ?: owner.toKtPsiSourceElement(KtFakeSourceElementKind.ImplicitConstructor)
 
-            val constructorSource = this?.toFirSourceElement()
-                ?: owner.toKtPsiSourceElement(KtFakeSourceElementKind.ImplicitConstructor)
-
-            fun buildDelegatedCall(superTypeCallEntry: KtSuperTypeCallEntry?, delegatedTypeRef: FirTypeRef): FirDelegatedConstructorCall? {
-                val constructorCall = superTypeCallEntry?.toFirSourceElement()
-                val constructedTypeRef = if (copyConstructedTypeRefWithImplicitSource) {
-                    delegatedTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
-                } else {
-                    delegatedTypeRef
-                }
-                return buildOrLazyDelegatedConstructorCall(isThis = false, constructedTypeRef) {
-                    buildDelegatedConstructorCall {
-                        source = constructorCall ?: constructorSource.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                        this.constructedTypeRef = constructedTypeRef
-                        isThis = false
-                        calleeReference = buildExplicitSuperReference {
-                            source =
-                                superTypeCallEntry?.calleeExpression?.toFirSourceElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                                    ?: this@buildDelegatedConstructorCall.source?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
-                            superTypeRef = this@buildDelegatedConstructorCall.constructedTypeRef
-                        }
-                        superTypeCallEntry?.extractArgumentsTo(this)
+                fun buildDelegatedCall(
+                    superTypeCallEntry: KtSuperTypeCallEntry?,
+                    delegatedTypeRef: FirTypeRef,
+                ): FirDelegatedConstructorCall? {
+                    val constructorCall = superTypeCallEntry?.toFirSourceElement()
+                    val constructedTypeRef = if (copyConstructedTypeRefWithImplicitSource) {
+                        delegatedTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
+                    } else {
+                        delegatedTypeRef
                     }
-                }
-            }
-
-            val firDelegatedCall = runUnless(containingClassIsExpectClass || isKotlinAny) {
-                if (allSuperTypeCallEntries.size <= 1) {
-                    buildDelegatedCall(superTypeCallEntry, delegatedSuperTypeRef!!)
-                } else {
-                    buildMultiDelegatedConstructorCall {
-                        allSuperTypeCallEntries.mapTo(delegatedConstructorCalls) { (superTypeCallEntry, delegatedTypeRef) ->
-                            buildDelegatedCall(superTypeCallEntry, delegatedTypeRef)!!
+                    return buildOrLazyDelegatedConstructorCall(isThis = false, constructedTypeRef) {
+                        buildDelegatedConstructorCall {
+                            source = constructorCall ?: constructorSource.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                            this.constructedTypeRef = constructedTypeRef
+                            isThis = false
+                            calleeReference = buildExplicitSuperReference {
+                                source =
+                                    superTypeCallEntry?.calleeExpression?.toFirSourceElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                                        ?: this@buildDelegatedConstructorCall.source?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
+                                superTypeRef = this@buildDelegatedConstructorCall.constructedTypeRef
+                            }
+                            superTypeCallEntry?.extractArgumentsTo(this)
                         }
                     }
                 }
-            }
 
-            // See DescriptorUtils#getDefaultConstructorVisibility in core.descriptors
-            fun defaultVisibility() = when {
-                owner is KtObjectDeclaration || owner.hasModifier(ENUM_KEYWORD) || owner is KtEnumEntry -> Visibilities.Private
-                owner.hasModifier(SEALED_KEYWORD) -> Visibilities.Protected
-                else -> Visibilities.Unknown
-            }
+                val firDelegatedCall = runUnless(containingClassIsExpectClass || isKotlinAny) {
+                    if (allSuperTypeCallEntries.size <= 1) {
+                        buildDelegatedCall(superTypeCallEntry, delegatedSuperTypeRef!!)
+                    } else {
+                        buildMultiDelegatedConstructorCall {
+                            allSuperTypeCallEntries.mapTo(delegatedConstructorCalls) { (superTypeCallEntry, delegatedTypeRef) ->
+                                buildDelegatedCall(superTypeCallEntry, delegatedTypeRef)!!
+                            }
+                        }
+                    }
+                }
 
-            val explicitVisibility = this?.visibility?.takeUnless { it == Visibilities.Unknown }
-            val status = FirDeclarationStatusImpl(explicitVisibility ?: defaultVisibility(), Modality.FINAL).apply {
-                isExpect = this@toFirConstructor?.hasExpectModifier() == true || this@PsiRawFirBuilder.context.containerIsExpect
-                isActual = this@toFirConstructor?.hasActualModifier() == true || isImplicitlyActual
+                // See DescriptorUtils#getDefaultConstructorVisibility in core.descriptors
+                fun defaultVisibility() = when {
+                    owner is KtObjectDeclaration || owner.hasModifier(ENUM_KEYWORD) || owner is KtEnumEntry -> Visibilities.Private
+                    owner.hasModifier(SEALED_KEYWORD) -> Visibilities.Protected
+                    else -> Visibilities.Unknown
+                }
 
-                // a warning about inner script class is reported on the class itself
-                isInner = owner.parent.parent !is KtScript && owner.hasModifier(INNER_KEYWORD)
-                isFromSealedClass = owner.hasModifier(SEALED_KEYWORD) && explicitVisibility !== Visibilities.Private
-                isFromEnumClass = owner.hasModifier(ENUM_KEYWORD)
-            }
+                val explicitVisibility = this?.visibility?.takeUnless { it == Visibilities.Unknown }
+                val status = FirDeclarationStatusImpl(explicitVisibility ?: defaultVisibility(), Modality.FINAL).apply {
+                    isExpect = this@toFirConstructor?.hasExpectModifier() == true || this@PsiRawFirBuilder.context.containerIsExpect
+                    isActual = this@toFirConstructor?.hasActualModifier() == true || isImplicitlyActual
 
-            val builder = when {
-                this?.modifierList != null && getConstructorKeyword() == null -> createErrorConstructorBuilder(ConeMissingConstructorKeyword)
-                isErrorConstructor -> createErrorConstructorBuilder(ConeNoConstructorError)
-                else -> FirPrimaryConstructorBuilder()
-            }
+                    // a warning about inner script class is reported on the class itself
+                    isInner = owner.parent.parent !is KtScript && owner.hasModifier(INNER_KEYWORD)
+                    isFromSealedClass = owner.hasModifier(SEALED_KEYWORD) && explicitVisibility !== Visibilities.Private
+                    isFromEnumClass = owner.hasModifier(ENUM_KEYWORD)
+                }
 
-            builder.apply {
-                source = constructorSource
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = delegatedSelfTypeRef
-                this.status = status
-                dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
-                symbol = constructorSymbol
-                delegatedConstructor = firDelegatedCall
-                typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
-                this.contextReceivers.addAll(convertContextReceivers(owner.contextReceivers))
-                this@toFirConstructor?.extractAnnotationsTo(this)
-                this@toFirConstructor?.extractValueParametersTo(this, symbol, ValueParameterDeclaration.PRIMARY_CONSTRUCTOR)
-                this.body = null
-            }
+                val builder = when {
+                    this?.modifierList != null &&
+                            getConstructorKeyword() == null -> createErrorConstructorBuilder(ConeMissingConstructorKeyword)
+                    isErrorConstructor -> createErrorConstructorBuilder(ConeNoConstructorError)
+                    else -> FirPrimaryConstructorBuilder()
+                }
 
-            return builder.build().apply {
-                containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
-                context.popContainerSymbol(constructorSymbol)
+                builder.apply {
+                    source = constructorSource
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = delegatedSelfTypeRef
+                    this.status = status
+                    dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
+                    symbol = constructorSymbol
+                    delegatedConstructor = firDelegatedCall
+                    typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
+                    this.contextReceivers.addAll(convertContextReceivers(owner.contextReceivers))
+                    this@toFirConstructor?.extractAnnotationsTo(this)
+                    this@toFirConstructor?.extractValueParametersTo(this, symbol, ValueParameterDeclaration.PRIMARY_CONSTRUCTOR)
+                    this.body = null
+                }
+
+                return builder.build().apply {
+                    containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
+                }
             }
         }
 
@@ -1254,14 +1255,13 @@ open class PsiRawFirBuilder(
             fileName: String,
             sourceFile: KtSourceFile?,
             setup: FirScriptBuilder.() -> Unit = {},
-        ): FirScript {
-            return buildScript {
-                source = script.toFirSourceElement()
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                name = Name.special("<script-$fileName>")
-                symbol = FirScriptSymbol(context.packageFqName.child(name))
-                context.pushContainerSymbol(symbol)
+        ): FirScript = buildScript {
+            source = script.toFirSourceElement()
+            moduleData = baseModuleData
+            origin = FirDeclarationOrigin.Source
+            name = Name.special("<script-$fileName>")
+            symbol = FirScriptSymbol(context.packageFqName.child(name))
+            withContainerSymbol(symbol) {
                 for (declaration in script.declarations) {
                     when (declaration) {
                         is KtScriptInitializer -> {
@@ -1302,8 +1302,6 @@ open class PsiRawFirBuilder(
                         with(configurator) { configure(sourceFile) }
                     }
                 }
-
-                context.popContainerSymbol(symbol)
             }
         }
 
@@ -1337,83 +1335,83 @@ open class PsiRawFirBuilder(
             val ktEnumEntry = this@toFirEnumEntry
             val containingClassIsExpectClass = hasExpectModifier() || this@PsiRawFirBuilder.context.containerIsExpect
             val enumSymbol = FirEnumEntrySymbol(callableIdForName(nameAsSafeName))
-            this@PsiRawFirBuilder.context.pushContainerSymbol(enumSymbol)
-            return buildEnumEntry {
-                source = toFirSourceElement()
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = delegatedEnumSelfTypeRef
-                name = nameAsSafeName
-                status = FirDeclarationStatusImpl(Visibilities.Public, Modality.FINAL).apply {
-                    isStatic = true
-                    isExpect = containingClassIsExpectClass
-                }
-                symbol = enumSymbol
-                if (ownerClassHasDefaultConstructor && ktEnumEntry.initializerList == null &&
-                    ktEnumEntry.annotationEntries.isEmpty() && ktEnumEntry.body == null
-                ) {
-                    return@buildEnumEntry
-                }
-                extractAnnotationsTo(this)
-                initializer = buildOrLazyExpression(toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)) {
-                    withChildClassName(nameAsSafeName, isExpect = false) {
-                        buildAnonymousObjectExpression {
-                            val enumEntrySource = toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
-                            source = enumEntrySource
-                            anonymousObject = buildAnonymousObject {
+            return withContainerSymbol(enumSymbol) {
+                buildEnumEntry {
+                    source = toFirSourceElement()
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = delegatedEnumSelfTypeRef
+                    name = nameAsSafeName
+                    status = FirDeclarationStatusImpl(Visibilities.Public, Modality.FINAL).apply {
+                        isStatic = true
+                        isExpect = containingClassIsExpectClass
+                    }
+                    symbol = enumSymbol
+                    if (ownerClassHasDefaultConstructor && ktEnumEntry.initializerList == null &&
+                        ktEnumEntry.annotationEntries.isEmpty() && ktEnumEntry.body == null
+                    ) {
+                        return@buildEnumEntry
+                    }
+                    extractAnnotationsTo(this)
+                    initializer = buildOrLazyExpression(toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)) {
+                        withChildClassName(nameAsSafeName, isExpect = false) {
+                            buildAnonymousObjectExpression {
+                                val enumEntrySource = toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
                                 source = enumEntrySource
-                                moduleData = baseModuleData
-                                origin = FirDeclarationOrigin.Source
-                                classKind = ClassKind.ENUM_ENTRY
-                                scopeProvider = this@PsiRawFirBuilder.baseScopeProvider
-                                symbol = FirAnonymousObjectSymbol(this@PsiRawFirBuilder.context.packageFqName)
-                                status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+                                anonymousObject = buildAnonymousObject {
+                                    source = enumEntrySource
+                                    moduleData = baseModuleData
+                                    origin = FirDeclarationOrigin.Source
+                                    classKind = ClassKind.ENUM_ENTRY
+                                    scopeProvider = this@PsiRawFirBuilder.baseScopeProvider
+                                    symbol = FirAnonymousObjectSymbol(this@PsiRawFirBuilder.context.packageFqName)
+                                    status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
 
-                                val delegatedEntrySelfType = buildResolvedTypeRef {
-                                    type =
-                                        ConeClassLikeTypeImpl(
-                                            this@buildAnonymousObject.symbol.toLookupTag(),
-                                            emptyArray(),
-                                            isNullable = false
-                                        )
-                                }
-                                registerSelfType(delegatedEntrySelfType)
+                                    val delegatedEntrySelfType = buildResolvedTypeRef {
+                                        type =
+                                            ConeClassLikeTypeImpl(
+                                                this@buildAnonymousObject.symbol.toLookupTag(),
+                                                emptyArray(),
+                                                isNullable = false
+                                            )
+                                    }
+                                    registerSelfType(delegatedEntrySelfType)
 
-                                superTypeRefs += delegatedEnumSelfTypeRef
-                                val superTypeCallEntry = superTypeListEntries.firstIsInstanceOrNull<KtSuperTypeCallEntry>()
-                                val correctedEnumSelfTypeRef = buildResolvedTypeRef {
-                                    source = superTypeCallEntry?.calleeExpression?.typeReference?.toFirSourceElement()
-                                    type = delegatedEnumSelfTypeRef.type
-                                }
-                                declarations += primaryConstructor.toFirConstructor(
-                                    superTypeCallEntry,
-                                    correctedEnumSelfTypeRef,
-                                    delegatedEntrySelfType,
-                                    owner = ktEnumEntry,
-                                    typeParameters,
-                                    allSuperTypeCallEntries = emptyList(),
-                                    containingClassIsExpectClass,
-                                    copyConstructedTypeRefWithImplicitSource = true,
-                                )
-                                // Use ANONYMOUS_OBJECT_NAME for the owner class id for enum entry declarations (see KT-42351)
-                                withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
-                                    for (declaration in ktEnumEntry.declarations) {
-                                        declarations += declaration.toFirDeclaration(
-                                            correctedEnumSelfTypeRef,
-                                            delegatedSelfType = delegatedEntrySelfType,
-                                            ktEnumEntry,
-                                            ownerClassBuilder = this,
-                                            ownerTypeParameters = emptyList()
-                                        )
+                                    superTypeRefs += delegatedEnumSelfTypeRef
+                                    val superTypeCallEntry = superTypeListEntries.firstIsInstanceOrNull<KtSuperTypeCallEntry>()
+                                    val correctedEnumSelfTypeRef = buildResolvedTypeRef {
+                                        source = superTypeCallEntry?.calleeExpression?.typeReference?.toFirSourceElement()
+                                        type = delegatedEnumSelfTypeRef.type
+                                    }
+                                    declarations += primaryConstructor.toFirConstructor(
+                                        superTypeCallEntry,
+                                        correctedEnumSelfTypeRef,
+                                        delegatedEntrySelfType,
+                                        owner = ktEnumEntry,
+                                        typeParameters,
+                                        allSuperTypeCallEntries = emptyList(),
+                                        containingClassIsExpectClass,
+                                        copyConstructedTypeRefWithImplicitSource = true,
+                                    )
+                                    // Use ANONYMOUS_OBJECT_NAME for the owner class id for enum entry declarations (see KT-42351)
+                                    withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
+                                        for (declaration in ktEnumEntry.declarations) {
+                                            declarations += declaration.toFirDeclaration(
+                                                correctedEnumSelfTypeRef,
+                                                delegatedSelfType = delegatedEntrySelfType,
+                                                ktEnumEntry,
+                                                ownerClassBuilder = this,
+                                                ownerTypeParameters = emptyList()
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                }.apply {
+                    containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
                 }
-            }.apply {
-                containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
-                this@PsiRawFirBuilder.context.popContainerSymbol(enumSymbol)
             }
         }
 
@@ -1574,14 +1572,13 @@ open class PsiRawFirBuilder(
                     }.also {
                         it.delegateFieldsMap = delegatedFieldsMap
                     }
-                }.also {
-                    context.popContainerSymbol(classSymbol)
                 }
             }.also {
                 if (classOrObject.parent is KtClassBody) {
                     it.initContainingClassForLocalAttr()
                 }
                 classOrObject.fillDanglingConstraintsTo(it)
+                context.popContainerSymbol(it.symbol)
             }
         }
 
@@ -1640,20 +1637,20 @@ open class PsiRawFirBuilder(
             return withChildClassName(typeAlias.nameAsSafeName, isExpect = typeAliasIsExpect) {
                 buildTypeAlias {
                     symbol = FirTypeAliasSymbol(context.currentClassId)
-                    context.pushContainerSymbol(symbol)
-                    source = typeAlias.toFirSourceElement()
-                    moduleData = baseModuleData
-                    origin = FirDeclarationOrigin.Source
-                    name = typeAlias.nameAsSafeName
-                    val isLocal = context.inLocalContext
-                    status = FirDeclarationStatusImpl(if (isLocal) Visibilities.Local else typeAlias.visibility, Modality.FINAL).apply {
-                        isExpect = typeAliasIsExpect
-                        isActual = typeAlias.hasActualModifier()
+                    withContainerSymbol(symbol) {
+                        source = typeAlias.toFirSourceElement()
+                        moduleData = baseModuleData
+                        origin = FirDeclarationOrigin.Source
+                        name = typeAlias.nameAsSafeName
+                        val isLocal = context.inLocalContext
+                        status = FirDeclarationStatusImpl(if (isLocal) Visibilities.Local else typeAlias.visibility, Modality.FINAL).apply {
+                            isExpect = typeAliasIsExpect
+                            isActual = typeAlias.hasActualModifier()
+                        }
+                        expandedTypeRef = typeAlias.getTypeReference().toFirOrErrorType()
+                        typeAlias.extractAnnotationsTo(this)
+                        typeAlias.extractTypeParametersTo(this, symbol)
                     }
-                    expandedTypeRef = typeAlias.getTypeReference().toFirOrErrorType()
-                    typeAlias.extractAnnotationsTo(this)
-                    typeAlias.extractTypeParametersTo(this, symbol)
-                    context.popContainerSymbol(symbol)
                 }
             }
         }
@@ -1916,40 +1913,39 @@ open class PsiRawFirBuilder(
             val target = FirFunctionTarget(labelName = null, isLambda = false)
             return buildConstructor {
                 symbol = FirConstructorSymbol(callableIdForClassConstructor())
-                this@PsiRawFirBuilder.context.pushContainerSymbol(symbol)
+                withContainerSymbol(symbol) {
+                    source = this@toFirConstructor.toFirSourceElement()
+                    moduleData = baseModuleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = selfTypeRef
+                    val explicitVisibility = visibility
+                    status = FirDeclarationStatusImpl(explicitVisibility, Modality.FINAL).apply {
+                        isExpect = hasExpectModifier() || this@PsiRawFirBuilder.context.containerIsExpect
+                        isActual = hasActualModifier()
+                        isInner = owner.hasModifier(INNER_KEYWORD)
+                        isFromSealedClass = owner.hasModifier(SEALED_KEYWORD) && explicitVisibility !== Visibilities.Private
+                        isFromEnumClass = owner.hasModifier(ENUM_KEYWORD)
+                    }
+                    dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
+                    contextReceivers.addAll(convertContextReceivers(owner.contextReceivers))
+                    delegatedConstructor = buildOrLazyDelegatedConstructorCall(
+                        isThis = isDelegatedCallToThis(),
+                        constructedTypeRef = delegatedTypeRef,
+                    ) {
+                        getDelegationCall().convert(delegatedTypeRef)
+                    }
+                    this@PsiRawFirBuilder.context.firFunctionTargets += target
+                    extractAnnotationsTo(this)
+                    typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
+                    extractValueParametersTo(this, symbol, ValueParameterDeclaration.FUNCTION)
 
-                source = this@toFirConstructor.toFirSourceElement()
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = selfTypeRef
-                val explicitVisibility = visibility
-                status = FirDeclarationStatusImpl(explicitVisibility, Modality.FINAL).apply {
-                    isExpect = hasExpectModifier() || this@PsiRawFirBuilder.context.containerIsExpect
-                    isActual = hasActualModifier()
-                    isInner = owner.hasModifier(INNER_KEYWORD)
-                    isFromSealedClass = owner.hasModifier(SEALED_KEYWORD) && explicitVisibility !== Visibilities.Private
-                    isFromEnumClass = owner.hasModifier(ENUM_KEYWORD)
+                    val (body, contractDescription) = withForcedLocalContext {
+                        buildFirBody()
+                    }
+                    contractDescription?.let { this.contractDescription = it }
+                    this.body = body
+                    this@PsiRawFirBuilder.context.firFunctionTargets.removeLast()
                 }
-                dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
-                contextReceivers.addAll(convertContextReceivers(owner.contextReceivers))
-                delegatedConstructor = buildOrLazyDelegatedConstructorCall(
-                    isThis = isDelegatedCallToThis(),
-                    constructedTypeRef = delegatedTypeRef,
-                ) {
-                    getDelegationCall().convert(delegatedTypeRef)
-                }
-                this@PsiRawFirBuilder.context.firFunctionTargets += target
-                extractAnnotationsTo(this)
-                typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
-                extractValueParametersTo(this, symbol, ValueParameterDeclaration.FUNCTION)
-
-                val (body, contractDescription) = withForcedLocalContext {
-                    buildFirBody()
-                }
-                contractDescription?.let { this.contractDescription = it }
-                this.body = body
-                this@PsiRawFirBuilder.context.firFunctionTargets.removeLast()
-                this@PsiRawFirBuilder.context.popContainerSymbol(symbol)
             }.also {
                 it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
                 bindFunctionTarget(target, it)
