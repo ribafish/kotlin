@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignation
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.codeFragment
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
-import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.analysis.utils.errors.withPsiEntry
 import org.jetbrains.kotlin.fir.*
@@ -32,6 +31,8 @@ import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.util.PrivateForInline
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 internal class RawFirNonLocalDeclarationBuilder private constructor(
     session: FirSession,
@@ -100,6 +101,7 @@ internal class RawFirNonLocalDeclarationBuilder private constructor(
             )
             builder.context.packageFqName = rootNonLocalDeclaration.containingKtFile.packageFqName
             if (rebindContainingSymbol) {
+                @OptIn(PrivateForInline::class)
                 builder.context.forcedContainerSymbol = designation.target.symbol
             }
 

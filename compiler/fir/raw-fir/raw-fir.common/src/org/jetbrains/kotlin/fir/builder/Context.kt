@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
 
 class Context<T> {
     lateinit var packageFqName: FqName
@@ -89,7 +90,16 @@ class Context<T> {
      * @see pushContainerSymbol
      * @see popContainerSymbol
      */
+    @set:PrivateForInline
     var forcedContainerSymbol: FirBasedSymbol<*>? = null
+        set(value) {
+            requireWithAttachment(field == null, { "The value cannot be reassigned" }) {
+                value?.let { withFirSymbolEntry("newValue", it) }
+                field?.let { withFirSymbolEntry("oldValue", it) }
+            }
+
+            field = value
+        }
 
     /**
      * Is required for [forcedContainerSymbol] to support "Nested symbols won't be replaced" constraint.
