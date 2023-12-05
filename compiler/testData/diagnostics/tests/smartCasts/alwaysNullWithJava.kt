@@ -11,6 +11,6 @@ public class My {
 fun test() {
     val my = My.create()
     if (my == null) {
-        my<!UNSAFE_CALL!>.<!>foo()
+        my.foo()
     }
 }

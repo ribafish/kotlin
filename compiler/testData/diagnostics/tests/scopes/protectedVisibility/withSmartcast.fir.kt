@@ -24,7 +24,7 @@ class Derived : Base() {
 
             x.x = x.x + 1
             // TODO: Should be smart cast
-            x.y = x.y + 1
+            x.<!INVISIBLE_SETTER!>y<!> = x.y + 1
         }
     }
 }

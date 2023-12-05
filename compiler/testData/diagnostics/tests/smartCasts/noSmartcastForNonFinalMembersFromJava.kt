@@ -15,7 +15,7 @@ class Derived : Base() {
         }
 
         if (finalField == null) {
-            finalField<!UNSAFE_CALL!>.<!>length
+            finalField.length
         }
     }
 }
