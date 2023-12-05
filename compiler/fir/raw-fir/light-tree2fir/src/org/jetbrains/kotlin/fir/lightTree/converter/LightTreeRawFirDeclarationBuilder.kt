@@ -746,10 +746,8 @@ class LightTreeRawFirDeclarationBuilder(
         val enumSuperTypeCallEntry = mutableListOf<FirExpression>()
         var classBodyNode: LighterASTNode? = null
         var superTypeCallEntry: LighterASTNode? = null
-        enumEntry.forEachChildren {
-            when (it.tokenType) {
-                IDENTIFIER -> identifier = it.asText
-            }
+        enumEntry.getChildNodeByType(IDENTIFIER)?.let {
+            identifier = it.asText
         }
 
         val enumEntryName = identifier.nameAsSafeName()
@@ -1245,10 +1243,8 @@ class LightTreeRawFirDeclarationBuilder(
         var propertyInitializer: FirExpression? = null
         var typeParameterList: LighterASTNode? = null
         var fieldDeclaration: LighterASTNode? = null
-        property.forEachChildren {
-            when (it.tokenType) {
-                IDENTIFIER -> identifier = it.asText
-            }
+        property.getChildNodeByType(IDENTIFIER)?.let {
+            identifier = it.asText
         }
 
         val propertyName = identifier.nameAsSafeName()
@@ -1740,10 +1736,8 @@ class LightTreeRawFirDeclarationBuilder(
         var hasEqToken = false
         var typeParameterList: LighterASTNode? = null
         var outerContractDescription: FirContractDescription? = null
-        functionDeclaration.forEachChildren {
-            when (it.tokenType) {
-                IDENTIFIER -> identifier = it.asText
-            }
+        functionDeclaration.getChildNodeByType(IDENTIFIER)?.let {
+            identifier = it.asText
         }
 
         val parentNode = functionDeclaration.getParent()
