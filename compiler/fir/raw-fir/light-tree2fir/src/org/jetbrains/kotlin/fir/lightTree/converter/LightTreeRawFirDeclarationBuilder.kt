@@ -243,16 +243,16 @@ class LightTreeRawFirDeclarationBuilder(
 
     /*****    MODIFIERS    *****/
     /**
-     * @param onlyKeywords process only keyword modifiers and skip other (e.g., annotations)
+     * @param skipAnnotations skip annotations as they are requiring correct [withContainerSymbol]
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseModifierList
      */
-    private fun convertModifierList(modifiers: LighterASTNode, isInClass: Boolean = false, onlyKeywords: Boolean = false): Modifier {
+    private fun convertModifierList(modifiers: LighterASTNode, isInClass: Boolean = false, skipAnnotations: Boolean = false): Modifier {
         val modifier = Modifier()
         modifiers.forEachChildren {
             val tokenType = it.tokenType
             when {
                 tokenType is KtModifierKeywordToken -> modifier.addModifier(it, isInClass)
-                onlyKeywords -> {}
+                skipAnnotations -> {}
                 tokenType == ANNOTATION -> modifier.annotations += convertAnnotation(it)
                 tokenType == ANNOTATION_ENTRY -> modifier.annotations += convertAnnotationEntry(it)
             }
@@ -439,7 +439,7 @@ class LightTreeRawFirDeclarationBuilder(
         var typeParameterList: LighterASTNode? = null
         classNode.forEachChildren {
             when (it.tokenType) {
-                MODIFIER_LIST -> modifiers = convertModifierList(it, isInClass = true, onlyKeywords = true)
+                MODIFIER_LIST -> modifiers = convertModifierList(it, isInClass = true, skipAnnotations = true)
                 IDENTIFIER -> identifier = it.asText
             }
         }
@@ -1184,7 +1184,7 @@ class LightTreeRawFirDeclarationBuilder(
 
         typeAlias.forEachChildren {
             when (it.tokenType) {
-                MODIFIER_LIST -> modifiers = convertModifierList(it, onlyKeywords = true)
+                MODIFIER_LIST -> modifiers = convertModifierList(it, skipAnnotations = true)
                 IDENTIFIER -> identifier = it.asText
             }
         }
