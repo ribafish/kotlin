@@ -214,17 +214,34 @@ class Fir2IrLazyProperty(
     }
 
     override var overriddenSymbols: List<IrPropertySymbol> by lazyVar(lock) {
-        if (containingClass == null) return@lazyVar emptyList()
+        when (configuration.useIrFakeOverrideBuilder) {
+            true -> computeOverriddenSymbolsForIrFakeOverrideGenerator()
+            false -> computeOverriddenUsingFir2IrFakeOverrideGenerator()
+        }
+    }
+
+    // TODO: drop this function after migration to IR f/o generator will be complete
+    private fun computeOverriddenUsingFir2IrFakeOverrideGenerator(): List<IrPropertySymbol> {
+        if (containingClass == null) return emptyList()
         if (isFakeOverride && parent is Fir2IrLazyClass) {
             fakeOverrideGenerator.calcBaseSymbolsForFakeOverrideProperty(
                 containingClass, this, fir.symbol
             )
             fakeOverrideGenerator.getOverriddenSymbolsForFakeOverride(this)?.let {
                 assert(!it.contains(symbol)) { "Cannot add function $symbol to its own overriddenSymbols" }
-                return@lazyVar it
+                return it
             }
         }
-        fir.generateOverriddenPropertySymbols(containingClass)
+        return fir.generateOverriddenPropertySymbols(containingClass)
+    }
+
+    private fun computeOverriddenSymbolsForIrFakeOverrideGenerator(): List<IrPropertySymbol> {
+        if (containingClass == null || parent !is Fir2IrLazyClass) return emptyList()
+        val baseFunctionWithDispatchReceiverTag =
+            fakeOverrideGenerator.computeBaseSymbolsWithContainingClass(containingClass, fir.symbol)
+        return baseFunctionWithDispatchReceiverTag.map { (symbol, dispatchReceiverLookupTag) ->
+            declarationStorage.getIrPropertySymbol(symbol, dispatchReceiverLookupTag) as IrPropertySymbol
+        }
     }
 
     override var metadata: MetadataSource?
