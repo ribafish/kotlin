@@ -22,6 +22,7 @@ struct RunLoopFinalizerProcessorConfig {
     // won't start the next one.
     std::chrono::nanoseconds maxTimeInTask = std::chrono::milliseconds(5);
     std::chrono::nanoseconds minTimeBetweenTasks = std::chrono::milliseconds(10);
+    int batchSizeForAutorelease = 100;
 };
 
 #if KONAN_HAS_FOUNDATION_FRAMEWORK
@@ -78,18 +79,23 @@ private:
                 return;
             }
         }
-        auto deadline = [&]() noexcept {
+        steady_clock::time_point deadline;
+        int batchCount;
+        {
             std::unique_lock guard(configMutex_);
             RuntimeLogDebug({ kTagGC }, "Processing finalizers on a run loop for maximum %" PRId64 "ms",
                             std::chrono::duration_cast<std::chrono::milliseconds>(config_.maxTimeInTask).count());
-            return startTime + config_.maxTimeInTask;
-        }();
+            deadline = startTime + config_.maxTimeInTask;
+            batchCount = config_.batchSizeForAutorelease;
+        }
+        int processedCount = 0;
         while (true) {
             auto now = steady_clock::now();
             if (now > deadline) {
                 // Finalization is being run too long. Stop processing and reschedule until the next allowed time.
                 std::unique_lock guard(configMutex_);
-                RuntimeLogDebug({ kTagGC }, "Processing finalizers on a run loop has taken %" PRId64" ms. Stopping for %" PRId64 "ms.",
+                RuntimeLogDebug({ kTagGC }, "Processing %d finalizers on a run loop has taken %" PRId64" ms. Stopping for %" PRId64 "ms.",
+                                processedCount,
                                 std::chrono::duration_cast<milliseconds>(now - startTime).count().value,
                                 std::chrono::duration_cast<std::chrono::milliseconds>(config_.minTimeBetweenTasks).count());
                 timer_.setNextFiring(config_.minTimeBetweenTasks);
@@ -98,9 +104,16 @@ private:
             }
             {
                 objc_support::AutoreleasePool autoreleasePool;
-                if (FinalizerQueueTraits::processSingle(currentQueue_)) {
-                    continue;
+                bool currentQueueIsEmpty = false;
+                for (int i = 0; i < batchCount; ++i) {
+                    if (!FinalizerQueueTraits::processSingle(currentQueue_)) {
+                        currentQueueIsEmpty = true;
+                        break;
+                    }
+                    ++processedCount;
                 }
+                if (!currentQueueIsEmpty)
+                    continue;
             }
             // Attempt to fill `currentQueue_` from the global `queue_`.
             std::unique_lock guard(queueMutex_);
@@ -111,7 +124,8 @@ private:
                 // Also, let's keep this under the lock. This way if someone were to schedule new tasks, they
                 // would definitely have to wait long enough to see the updated lastProcessTimestamp_.
                 lastProcessTimestamp_ = steady_clock::now();
-                RuntimeLogDebug({ kTagGC }, "Processing finalizers on a run loop has finished in %" PRId64 "ms.",
+                RuntimeLogDebug({ kTagGC }, "Processing %d finalizers on a run loop has finished in %" PRId64 "ms.",
+                                processedCount,
                                 std::chrono::duration_cast<milliseconds>(lastProcessTimestamp_ - startTime).count().value);
                 return;
             }
