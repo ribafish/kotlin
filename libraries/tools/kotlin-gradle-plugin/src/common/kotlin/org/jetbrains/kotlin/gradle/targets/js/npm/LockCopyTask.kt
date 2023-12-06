@@ -15,6 +15,7 @@ import org.gradle.work.DisableCachingByDefault
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.utils.contentEquals
 import java.io.File
+import java.io.Serializable
 import javax.inject.Inject
 
 @DisableCachingByDefault
@@ -24,7 +25,7 @@ abstract class LockCopyTask : DefaultTask() {
     @get:InputFile
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val inputFile: Property<File?>
+    abstract val inputFile: RegularFileProperty
 
     @get:NormalizeLineEndings
     @get:InputFiles
@@ -93,7 +94,7 @@ abstract class LockStoreTask : LockCopyTask() {
         val shouldReportMismatch = if (!outputFile.exists()) {
             reportNewLockFile.get()
         } else {
-            lockFileMismatchReport.get() != LockFileMismatchReport.NONE && !contentEquals(value, outputFile)
+            lockFileMismatchReport.get() != LockFileMismatchReport.NONE && !contentEquals(value.asFile, outputFile)
         }
 
         // outputFile is updated only with auto replace or not existed, but we need delete all other files initially

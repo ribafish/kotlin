@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.nodejs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.RegularFile
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
@@ -204,13 +205,8 @@ open class NodeJsRootPlugin : Plugin<Project> {
         project.tasks.register(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME, LockCopyTask::class.java) { task ->
             val lockFileName = npm.lockFileName
             task.inputFile.set(
-                npm.lockFileDirectory.map { dir ->
-                    val file = dir.file(lockFileName).get().asFile
-                    if (file.exists()) {
-                        file
-                    } else {
-                        null
-                    }
+                npm.lockFileDirectory.flatMap { dir ->
+                    dir.file(lockFileName)
                 }
             )
             task.additionalInputFiles.from(
@@ -219,7 +215,13 @@ open class NodeJsRootPlugin : Plugin<Project> {
             task.outputDirectory.set(nodeJs.rootPackageDir)
             task.fileName.set(LockCopyTask.PACKAGE_LOCK)
             task.onlyIf {
-                task.inputFile.getOrNull()?.exists() == true || task.additionalInputFiles.files.any { it.exists() }
+                val inputFileExists = task.inputFile.getOrNull()?.asFile?.exists() == true
+                // Workaround for "skip if not exists"
+                // https://github.com/gradle/gradle/issues/2919
+                if (!inputFileExists) {
+                    task.inputFile.set(null as RegularFile?)
+                }
+                inputFileExists || task.additionalInputFiles.files.any { it.exists() }
             }
         }
 
