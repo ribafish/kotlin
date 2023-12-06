@@ -1417,7 +1417,7 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 it + "\n" +
                         """
                         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().reportNewPackageLock = true
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().reportNewPackageLock.set(true)
                         }
                         """.trimIndent()
             }
@@ -1434,8 +1434,9 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                         }
                             
                         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport = 
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport.set(
                                 org.jetbrains.kotlin.gradle.targets.js.npm.LockFileMismatchReport.FAIL
+                            )
                         }
                         """.trimIndent()
             }
@@ -1458,8 +1459,9 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 replaced + "\n" +
                         """
                         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport =
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport.set(
                                 org.jetbrains.kotlin.gradle.targets.js.npm.LockFileMismatchReport.WARNING
+                            )
                         }
                         """.trimIndent()
             }
@@ -1482,8 +1484,9 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                         }
                             
                         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport =
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport.set(
                                 org.jetbrains.kotlin.gradle.targets.js.npm.LockFileMismatchReport.NONE
+                            )
                         }
                         """.trimIndent()
             }
@@ -1508,10 +1511,12 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 it + "\n" +
                         """
                         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport =
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport.set(
                                 org.jetbrains.kotlin.gradle.targets.js.npm.LockFileMismatchReport.NONE
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().reportNewPackageLock =
+                            )
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().reportNewPackageLock.set(
                                 true
+                            )
                         }
                         """.trimIndent()
             }
@@ -1530,10 +1535,12 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                         }
                             
                         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport =
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockMismatchReport.set(
                                 org.jetbrains.kotlin.gradle.targets.js.npm.LockFileMismatchReport.FAIL
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockAutoReplace = 
+                            )
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().packageLockAutoReplace.set(
                                 true
+                            )
                         }
                         """.trimIndent()
             }
@@ -1717,7 +1724,7 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 it + "\n" +
                         """
                         rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
-                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().ignoreScripts = false
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension>().ignoreScripts.set(false)
                         }
                         """.trimIndent()
             }
