@@ -53,4 +53,16 @@ public class SourceDependentCopyContextTestGenerated extends AbstractSourceDepen
     public void testFunction() throws Exception {
         runTest("analysis/low-level-api-fir/testData/dependentCopy/function.kt");
     }
+
+    @Test
+    @TestMetadata("superCallArgument_primaryConstructor.kt")
+    public void testSuperCallArgument_primaryConstructor() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/dependentCopy/superCallArgument_primaryConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("superCallArgument_secondaryConstructor.kt")
+    public void testSuperCallArgument_secondaryConstructor() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/dependentCopy/superCallArgument_secondaryConstructor.kt");
+    }
 }

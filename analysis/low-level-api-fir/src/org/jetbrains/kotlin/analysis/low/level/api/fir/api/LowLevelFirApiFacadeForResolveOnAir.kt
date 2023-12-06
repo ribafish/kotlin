@@ -456,11 +456,25 @@ object LowLevelFirApiFacadeForResolveOnAir {
 
     private fun bodyResolveRequired(container: KtDeclaration, elementToReplace: PsiElement): Boolean = when {
         container == elementToReplace -> true
-        container is KtDeclarationWithBody -> container.bodyExpression.isAncestor(elementToReplace)
+
+        container is KtDeclarationWithBody -> {
+            val bodyExpression = container.bodyExpression
+            val secondaryConstructorSuperCallArgs = (container as? KtSecondaryConstructor)?.getDelegationCallOrNull()?.valueArgumentList
+
+            bodyExpression.isAncestor(elementToReplace) || secondaryConstructorSuperCallArgs.isAncestor(elementToReplace)
+        }
+
         container is KtProperty -> container.delegateExpressionOrInitializer.isAncestor(elementToReplace)
         container is KtParameter -> container.defaultValue.isAncestor(elementToReplace)
+
         container is KtEnumEntry -> {
             container.initializerList.isAncestor(elementToReplace) || container.body.isAncestor(elementToReplace)
+        }
+
+        container is KtClassOrObject -> {
+            val superTypeCalls = container.superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>()
+
+            superTypeCalls.any { it.valueArgumentList.isAncestor(elementToReplace) }
         }
 
         container is KtScript || container is KtAnonymousInitializer -> true
