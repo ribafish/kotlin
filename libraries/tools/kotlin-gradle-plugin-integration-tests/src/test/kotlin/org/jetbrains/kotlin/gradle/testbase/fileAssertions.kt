@@ -228,7 +228,7 @@ fun assertFileContains(
 ): String {
     assertFileExists(file)
     val text = file.readText()
-    assertTextContains(text, prefixMessage = "$file does not contain:", *expectedText)
+    return assertTextContains(text, prefixMessage = "$file does not contain:", *expectedText)
 }
 
 /**
@@ -245,7 +245,7 @@ private fun assertTextContains(
     text: String,
     prefixMessage: String,
     vararg expectedText: String,
-) {
+): String {
     val textNotInTheFile = expectedText.filterNot { text.contains(it) }
     assert(textNotInTheFile.isEmpty()) {
         """
