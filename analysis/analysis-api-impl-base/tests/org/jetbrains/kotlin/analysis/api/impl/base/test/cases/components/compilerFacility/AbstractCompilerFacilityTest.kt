@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compilerFacility
 
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
@@ -68,6 +70,8 @@ abstract class AbstractCompilerFacilityTest : AbstractAnalysisApiBasedTest() {
         ).map { it.name }
     }
 
+    open fun registerIrGenerationExtensions(irGenerationExtensionPoint: ExtensionPoint<IrGenerationExtension>, project: Project) {}
+
     override fun doTestByModuleStructure(moduleStructure: TestModuleStructure, testServices: TestServices) {
         val mainModule = moduleStructure.modules.first { it.name == "main" }
         val ktFiles = testServices.ktModuleProvider.getModuleFiles(mainModule).filterIsInstance<KtFile>()
@@ -76,8 +80,10 @@ abstract class AbstractCompilerFacilityTest : AbstractAnalysisApiBasedTest() {
         val irCollector = CollectingIrGenerationExtension()
 
         val project = ktFile.project
-        project.extensionArea.getExtensionPoint(IrGenerationExtension.extensionPointName)
-            .registerExtension(irCollector, LoadingOrder.LAST, project)
+        val irGenerationExtensionPoint = project.extensionArea.getExtensionPoint(IrGenerationExtension.extensionPointName)
+        irGenerationExtensionPoint.registerExtension(irCollector, LoadingOrder.LAST, project)
+
+        registerIrGenerationExtensions(irGenerationExtensionPoint, project)
 
         val ktCodeFragment = createCodeFragment(ktFile, mainModule, testServices)
         if (ktCodeFragment != null) {
