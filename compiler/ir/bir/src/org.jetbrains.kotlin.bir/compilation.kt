@@ -55,9 +55,9 @@ val allBirPhases = listOf<Pair<(JvmBirBackendContext) -> BirLoweringPhase, List<
 )
 
 private val excludedPhases = setOf<String>(
-    //"Ir2Bir",
-    //"Lower Bir",
-    //"Bir2Ir",
+    "Ir2Bir",
+    "Lower Bir",
+    "Bir2Ir",
     "Terminate",
 
     // This phase removes annotation constructors, but they are still being used,
@@ -65,7 +65,7 @@ private val excludedPhases = setOf<String>(
     // still have their parent property set.
     //"Annotation",
     // This phase is not implemented, as it is hardly ever relevant.
-    //"AnnotationImplementation",
+    "AnnotationImplementation",
 )
 
 fun lowerWithBir(
