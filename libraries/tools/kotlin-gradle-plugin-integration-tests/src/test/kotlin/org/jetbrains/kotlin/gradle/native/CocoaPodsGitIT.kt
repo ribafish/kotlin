@@ -472,15 +472,29 @@ class CocoaPodsGitIT : KGPBaseTest() {
         gradleVersion: GradleVersion,
         @TempDir testPodsHomeDir: Path
     ) {
-        val envVars = cocoaPodsEnvironmentVariables() + mapOf("CP_HOME_DIR" to testPodsHomeDir.absolutePathString())
         nativeProjectWithCocoapodsAndIosAppPodFile(
             outdatedRepoName,
             gradleVersion,
-            environmentVariables = EnvironmentalVariables(envVars)
+            environmentVariables = EnvironmentalVariables(mapOf("CP_HOME_DIR" to testPodsHomeDir.absolutePathString()))
         ) {
             val podLibrary = projectPath.resolve(customPodLibraryName)
             val privateSpecGit = projectPath.resolve(privateSpecGitRepo)
             val privateSpecGitUri = privateSpecGit.toUri().toString()
+
+            buildGradleKts.addSpecRepo(privateSpecGitUri)
+
+            fun podInstallSynthetic(version: String) {
+                buildGradleKts.addPod(customPodLibraryName, "version = \"$version\"")
+                build(defaultPodGenTaskName) {
+                    assertTasksExecuted(defaultPodGenTaskName)
+                }
+
+                build(defaultPodInstallSyntheticTaskName) {
+                    assertTasksExecuted(defaultPodInstallSyntheticTaskName)
+                }
+
+                buildGradleKts.removePod(customPodLibraryName)
+            }
 
             // Create bare repo
             runProcess(
@@ -526,6 +540,8 @@ class CocoaPodsGitIT : KGPBaseTest() {
                 assertTrue(isSuccessful, output)
             }
 
+            podInstallSynthetic("0.1.0")
+
             //Silently publish 0.2.0
             val podLibSpecs = projectPath.resolve(customPodLibraryName).relativeTo(privateSpecGit).pathString
             runProcess(
@@ -541,15 +557,7 @@ class CocoaPodsGitIT : KGPBaseTest() {
                 assertTrue(isSuccessful, output)
             }
 
-            buildGradleKts.addPod(customPodLibraryName, "version = \"0.2.0\"")
-            buildGradleKts.addSpecRepo(privateSpecGitUri)
-            build(defaultPodGenTaskName) {
-                assertTasksExecuted(defaultPodGenTaskName)
-            }
-
-            build(defaultPodInstallSyntheticTaskName) {
-                assertTasksExecuted(defaultPodInstallSyntheticTaskName)
-            }
+            podInstallSynthetic("0.2.0")
         }
     }
 
