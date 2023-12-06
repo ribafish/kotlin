@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement.Version
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
@@ -301,15 +300,15 @@ object FirErrors {
     val POTENTIALLY_NON_REPORTED_ANNOTATION by warning0<KtAnnotationEntry>()
 
     // OptIn
-    val OPT_IN_USAGE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val OPT_IN_USAGE_ERROR by error2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val OPT_IN_OVERRIDE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
-    val OPT_IN_OVERRIDE_ERROR by error2<PsiElement, FqName, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val OPT_IN_USAGE by warning2<PsiElement, ClassId, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val OPT_IN_USAGE_ERROR by error2<PsiElement, ClassId, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val OPT_IN_OVERRIDE by warning2<PsiElement, ClassId, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val OPT_IN_OVERRIDE_ERROR by error2<PsiElement, ClassId, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val OPT_IN_IS_NOT_ENABLED by warning0<KtAnnotationEntry>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION by error0<PsiElement>()
     val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN by error0<PsiElement>()
     val OPT_IN_WITHOUT_ARGUMENTS by warning0<KtAnnotationEntry>()
-    val OPT_IN_ARGUMENT_IS_NOT_MARKER by warning1<KtAnnotationEntry, FqName>()
+    val OPT_IN_ARGUMENT_IS_NOT_MARKER by warning1<KtAnnotationEntry, ClassId>()
     val OPT_IN_MARKER_WITH_WRONG_TARGET by error1<KtAnnotationEntry, String>()
     val OPT_IN_MARKER_WITH_WRONG_RETENTION by error0<KtAnnotationEntry>()
     val OPT_IN_MARKER_ON_WRONG_TARGET by error1<KtAnnotationEntry, String>()
@@ -478,7 +477,7 @@ object FirErrors {
     val TYPE_VARIANCE_CONFLICT_IN_EXPANDED_TYPE by error4<PsiElement, FirTypeParameterSymbol, Variance, Variance, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val SMARTCAST_IMPOSSIBLE by error4<KtExpression, ConeKotlinType, FirExpression, String, Boolean>()
     val REDUNDANT_NULLABLE by warning0<KtTypeReference>(SourceElementPositioningStrategies.REDUNDANT_NULLABLE)
-    val PLATFORM_CLASS_MAPPED_TO_KOTLIN by warning1<PsiElement, FqName>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val PLATFORM_CLASS_MAPPED_TO_KOTLIN by warning1<PsiElement, ClassId>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION by deprecationError4<PsiElement, String, Collection<ConeKotlinType>, String, String>(ForbidInferringTypeVariablesIntoEmptyIntersection)
     val INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION by warning4<PsiElement, String, Collection<ConeKotlinType>, String, String>()
     val INCORRECT_LEFT_COMPONENT_OF_INTERSECTION by error0<KtTypeReference>()
