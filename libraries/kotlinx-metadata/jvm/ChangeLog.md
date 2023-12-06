@@ -3,7 +3,7 @@
 ## 0.8.0
 
 This release concludes our API overhaul: it features last significant API changes, as well as raised deprecations to ERROR level almost everywhere.
-To help with migration, we've prepared a special guide (TODO). 
+To help with migration, we've prepared a special [guide](Migration.md#migrating-from-070-to-080). 
 It still uses Kotlin 1.9, but is able to read or write metadata of version 2.0.
 
 - Provide a separate class for representing metadata version in kotlinx-metadata: `JvmMetadataVersion`

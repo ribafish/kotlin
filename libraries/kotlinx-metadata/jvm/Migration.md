@@ -20,9 +20,8 @@ Historically, a metadata version in kotlinx-metadata-jvm API was represented as 
 However, having a general-purpose array for storing versions is not very handy: making comparisons or simply converting to string is notoriously inconvenient for arrays.
 Therefore, we decided to replace `IntArray` with a new specialized type, `JvmMetadataVersion`.
 It carries the same three components: `major`, `minor`, and `patch` (with possibility to add new in the future) and provides convenient `equals`, `compareTo`, `toString`, and other methods.
-`KotlinClassMetadata.version` (described below) is exposed as this type.
+`KotlinClassMetadata.version` (described below) is exposed as a value of this type.
 Main migration path here is to replace `KotlinClassMetadata.COMPATIBLE_METADATA_VERSION` with new value with the same meaning: `JvmMetadataVersion.LATEST_STABLE_SUPPORTED`.
-
 
 ### Write is now a member method
 
@@ -31,13 +30,14 @@ It was not very convenient:
 - Function names are different and don't look nice if you use them in e.g., `when`.
 - It is easy to forget `metadataVersion` or `flags` parameter since they are not present in `KmClass` and have default values.
 
-To mitigate these problems, we have changed an API in a way that version and flags are always stored in the corresponding `KotlinClassMetadata` instance.
+To mitigate these problems, we have changed the API in a way that version and flags are always stored in the corresponding `KotlinClassMetadata` instance.
 You can access and change them with `kotlinClassMetadata.version` and `kotlinClassMetadata.flag` properties.
 Consequently, there is no need for companion object methods anymore, as we have all information required in the instance.
 To write the metadata and get `Metadata` annotation, simply call `kotlinClassMetadata.write()` without arguments.
 
 Note: we strongly recommend doing it at the same instance you received from `KotlinClassMetadata.read()` instead of creating a new one.
 It would be easier not to forget the correct version that way.
+See usage example in [this readme section](ReadMe.md#transforming-metadata).
  
 ## Migrating from 0.6.x to 0.7.0
 
