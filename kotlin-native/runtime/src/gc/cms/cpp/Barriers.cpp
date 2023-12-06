@@ -86,7 +86,7 @@ namespace {
 void beforeHeapRefUpdateSlowPath(mm::DirectRefAccessor ref, ObjHeader* value) noexcept {
     auto prev = ref.loadAtomic(std::memory_order_consume);
     BarriersLogDebug(true, "Write *%p <- %p (%p overwritten)", ref.location(), value, prev);
-    if (prev != nullptr) {
+    if (prev != nullptr && prev->heap()) {
 //#if __has_feature(thread_sanitizer)
 //        // Tell TSAN, that we acquire here the object's memory,
 //        // released previously on allocation with atomic_thread_fence and __tsan_release workaround.
@@ -95,9 +95,10 @@ void beforeHeapRefUpdateSlowPath(mm::DirectRefAccessor ref, ObjHeader* value) no
         // FIXME Redundant if the destination object is black.
         //       Yet at the moment there is now efficient way to distinguish black and gray objects.
 
-        auto& objectData = alloc::objectDataForObject(prev);
+        // FIXME here inlines a huge chunk of intrusive list logic
         auto& threadData = *mm::ThreadRegistry::Instance().CurrentThreadData();
-        threadData.gc().impl().gc().mark().markQueue()->tryPush(objectData);
+        auto& markQueue = *threadData.gc().impl().gc().mark().markQueue();
+        gc::mark::ConcurrentMark::MarkTraits::tryEnqueue(markQueue, prev);
         // No need to add the marked object in statistics here.
         // Objects will be counted on dequeue.
     }

@@ -28,12 +28,13 @@ class ConcurrentMark : private Pinned {
 public:
     using ParallelProcessor = ParallelProcessor<MarkStackImpl, 512, 4096>;
     using MutatorQueue = ParallelProcessor::WorkSource;
+    using AnyQueue = ParallelProcessor::WorkSource;
 
     class MarkTraits {
     public:
         using MarkQueue = ParallelProcessor::Worker;
 
-        static void clear(MarkQueue& queue) noexcept {
+        static void clear(AnyQueue& queue) noexcept {
             RuntimeAssert(queue.localEmpty(), "Mark queue must be empty");
         }
 
@@ -45,7 +46,7 @@ public:
             return nullptr;
         }
 
-        static ALWAYS_INLINE bool tryEnqueue(MarkQueue& queue, ObjHeader* object) noexcept {
+        static ALWAYS_INLINE bool tryEnqueue(AnyQueue& queue, ObjHeader* object) noexcept {
             auto& objectData = alloc::objectDataForObject(object);
             return compiler::gcMarkSingleThreaded() ? queue.tryPushLocal(objectData) : queue.tryPush(objectData);
         }

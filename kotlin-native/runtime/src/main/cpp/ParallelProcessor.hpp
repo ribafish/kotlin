@@ -42,7 +42,7 @@ private:
         ALWAYS_INLINE bool tryPush(typename ListImpl::reference value) noexcept {
             RuntimeAssert(!full(), "Batch overflow");
             bool pushed = elems_.try_push_front(value);
-            if (pushed) {
+            if (pushed) { // TODO likely or even branchless?
                 ++elemsCount_;
             }
             return pushed;

@@ -60,7 +60,7 @@ void gc::mark::ConcurrentMark::runMainInSTW() {
     bool refsRemainInMutatorQueues = false;
     do {
         for (auto& mutator: *lockedMutatorsList_) {
-            bool markQueueNowEmpty = mutator.gc().impl().gc().mark().markQueue()->forceFlush();
+            const bool markQueueNowEmpty = mutator.gc().impl().gc().mark().markQueue()->forceFlush();
             if (!markQueueNowEmpty) {
                 refsRemainInMutatorQueues = true;
             }
