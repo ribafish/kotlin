@@ -12,6 +12,9 @@ import java.util.concurrent.Callable
 
 internal object DefaultKotlinCompilationOutputFactory : KotlinCompilationImplFactory.KotlinCompilationOutputFactory {
     override fun create(target: KotlinTarget, compilationName: String): KotlinCompilationOutput = DefaultKotlinCompilationOutput(
-        target.project, Callable { target.project.buildDir.resolve("processedResources/${target.targetName}/$compilationName") }
+        target.project,
+        Callable {
+            target.project.layout.buildDirectory.dir("processedResources/${target.targetName}/$compilationName")
+        }
     )
 }
