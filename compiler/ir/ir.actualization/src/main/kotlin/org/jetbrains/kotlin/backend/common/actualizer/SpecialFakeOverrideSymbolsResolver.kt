@@ -19,8 +19,12 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 
-class SpecialFakeOverrideSymbolsResolver(val expectActualMap: Map<IrSymbol, IrSymbol>) : IrElementVisitorVoid {
+class SpecialFakeOverrideSymbolsResolver(private val expectActualMap: Map<IrSymbol, IrSymbol>) : IrElementVisitorVoid {
     private val cachedFakeOverrides = mutableMapOf<Pair<IrClassSymbol, IrSymbol>, IrSymbol>()
+    private val _remappedSymbols = mutableMapOf<IrSymbol, IrSymbol>()
+    val remappedSymbols: Map<IrSymbol, IrSymbol>
+        get() = _remappedSymbols
+
     private val processedClasses = mutableSetOf<IrClass>()
 
     private fun IrOverridableDeclaration<*>.collectOverrides(visited: MutableSet<IrSymbol>): Sequence<IrSymbol> = sequence {
@@ -99,6 +103,7 @@ class SpecialFakeOverrideSymbolsResolver(val expectActualMap: Map<IrSymbol, IrSy
         if (result !is S) {
             shouldNotBeCalled("No override for ${actualizedOriginalSymbol} in ${actualizedClassSymbol}")
         }
+        _remappedSymbols[this] = result
         result
     } else {
         this

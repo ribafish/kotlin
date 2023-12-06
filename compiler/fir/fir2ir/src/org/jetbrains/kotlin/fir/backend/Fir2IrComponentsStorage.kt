@@ -63,6 +63,7 @@ class Fir2IrComponentsStorage(
     override val callGenerator: CallAndReferenceGenerator = CallAndReferenceGenerator(this, fir2IrVisitor, conversionScope)
     override val fakeOverrideGenerator: FakeOverrideGenerator = FakeOverrideGenerator(this, conversionScope)
     override val delegatedMemberGenerator: DelegatedMemberGenerator = DelegatedMemberGenerator(this)
+    override val symbolRemapper: Fir2IrSymbolRemapper = Fir2IrSymbolRemapper()
 
     override val annotationsFromPluginRegistrar: Fir2IrAnnotationsFromPluginRegistrar = Fir2IrAnnotationsFromPluginRegistrar(this)
 
