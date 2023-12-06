@@ -5,11 +5,11 @@
 
 #pragma once
 
-
-
+#include <cinttypes>
 #include <mutex>
 
 #include "Clock.hpp"
+#include "Logging.hpp"
 #include "Utils.hpp"
 #include "objc_support/RunLoopSource.hpp"
 #include "objc_support/RunLoopTimer.hpp"

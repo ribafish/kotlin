@@ -97,6 +97,7 @@ TEST(RunLoopFinalizerProcessorTest, Overtime) {
     processor.withConfig([&](alloc::RunLoopFinalizerProcessorConfig& config) noexcept {
         config.minTimeBetweenTasks = timeoutBetween;
         config.maxTimeInTask = overtime;
+        config.batchSizeForAutorelease = 2;
     });
     objc_support::test_support::RunLoopInScopedThread runLoop([&]() noexcept { return processor.attachToCurrentRunLoop(); });
 
@@ -135,6 +136,7 @@ TEST(RunLoopFinalizerProcessorTest, ScheduleWhileOvertime) {
     processor.withConfig([&](alloc::RunLoopFinalizerProcessorConfig& config) noexcept {
         config.minTimeBetweenTasks = timeoutBetween;
         config.maxTimeInTask = overtime;
+        config.batchSizeForAutorelease = 2;
     });
     objc_support::test_support::RunLoopInScopedThread runLoop([&]() noexcept { return processor.attachToCurrentRunLoop(); });
 
