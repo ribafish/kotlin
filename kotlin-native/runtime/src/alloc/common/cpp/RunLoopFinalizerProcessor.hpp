@@ -46,6 +46,8 @@ public:
     RunLoopFinalizerProcessor() noexcept = default;
 
     void schedule(FinalizerQueue tasks) noexcept {
+        if (FinalizerQueueTraits::isEmpty(tasks))
+            return;
         {
             std::unique_lock guard(queueMutex_);
             FinalizerQueueTraits::add(queue_, std::move(tasks));
@@ -63,7 +65,7 @@ public:
 
 private:
     void process() noexcept {
-        auto startTime = kotlin::steady_clock::now();
+        auto startTime = steady_clock::now();
         {
             std::unique_lock guard(configMutex_);
             auto minStartTime = lastProcessTimestamp_ + config_.minTimeBetweenTasks;
@@ -78,14 +80,20 @@ private:
         }
         auto deadline = [&]() noexcept {
             std::unique_lock guard(configMutex_);
+            RuntimeLogDebug({ kTagGC }, "Processing finalizers on a run loop for maximum %" PRId64 "ms",
+                            std::chrono::duration_cast<std::chrono::milliseconds>(config_.maxTimeInTask).count());
             return startTime + config_.maxTimeInTask;
         }();
         while (true) {
-            if (steady_clock::now() > deadline) {
+            auto now = steady_clock::now();
+            if (now > deadline) {
                 // Finalization is being run too long. Stop processing and reschedule until the next allowed time.
                 std::unique_lock guard(configMutex_);
+                RuntimeLogDebug({ kTagGC }, "Processing finalizers on a run loop has taken %" PRId64" ms. Stopping for %" PRId64 "ms.",
+                                std::chrono::duration_cast<milliseconds>(now - startTime).count().value,
+                                std::chrono::duration_cast<std::chrono::milliseconds>(config_.minTimeBetweenTasks).count());
                 timer_.setNextFiring(config_.minTimeBetweenTasks);
-                lastProcessTimestamp_ = steady_clock::now();
+                lastProcessTimestamp_ = now;
                 return;
             }
             {
@@ -100,7 +108,11 @@ private:
             queue_ = FinalizerQueue{};
             if (FinalizerQueueTraits::isEmpty(currentQueue_)) {
                 // If `currentQueue_` is still empty, we're done with all the queued finalizers.
+                // Also, let's keep this under the lock. This way if someone were to schedule new tasks, they
+                // would definitely have to wait long enough to see the updated lastProcessTimestamp_.
                 lastProcessTimestamp_ = steady_clock::now();
+                RuntimeLogDebug({ kTagGC }, "Processing finalizers on a run loop has finished in %" PRId64 "ms.",
+                                std::chrono::duration_cast<milliseconds>(lastProcessTimestamp_ - startTime).count().value);
                 return;
             }
         }
