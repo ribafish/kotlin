@@ -25,9 +25,19 @@ kotlin {
         freeCompilerArgs.addAll(
             "-Xreturn-value-checker=full",
             "-Xallow-kotlin-package",
-            // TODO(KT-50876) Required for reproducible builds.
-            "-Xklib-relative-path-base=${layout.buildDirectory.get().asFile},${layout.projectDirectory.asFile},$rootDir",
         )
+    }
+
+    // KT-50876: Add -Xklib-relative-path-base in doFirst to keep absolute paths out of
+    // task input fingerprints, avoiding cache misses when building from different locations.
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+        val projectLayout = layout
+        val projectRootDir = rootDir
+        doFirst {
+            @Suppress("DEPRECATION_ERROR", "DEPRECATION")
+            (this as org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>).kotlinOptions.freeCompilerArgs +=
+                "-Xklib-relative-path-base=${projectLayout.buildDirectory.get().asFile},${projectLayout.projectDirectory.asFile},$projectRootDir"
+        }
     }
 
     targets.all {
